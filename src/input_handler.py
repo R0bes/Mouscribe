@@ -1,8 +1,4 @@
-"""
-Mauscribe Input Handler
-Erweiterter Input-Handler für verschiedene Eingabemethoden
-"""
-
+# src/input_handler.py
 from __future__ import annotations
 
 import threading

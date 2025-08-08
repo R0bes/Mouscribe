@@ -18,14 +18,14 @@ __description__ = "Voice-to-Text Tool mit Push-to-Talk und automatischem Clipboa
 
 from .main import MauscribeController, main
 from .config import *
-from .audio import AudioRecorder
+from .recorder import AudioRecorder
 from .stt import SpeechToText
-from .actions import SystemActions
+from .sound_controller import SoundController
 
 __all__ = [
     "MauscribeController",
     "main", 
     "AudioRecorder",
     "SpeechToText",
-    "SystemActions",
+    "SoundController",
 ]

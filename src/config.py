@@ -12,14 +12,14 @@ def load_config():
     config_path = Path(__file__).parent.parent / "config.toml"
     
     if not config_path.exists():
-        print("⚠️  config.toml nicht gefunden, verwende Standardeinstellungen")
+        print("WARNUNG: config.toml nicht gefunden, verwende Standardeinstellungen")
         return get_default_config()
     
     try:
         with open(config_path, "rb") as f:
             return tomllib.load(f)
     except Exception as e:
-        print(f"⚠️  Fehler beim Laden der config.toml: {e}")
+        print(f"WARNUNG: Fehler beim Laden der config.toml: {e}")
         return get_default_config()
 
 def get_default_config():

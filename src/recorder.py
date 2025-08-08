@@ -8,12 +8,7 @@ import sounddevice as sd
 
 from . import config
 
-
 class AudioRecorder:
-    """Simple push-to-talk audio recorder using sounddevice.
-
-    start_recording() opens a stream and buffers audio until stop_recording() is called.
-    """
 
     def __init__(self, sample_rate_hz: int | None = None, num_channels: int | None = None) -> None:
         self.sample_rate_hz: int = sample_rate_hz or config.SAMPLE_RATE

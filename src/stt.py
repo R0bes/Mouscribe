@@ -1,12 +1,9 @@
 from __future__ import annotations
-
 from typing import Optional
-
 import numpy as np
 from faster_whisper import WhisperModel
 
 from . import config
-
 
 class SpeechToText:
     def __init__(self) -> None:
