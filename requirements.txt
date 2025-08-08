@@ -1,0 +1,14 @@
+faster-whisper
+numpy
+sounddevice
+webrtcvad
+pynput
+pycaw
+comtypes
+python-dotenv
+openai
+pyperclip
+pyautogui
+pywin32
+pystray
+pillow

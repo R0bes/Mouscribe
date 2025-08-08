@@ -1,0 +1,70 @@
+# Mauscribe Konfiguration
+# ======================
+
+[input]
+# Input-Methode: "mouse_button", "keyboard", "custom"
+method = "mouse_button"
+
+# Maus-Button Konfiguration
+[mouse_button]
+primary = "x2"      # Primärer Button (meist rechte Maustaste)
+secondary = "x1"    # Sekundärer Button (meist mittlere Maustaste)
+left_with_ctrl = true  # Strg + Linke Maus aktivieren
+
+# Tastatur-Konfiguration
+[keyboard]
+primary = "f9"      # Primäre Taste
+secondary = "shift+f9"  # Sekundäre Taste
+
+# Custom-Kombinationen
+[custom]
+combinations = [
+    ["ctrl", "shift", "v"],
+    ["alt", "v"]
+]
+
+# Audio-Einstellungen
+[audio]
+sample_rate = 16000
+channels = 1
+chunk_size = 1024
+format = "int16"
+
+# STT-Einstellungen
+[stt]
+model = "base"      # "base", "small", "medium", "large"
+language = "de"     # Sprache für Transkription
+compute_type = "float32"  # "float16" = schnell, "float32" = genau
+
+# Verhalten
+[behavior]
+# Automatisches Einfügen nach Transkription
+auto_paste_after_transcription = false
+
+# Leerzeichen nach Text hinzufügen
+add_space_after_text = true
+
+# Doppelklick-Fenster in Sekunden
+paste_double_click_window = 10.0
+
+# Doppelklick-Schwelle in Sekunden
+double_click_threshold = 0.5
+
+# Cursor-Feedback
+[cursor]
+enable = true
+type = "microphone"  # "microphone", "recording", "custom"
+
+# System-Sounds
+[system]
+# System-Sounds bei kurzen Aufnahmen wiederherstellen
+restore_system_sounds = true
+# System-Sound Reduzierung während Aufnahme (in Prozent)
+volume_reduction_factor = 0.15
+# Minimale System-Lautstärke während Aufnahme (in Prozent)
+min_volume_percent = 5
+
+# Debug-Modus
+[debug]
+verbose = true
+log_errors = true
