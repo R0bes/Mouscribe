@@ -12,3 +12,5 @@ pyautogui
 pywin32
 pystray
 pillow
+pyspellchecker
+requests

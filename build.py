@@ -1,38 +1,34 @@
+# build.py - Mauscribe Build Script for creating .exe file with icon
 #!/usr/bin/env python3
-"""
-Mauscribe Build Script
-Erstellt die .exe Datei mit Icon
-"""
-
 import os
 import sys
 import subprocess
 from pathlib import Path
 
 def main():
-    print("🔨 Mauscribe Build Script")
+    print("Mauscribe Build Script")
     print("=" * 40)
     
-    # Prüfe ob PyInstaller installiert ist
+    # Check if PyInstaller is installed
     try:
         import PyInstaller
-        print("✅ PyInstaller gefunden")
+        print("PyInstaller found")
     except ImportError:
-        print("❌ PyInstaller nicht gefunden")
-        print("📦 Installiere PyInstaller...")
+        print("PyInstaller not found")
+        print("Installing PyInstaller...")
         subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"])
     
-    # Prüfe ob Icon existiert
+    # Check if icon exists
     icon_path = Path("icons/mauscribe_icon.ico")
     if icon_path.exists():
-        print(f"✅ Icon gefunden: {icon_path}")
+        print(f"Icon found: {icon_path}")
         icon_arg = f"--icon={icon_path}"
     else:
-        print("⚠️  Icon nicht gefunden, verwende Standard-Icon")
+        print("Icon not found, using default icon")
         icon_arg = ""
     
-    # Lösche alte Build-Dateien
-    print("🧹 Lösche alte Build-Dateien...")
+    # Clean old build files
+    print("Cleaning old build files...")
     if Path("dist").exists():
         import shutil
         shutil.rmtree("dist")
@@ -42,55 +38,58 @@ def main():
     if Path("mauscribe.spec").exists():
         Path("mauscribe.spec").unlink()
     
-    # PyInstaller Kommando
+    # PyInstaller command
     cmd = [
         sys.executable, "-m", "PyInstaller",
-        "--onefile",           # Eine .exe Datei
-        "--windowed",          # Kein Konsolen-Fenster
-        "--name=mauscribe",    # Name der .exe
+        "--onefile",           # Single .exe file
+        "--windowed",          # No console window
+        "--name=mauscribe",    # .exe name
         "--clean",             # Clean build
-        "main.py"              # Hauptdatei
+        "--hidden-import=spellchecker",  # Explicitly include pyspellchecker
+        "--hidden-import=requests",      # Explicitly include requests
+        "--collect-data=spellchecker",   # Include data files
+        "main.py"              # Main file
     ]
     
-    # Icon hinzufügen falls vorhanden
+    # Add icon if available
     if icon_arg:
         cmd.insert(-1, icon_arg)
     
-    print("🔨 Starte Build...")
-    print(f"Kommando: {' '.join(cmd)}")
+    print("Starting build...")
+    print(f"Command: {' '.join(cmd)}")
     
-    # Build ausführen
+    # Execute build
     result = subprocess.run(cmd, capture_output=True, text=True)
     
     if result.returncode == 0:
-        print("✅ Build erfolgreich!")
+        print("Build successful!")
         
-        # Prüfe ob .exe erstellt wurde
+        # Check if .exe was created
         exe_path = Path("dist/mauscribe.exe")
         if exe_path.exists():
             size_mb = exe_path.stat().st_size / (1024 * 1024)
-            print(f"📦 .exe erstellt: {exe_path}")
-            print(f"📏 Größe: {size_mb:.1f} MB")
+            print(f".exe created: {exe_path}")
+            print(f"Size: {size_mb:.1f} MB")
             
-            # Teste die .exe
-            print("🧪 Teste .exe...")
+            # Test the .exe
+            print("Testing .exe...")
             try:
                 test_result = subprocess.run([str(exe_path), "--help"], 
                                           capture_output=True, text=True, timeout=5)
-                print("✅ .exe funktioniert")
+                print(".exe works")
             except subprocess.TimeoutExpired:
-                print("✅ .exe startet (Timeout = OK)")
+                print(".exe starts (Timeout = OK)")
             except Exception as e:
-                print(f"⚠️  .exe Test: {e}")
+                print(f".exe test: {e}")
         else:
-            print("❌ .exe wurde nicht erstellt")
+            print(".exe was not created")
     else:
-        print("❌ Build fehlgeschlagen!")
-        print("Fehler:")
+        print("Build failed!")
+        print("Error:")
         print(result.stderr)
     
     print("=" * 40)
-    print("🎯 Build abgeschlossen!")
+    print("Build completed!")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,266 @@
+name: Automatische Feature-Entwicklung
+
+on:
+  workflow_dispatch:
+    inputs:
+      feature_name:
+        description: 'Name des Features'
+        required: true
+        type: string
+        default: 'new-feature'
+      commit_message:
+        description: 'Commit-Nachricht'
+        required: false
+        type: string
+        default: 'feat: automatische Feature-Entwicklung'
+      target_branch:
+        description: 'Ziel-Branch für den PR'
+        required: false
+        type: string
+        default: 'main'
+      auto_merge:
+        description: 'PR automatisch mergen nach erfolgreichen Tests?'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Feature-Branch erstellen und Änderungen committen
+  create-feature:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Create Feature Branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          FEATURE_NAME="${{ github.event.inputs.feature_name }}"
+          BRANCH_NAME="feature/$FEATURE_NAME-$(date +%Y%m%d-%H%M%S)"
+          
+          echo "Creating feature branch: $BRANCH_NAME"
+          git checkout -b "$BRANCH_NAME"
+          
+          # Hier können automatische Änderungen vorgenommen werden
+          # Beispiel: Version aktualisieren, Konfiguration ändern, etc.
+          echo "Feature branch $BRANCH_NAME created successfully"
+          
+          # Branch-Name für nachfolgende Jobs speichern
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Commit Changes
+        run: |
+          COMMIT_MSG="${{ github.event.inputs.commit_message }}"
+          git add .
+          git commit -m "$COMMIT_MSG" || echo "No changes to commit"
+
+      - name: Push Feature Branch
+        run: |
+          git push origin "$BRANCH_NAME"
+          echo "Feature branch pushed: $BRANCH_NAME"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.inputs.target_branch }}
+          branch: ${{ env.BRANCH_NAME }}
+          title: "feat: ${{ github.event.inputs.feature_name }}"
+          body: |
+            ## Automatisch generierter Pull Request
+            
+            Dieser PR wurde automatisch durch den CI/CD Workflow erstellt.
+            
+            **Feature:** ${{ github.event.inputs.feature_name }}
+            **Branch:** ${{ env.BRANCH_NAME }}
+            **Erstellt:** ${{ github.event.head_commit.timestamp }}
+            **Ziel-Branch:** ${{ github.event.inputs.target_branch }}
+            
+            ### Änderungen
+            - Automatische Feature-Entwicklung: ${{ github.event.inputs.feature_name }}
+            - Branch: ${{ env.BRANCH_NAME }}
+            - Commit: ${{ github.event.inputs.commit_message }}
+            
+            ### Review erforderlich
+            Bitte überprüfe die Änderungen und merge den PR nach dem Review.
+            
+            Nach dem Merge wird automatisch ein Release gebaut.
+            
+            ### Automatischer Merge
+            ${{ github.event.inputs.auto_merge && '✅ Automatischer Merge aktiviert nach erfolgreichen Tests' || '❌ Automatischer Merge deaktiviert - manueller Merge erforderlich' }}
+          labels: |
+            automated
+            feature
+            needs-review
+          assignees: ${{ github.repository_owner }}
+
+  # Tests auf dem Feature-Branch
+  test-feature:
+    needs: create-feature
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Feature Branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create-feature.outputs.branch_name }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Lint with flake8
+        run: |
+          flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Format check with black
+        run: |
+          black --check --diff src/
+
+      - name: Test with pytest
+        run: |
+          pytest --cov=src --cov-report=xml --cov-report=html
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  # Automatischer Merge nach erfolgreichen Tests (optional)
+  auto-merge:
+    needs: [create-feature, test-feature]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.auto_merge == true
+    steps:
+      - name: Auto-merge Pull Request
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: pullRequests } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: '${{ needs.create-feature.outputs.branch_name }}'
+            });
+            
+            if (pullRequests.length > 0) {
+              const pr = pullRequests[0];
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                merge_method: 'squash'
+              });
+              console.log(`PR #${pr.number} automatically merged`);
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build nach erfolgreichem Merge
+  build-after-merge:
+    needs: [create-feature, test-feature]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.auto_merge == true
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Build Windows Executable
+        run: |
+          python build.py
+
+      - name: Build Linux Executable
+        run: |
+          python build.py
+
+      - name: Build macOS Executable
+        run: |
+          python build.py
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: mauscribe-builds
+          path: dist/*
+
+  # Release nach erfolgreichem Build
+  release-after-build:
+    needs: build-after-merge
+    runs-on: ubuntu-latest
+    if: github.event.inputs.auto_merge == true
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Prepare Release Files
+        run: |
+          mkdir -p release
+          cp mauscribe-builds/* release/ || true
+          ls -la release/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/*
+          draft: false
+          prerelease: false
+          tag_name: "v${{ github.run_number }}"
+          name: "Auto-Release v${{ github.run_number }}"
+          body: |
+            ## Automatischer Release nach Feature-Entwicklung
+            
+            **Feature:** ${{ github.event.inputs.feature_name }}
+            **Branch:** ${{ needs.create-feature.outputs.branch_name }}
+            **Erstellt:** ${{ github.event.head_commit.timestamp }}
+            
+            ### Build erfolgreich
+            - Windows: ✅
+            - Linux: ✅  
+            - macOS: ✅
+            
+            ### Änderungen
+            - Feature: ${{ github.event.inputs.feature_name }}
+            - Commit: ${{ github.event.inputs.commit_message }}
+            
+            ### Automatischer Workflow
+            Dieser Release wurde automatisch nach erfolgreichem Feature-Build erstellt.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

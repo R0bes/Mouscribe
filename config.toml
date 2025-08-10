@@ -64,7 +64,33 @@ volume_reduction_factor = 0.15
 # Minimale System-Lautstärke während Aufnahme (in Prozent)
 min_volume_percent = 5
 
+# Rechtschreib- und Grammatikkorrektur
+[spell_check]
+# Rechtschreibkorrektur aktivieren
+enabled = true
+# Grammatikprüfung aktivieren  
+grammar_check = true
+# Sprache für Korrektur ("de", "en", "auto")
+language = "de"
+# Automatische Korrektur anwenden
+auto_correct = true
+# Nur Vorschläge anzeigen (true) oder direkt korrigieren (false)
+suggest_only = false
+
 # Debug-Modus
 [debug]
 verbose = true
 log_errors = true
+
+# Auto-Updater
+[auto_update]
+# Automatische Updates aktivieren
+enabled = true
+# Update-Check-Intervall in Sekunden (Standard: 24 Stunden)
+check_interval = 86400
+# Nach Updates suchen beim Programmstart
+check_on_startup = true
+# Automatisch Updates installieren (false = nur nach Bestätigung)
+auto_install = false
+# Pre-Releases einschließen
+include_prereleases = false

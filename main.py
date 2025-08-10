@@ -1,7 +1,8 @@
+# main.py - Main entry point for Mauscribe application
 #!/usr/bin/env python3
 """
 Mauscribe - Voice-to-Text Tool
-Einfacher Einstiegspunkt
+Simple entry point
 """
 
 import sys

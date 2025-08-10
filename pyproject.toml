@@ -1,0 +1,35 @@
+# pyproject.toml - Python project configuration for Mauscribe
+[project]
+name = "mauscribe"
+version = "1.0.0"
+description = "Voice-to-Text Tool mit Push-to-Talk und automatischem Clipboard-Management"
+authors = [
+    {name = "Robs", email = "rob.schwe@gmail.com"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+[project.urls]
+Homepage = "https://github.com/R0bes/Mauscribe"
+Repository = "https://github.com/R0bes/Mauscribe"
+Issues = "https://github.com/R0bes/Mauscribe/issues"
+Documentation = "https://github.com/R0bes/Mauscribe#readme"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

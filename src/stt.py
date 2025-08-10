@@ -4,6 +4,7 @@ import numpy as np
 from faster_whisper import WhisperModel
 
 from . import config
+from .spell_checker import check_and_correct_text
 
 class SpeechToText:
     def __init__(self) -> None:
@@ -29,4 +30,15 @@ class SpeechToText:
             best_of=1,
         )
         text_parts = [seg.text.strip() for seg in segments]
-        return " ".join([t for t in text_parts if t])
+        raw_text = " ".join([t for t in text_parts if t])
+        
+        # Rechtschreibkorrektur anwenden falls aktiviert
+        if config.SPELL_CHECK_ENABLED and raw_text:
+            try:
+                corrected_text = check_and_correct_text(raw_text)
+                return corrected_text
+            except Exception as e:
+                print(f"Rechtschreibkorrektur fehlgeschlagen: {e}")
+                return raw_text
+        
+        return raw_text
