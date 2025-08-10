@@ -87,6 +87,31 @@ mauscribe/
 python build.py
 ```
 
+### Testing
+```bash
+# Run all tests with coverage
+python run_tests.py
+
+# Or run tests manually
+python -m pytest --cov=src --cov-report=html
+
+# Run specific test file
+python -m pytest tests/test_config.py -v
+```
+
+### Code Quality
+```bash
+# Install pre-commit hooks
+pre-commit install
+
+# Run all checks manually
+pre-commit run --all-files
+
+# Format code
+black src/
+isort src/
+```
+
 ## License
 
 MIT License - see LICENSE file for details.

@@ -144,6 +144,52 @@ class Config:
         return self._get('system.min_volume_percent', 10)
         
     @property
+    def spell_check_enabled(self) -> bool:
+        """Get spell check enabled setting."""
+        return self._get('spell_check.enabled', True)
+        
+    @property
+    def spell_check_language(self) -> str:
+        """Get spell check language setting."""
+        return self._get('spell_check.language', 'de')
+        
+    @property
+    def spell_check_grammar(self) -> bool:
+        """Get grammar check enabled setting."""
+        return self._get('spell_check.grammar_check', True)
+        
+    @property
+    def spell_check_auto_correct(self) -> bool:
+        """Get auto-correct enabled setting."""
+        return self._get('spell_check.auto_correct', True)
+        
+    @property
+    def spell_check_suggest_only(self) -> bool:
+        """Get suggest-only mode setting."""
+        return self._get('spell_check.suggest_only', False)
+        
+    @property
+    def custom_dictionary_enabled(self) -> bool:
+        """Get custom dictionary enabled setting."""
+        return self._get('custom_dictionary.enabled', True)
+        
+    @property
+    def custom_dictionary_auto_add_unknown(self) -> bool:
+        """Get auto-add unknown words setting."""
+        return self._get('custom_dictionary.auto_add_unknown', False)
+        
+    @property
+    def custom_dictionary_path(self) -> Optional[str]:
+        """Get custom dictionary path setting."""
+        path = self._get('custom_dictionary.path', '')
+        return path if path else None
+        
+    @property
+    def custom_dictionary_max_words(self) -> int:
+        """Get maximum words in dictionary setting."""
+        return self._get('custom_dictionary.max_words', 1000)
+        
+    @property
     def debug_enabled(self) -> bool:
         """Get debug mode setting."""
         return self._get('debug.enabled', False)

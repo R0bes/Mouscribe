@@ -10,6 +10,7 @@ except ImportError:
     print("Warnung: pyspellchecker nicht verfügbar. Rechtschreibprüfung deaktiviert.")
 
 from . import config
+from .custom_dictionary import get_custom_dictionary, CustomDictionary
 
 
 class SpellGrammarChecker:
@@ -28,11 +29,20 @@ class SpellGrammarChecker:
         self._auto_correct = config.SPELL_CHECK_AUTO_CORRECT
         self._suggest_only = config.SPELL_CHECK_SUGGEST_ONLY
         
+        # Benutzerdefiniertes Wörterbuch
+        self._custom_dictionary: Optional[CustomDictionary] = None
+        self._custom_dict_enabled = config.CUSTOM_DICTIONARY_ENABLED
+        self._auto_add_unknown = config.CUSTOM_DICTIONARY_AUTO_ADD_UNKNOWN
+        self._max_words = config.CUSTOM_DICTIONARY_MAX_WORDS
+        
         # Einfache deutsche Grammatikregeln
         self._grammar_patterns = self._setup_grammar_patterns()
         
         if self._enabled:
             self._initialize_spell_checker()
+        
+        if self._custom_dict_enabled:
+            self._initialize_custom_dictionary()
     
     def _setup_grammar_patterns(self) -> List[Dict[str, Any]]:
         """Erstellt einfache Grammatikregeln für Deutsch."""
@@ -96,6 +106,17 @@ class SpellGrammarChecker:
             print(f"Fehler beim Initialisieren der Rechtschreibprüfung: {e}")
             self._enabled = False
     
+    def _initialize_custom_dictionary(self) -> None:
+        """Initialisiert das benutzerdefinierte Wörterbuch."""
+        try:
+            print("Initialisiere benutzerdefiniertes Wörterbuch...")
+            self._custom_dictionary = get_custom_dictionary()
+            print(f"Benutzerdefiniertes Wörterbuch geladen: {self._custom_dictionary.get_word_count()} Wörter")
+        except Exception as e:
+            print(f"Fehler beim Initialisieren des benutzerdefinierten Wörterbuchs: {e}")
+            self._custom_dictionary = None
+            self._custom_dict_enabled = False
+    
     def check_text(self, text: str) -> Optional[str]:
         """
         Prüft und korrigiert einen Text.
@@ -138,7 +159,14 @@ class SpellGrammarChecker:
             
             # 2. Rechtschreibprüfung
             words = re.findall(r'\b[a-zA-ZäöüßÄÖÜ]+\b', corrected_text)
-            misspelled = self._spell_checker.unknown(words)
+            
+            # Filtere Wörter, die im benutzerdefinierten Wörterbuch sind
+            if self._custom_dictionary:
+                words_to_check = [word for word in words if not self._custom_dictionary.has_word(word)]
+            else:
+                words_to_check = words
+            
+            misspelled = self._spell_checker.unknown(words_to_check)
             
             if misspelled:
                 if self._suggest_only:
@@ -158,6 +186,15 @@ class SpellGrammarChecker:
                                     flags=re.IGNORECASE
                                 )
                                 corrections_made.append(f"Rechtschreibung: {word} -> {best_candidate}")
+                
+                # Automatisch unbekannte Wörter zum Wörterbuch hinzufügen (falls aktiviert)
+                if self._auto_add_unknown and self._custom_dictionary:
+                    for word in misspelled:
+                        if self._custom_dictionary.get_word_count() < self._max_words or self._max_words == 0:
+                            if self._custom_dictionary.add_word(word):
+                                print(f"Wort '{word}' automatisch zum Wörterbuch hinzugefügt")
+                        else:
+                            print(f"Wörterbuch ist voll ({self._max_words} Wörter), kann '{word}' nicht hinzufügen")
             
             # Ergebnis ausgeben
             if corrections_made and corrected_text != text:
@@ -218,7 +255,14 @@ class SpellGrammarChecker:
         try:
             suggestions = []
             words = re.findall(r'\b[a-zA-ZäöüßÄÖÜ]+\b', text)
-            misspelled = self._spell_checker.unknown(words)
+            
+            # Filtere Wörter, die im benutzerdefinierten Wörterbuch sind
+            if self._custom_dictionary:
+                words_to_check = [word for word in words if not self._custom_dictionary.has_word(word)]
+            else:
+                words_to_check = words
+            
+            misspelled = self._spell_checker.unknown(words_to_check)
             
             for word in misspelled:
                 candidates = self._spell_checker.candidates(word)
@@ -240,6 +284,79 @@ class SpellGrammarChecker:
     def is_enabled(self) -> bool:
         """Prüft, ob die Rechtschreibprüfung aktiviert ist."""
         return self._enabled and self._spell_checker is not None
+    
+    def is_custom_dictionary_enabled(self) -> bool:
+        """Prüft, ob das benutzerdefinierte Wörterbuch aktiviert ist."""
+        return self._custom_dict_enabled and self._custom_dictionary is not None
+    
+    def add_custom_word(self, word: str) -> bool:
+        """
+        Fügt ein Wort zum benutzerdefinierten Wörterbuch hinzu.
+        
+        Args:
+            word: Das hinzuzufügende Wort
+            
+        Returns:
+            True wenn erfolgreich, False bei Fehlern
+        """
+        if not self.is_custom_dictionary_enabled():
+            print("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
+            return False
+        
+        return self._custom_dictionary.add_word(word)
+    
+    def remove_custom_word(self, word: str) -> bool:
+        """
+        Entfernt ein Wort aus dem benutzerdefinierten Wörterbuch.
+        
+        Args:
+            word: Das zu entfernende Wort
+            
+        Returns:
+            True wenn erfolgreich, False bei Fehlern
+        """
+        if not self.is_custom_dictionary_enabled():
+            print("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
+            return False
+        
+        return self._custom_dictionary.remove_word(word)
+    
+    def get_custom_words(self) -> List[str]:
+        """
+        Gibt alle Wörter aus dem benutzerdefinierten Wörterbuch zurück.
+        
+        Returns:
+            Liste aller Wörter oder leere Liste wenn nicht aktiviert
+        """
+        if not self.is_custom_dictionary_enabled():
+            return []
+        
+        return self._custom_dictionary.get_all_words()
+    
+    def get_custom_word_count(self) -> int:
+        """
+        Gibt die Anzahl der Wörter im benutzerdefinierten Wörterbuch zurück.
+        
+        Returns:
+            Anzahl der Wörter oder 0 wenn nicht aktiviert
+        """
+        if not self.is_custom_dictionary_enabled():
+            return 0
+        
+        return self._custom_dictionary.get_word_count()
+    
+    def clear_custom_dictionary(self) -> bool:
+        """
+        Löscht alle Wörter aus dem benutzerdefinierten Wörterbuch.
+        
+        Returns:
+            True wenn erfolgreich, False bei Fehlern
+        """
+        if not self.is_custom_dictionary_enabled():
+            print("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
+            return False
+        
+        return self._custom_dictionary.clear_dictionary()
     
     def close(self) -> None:
         """Schließt den Spell Checker."""
@@ -282,3 +399,53 @@ def check_and_correct_text(text: str) -> str:
     checker = get_spell_checker()
     result = checker.check_text(text)
     return result if result is not None else text
+
+
+def add_custom_word(word: str) -> bool:
+    """
+    Convenience-Funktion zum Hinzufügen eines Wortes zum benutzerdefinierten Wörterbuch.
+    
+    Args:
+        word: Das hinzuzufügende Wort
+        
+    Returns:
+        True wenn erfolgreich, False bei Fehlern
+    """
+    checker = get_spell_checker()
+    return checker.add_custom_word(word)
+
+
+def remove_custom_word(word: str) -> bool:
+    """
+    Convenience-Funktion zum Entfernen eines Wortes aus dem benutzerdefinierten Wörterbuch.
+    
+    Args:
+        word: Das zu entfernende Wort
+        
+    Returns:
+        True wenn erfolgreich, False bei Fehlern
+    """
+    checker = get_spell_checker()
+    return checker.remove_custom_word(word)
+
+
+def get_custom_words() -> List[str]:
+    """
+    Convenience-Funktion zum Abrufen aller Wörter aus dem benutzerdefinierten Wörterbuch.
+    
+    Returns:
+        Liste aller Wörter
+    """
+    checker = get_spell_checker()
+    return checker.get_custom_words()
+
+
+def get_custom_word_count() -> int:
+    """
+    Convenience-Funktion zum Abrufen der Anzahl der Wörter im benutzerdefinierten Wörterbuch.
+    
+    Returns:
+        Anzahl der Wörter
+    """
+    checker = get_spell_checker()
+    return checker.get_custom_word_count()

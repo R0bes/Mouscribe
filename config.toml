@@ -77,6 +77,17 @@ auto_correct = true
 # Nur Vorschläge anzeigen (true) oder direkt korrigieren (false)
 suggest_only = false
 
+# Benutzerdefiniertes Wörterbuch
+[custom_dictionary]
+# Benutzerdefiniertes Wörterbuch aktivieren
+enabled = true
+# Automatisch unbekannte Wörter zum Wörterbuch hinzufügen
+auto_add_unknown = false
+# Wörterbuch-Pfad (leer = Standard-Pfad im Benutzerverzeichnis)
+path = ""
+# Maximale Anzahl von Wörtern im Wörterbuch (0 = unbegrenzt)
+max_words = 1000
+
 # Debug-Modus
 [debug]
 verbose = true
