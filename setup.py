@@ -27,7 +27,7 @@ setup(
     install_requires=read_requirements(),
     entry_points={
         "console_scripts": [
-            "mauscribe=voice_control.main:main",
+            "mauscribe=src.main:main",
         ],
     },
     include_package_data=True,

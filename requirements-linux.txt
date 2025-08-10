@@ -1,0 +1,19 @@
+# Requirements für Linux-Systeme
+# Diese Datei enthält alle Dependencies außer Windows-spezifischen Paketen
+
+faster-whisper
+numpy
+sounddevice
+webrtcvad
+pynput
+python-dotenv
+openai
+pyperclip
+pyautogui
+pystray
+pillow
+pyspellchecker
+requests
+
+# Linux-spezifische Audio-Pakete
+pyaudio
