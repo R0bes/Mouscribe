@@ -1,0 +1,74 @@
+name: Setup Branch Protection
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  setup-protection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Branch Protection
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+              // Branch Protection für Main-Branch einrichten
+              await github.rest.repos.updateBranchProtection({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch: 'main',
+                required_status_checks: {
+                  strict: true,
+                  contexts: ['test', 'build']
+                },
+                enforce_admins: false,
+                required_pull_request_reviews: {
+                  required_approving_review_count: 1,
+                  dismiss_stale_reviews: true,
+                  require_code_owner_reviews: false
+                },
+                restrictions: null,
+                allow_force_pushes: false,
+                allow_deletions: false,
+                block_creations: false,
+                required_conversation_resolution: true
+              });
+              
+              console.log('✅ Branch protection für main erfolgreich eingerichtet');
+              
+              // Branch Protection für develop-Branch (falls vorhanden)
+              try {
+                await github.rest.repos.updateBranchProtection({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  branch: 'develop',
+                  required_status_checks: {
+                    strict: false,
+                    contexts: ['test']
+                  },
+                  enforce_admins: false,
+                  required_pull_request_reviews: {
+                    required_approving_review_count: 1,
+                    dismiss_stale_reviews: true,
+                    require_code_owner_reviews: false
+                  },
+                  restrictions: null,
+                  allow_force_pushes: false,
+                  allow_deletions: false,
+                  block_creations: false,
+                  required_conversation_resolution: false
+                });
+                
+                console.log('✅ Branch protection für develop erfolgreich eingerichtet');
+              } catch (error) {
+                console.log('ℹ️ Develop-Branch existiert nicht oder kann nicht geschützt werden');
+              }
+              
+            } catch (error) {
+              console.error('❌ Fehler beim Einrichten der Branch Protection:', error.message);
+              core.setFailed('Branch Protection konnte nicht eingerichtet werden');
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

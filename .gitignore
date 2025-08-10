@@ -132,7 +132,36 @@ dmypy.json
 *.wav
 *.mp3
 *.flac
+*.m4a
+*.aac
+*.ogg
 
 # Temporary files
 *.tmp
 *.temp
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artifacts
+*.exe
+*.msi
+*.dmg
+*.deb
+*.rpm
+*.AppImage
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
