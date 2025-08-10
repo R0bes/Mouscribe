@@ -112,6 +112,20 @@ black src/
 isort src/
 ```
 
+### Pipeline Monitoring
+```bash
+# Set up automated pipeline monitoring
+python setup_pipeline_monitoring.py
+
+# Monitor pipelines manually
+python pipeline_monitor.py
+
+# Open pipeline status in browser
+python pipeline_monitor.py --open
+```
+
+**Automatische Überwachung**: Nach jedem `git push` werden Ihre CI/CD-Pipelines automatisch überwacht und Sie erhalten detailliertes Feedback über den Status.
+
 ## License
 
 MIT License - see LICENSE file for details.

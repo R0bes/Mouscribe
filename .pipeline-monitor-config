@@ -1,0 +1,17 @@
+# Pipeline Monitor Configuration
+# This file contains configuration for automated pipeline monitoring
+
+[monitoring]
+enabled = true
+max_wait_time = 300
+check_interval = 15
+
+[notifications]
+show_progress = true
+show_job_details = true
+open_browser_on_failure = false
+
+[github]
+token_source = auto
+repo_owner = R0bes
+repo_name = Mouscribe
