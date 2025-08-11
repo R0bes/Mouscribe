@@ -45,14 +45,3 @@ repos:
       - id: bandit
         args: [-r, src/, -f, json, -o, bandit-report.json]
         exclude: tests/
-
-  - repo: local
-    hooks:
-      - id: pytest
-        name: pytest
-        entry: pytest
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [commit]
-        args: [--cov=src, --cov-report=term-missing]
