@@ -15,7 +15,12 @@ def main():
 
     # Check if we're in a git repository
     try:
-        result = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-dir"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
         git_dir = result.stdout.strip()
     except subprocess.CalledProcessError:
         print("❌ Error: Not in a git repository!")
@@ -26,7 +31,12 @@ def main():
 
     # Get repository root
     try:
-        result = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
         repo_root = Path(result.stdout.strip())
     except subprocess.CalledProcessError:
         print("❌ Could not determine repository root")

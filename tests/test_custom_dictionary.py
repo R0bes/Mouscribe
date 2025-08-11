@@ -13,15 +13,23 @@ from unittest.mock import MagicMock, patch
 
 # Importiere nur das benötigte Modul
 try:
-    from custom_dictionary import (CustomDictionary, add_custom_word,
-                                   get_custom_dictionary, is_custom_word,
-                                   remove_custom_word)
+    from custom_dictionary import (
+        CustomDictionary,
+        add_custom_word,
+        get_custom_dictionary,
+        is_custom_word,
+        remove_custom_word,
+    )
 except ImportError:
     # Füge src zum Python-Pfad hinzu, falls Import fehlschlägt
     sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-    from custom_dictionary import (CustomDictionary, add_custom_word,
-                                   get_custom_dictionary, is_custom_word,
-                                   remove_custom_word)
+    from custom_dictionary import (
+        CustomDictionary,
+        add_custom_word,
+        get_custom_dictionary,
+        is_custom_word,
+        remove_custom_word,
+    )
 
 
 class TestCustomDictionary(unittest.TestCase):

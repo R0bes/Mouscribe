@@ -17,7 +17,9 @@ class PipelineMonitor:
         self.repo_owner = "R0bes"
         self.repo_name = "Mouscribe"
         self.github_token = self._get_github_token()
-        self.base_url = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}"
+        self.base_url = (
+            f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}"
+        )
 
     def _get_github_token(self) -> Optional[str]:
         """Get GitHub token from environment or git config."""
@@ -30,14 +32,24 @@ class PipelineMonitor:
 
         # Try git config
         try:
-            result = subprocess.run(["git", "config", "--global", "github.token"], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["git", "config", "--global", "github.token"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
             return result.stdout.strip()
         except subprocess.CalledProcessError:
             pass
 
         # Try local git config
         try:
-            result = subprocess.run(["git", "config", "github.token"], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["git", "config", "github.token"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
             return result.stdout.strip()
         except subprocess.CalledProcessError:
             pass
@@ -47,7 +59,12 @@ class PipelineMonitor:
     def get_current_branch(self) -> str:
         """Get current git branch."""
         try:
-            result = subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["git", "branch", "--show-current"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
             return result.stdout.strip()
         except subprocess.CalledProcessError:
             return "main"
@@ -55,7 +72,9 @@ class PipelineMonitor:
     def get_last_commit_sha(self) -> str:
         """Get the SHA of the last commit."""
         try:
-            result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+            )
             return result.stdout.strip()
         except subprocess.CalledProcessError:
             return ""
@@ -64,10 +83,15 @@ class PipelineMonitor:
         """Get workflow runs for a specific branch and commit."""
         if not self.github_token:
             print("WARNING: No GitHub token found. Cannot check pipeline status.")
-            print("   Set GITHUB_TOKEN environment variable or configure git config github.token")
+            print(
+                "   Set GITHUB_TOKEN environment variable or configure git config github.token"
+            )
             return []
 
-        headers = {"Authorization": f"token {self.github_token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {
+            "Authorization": f"token {self.github_token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
 
         try:
             # Get workflow runs for the specific commit
@@ -92,7 +116,10 @@ class PipelineMonitor:
         if not self.github_token:
             return None
 
-        headers = {"Authorization": f"token {self.github_token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {
+            "Authorization": f"token {self.github_token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
 
         try:
             # First get the workflow run
@@ -119,7 +146,10 @@ class PipelineMonitor:
         if not self.github_token:
             return None
 
-        headers = {"Authorization": f"token {self.github_token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {
+            "Authorization": f"token {self.github_token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
 
         try:
             # Try the jobs logs endpoint first
@@ -144,7 +174,9 @@ class PipelineMonitor:
             print(f"   DEBUG: Request error: {e}")
             return None
 
-    def _print_pipeline_header(self, current_branch: str, commit_sha: str, max_wait_time: int) -> None:
+    def _print_pipeline_header(
+        self, current_branch: str, commit_sha: str, max_wait_time: int
+    ) -> None:
         """Print pipeline monitoring header."""
         print("Mauscribe Pipeline Monitor")
         print("=" * 50)
@@ -225,19 +257,27 @@ class PipelineMonitor:
         print("\nSUCCESS: Pipeline Success Summary:")
         print("-" * 30)
         print(f"SUCCESS: Workflow: {run['name']}")
-        print(f"DURATION: {self._format_duration(run['created_at'], run['updated_at'])}")
+        print(
+            f"DURATION: {self._format_duration(run['created_at'], run['updated_at'])}"
+        )
         print(f"URL: {run['html_url']}")
 
         # Show job summary
         if "jobs_url" in run:
             try:
-                headers = {"Authorization": f"token {self.github_token}"} if self.github_token else {}
+                headers = (
+                    {"Authorization": f"token {self.github_token}"}
+                    if self.github_token
+                    else {}
+                )
                 response = requests.get(run["jobs_url"], headers=headers)
                 if response.status_code == 200:
                     jobs = response.json()["jobs"]
                     print(f"\nJOBS: Jobs ({len(jobs)}):")
                     for job in jobs:
-                        status_text = "SUCCESS" if job["conclusion"] == "success" else "FAILED"
+                        status_text = (
+                            "SUCCESS" if job["conclusion"] == "success" else "FAILED"
+                        )
                         print(f"  {status_text} {job['name']}: {job['conclusion']}")
             except Exception:
                 pass
@@ -248,7 +288,9 @@ class PipelineMonitor:
         print("-" * 30)
         print(f"🔗 Workflow: {run['name']}")
         print(f"🔗 URL: {run['html_url']}")
-        print(f"⏱️  Duration: {self._format_duration(run['created_at'], run['updated_at'])}")
+        print(
+            f"⏱️  Duration: {self._format_duration(run['created_at'], run['updated_at'])}"
+        )
         print()
 
         # Get workflow details to see all jobs
@@ -298,7 +340,9 @@ class PipelineMonitor:
                 job_name = job.get("name", "Unknown")
                 job_status = job.get("status", "Unknown")
                 job_conclusion = job.get("conclusion", "Unknown")
-                print(f"  {i + 1}. {job_name} - Status: {job_status} - Conclusion: {job_conclusion}")
+                print(
+                    f"  {i + 1}. {job_name} - Status: {job_status} - Conclusion: {job_conclusion}"
+                )
 
         print("FAILED: Some pipelines failed. Check the details above.")
 
@@ -306,15 +350,25 @@ class PipelineMonitor:
         """Show progress of running pipeline."""
         if "jobs_url" in run:
             try:
-                headers = {"Authorization": f"token {self.github_token}"} if self.github_token else {}
+                headers = (
+                    {"Authorization": f"token {self.github_token}"}
+                    if self.github_token
+                    else {}
+                )
                 response = requests.get(run["jobs_url"], headers=headers)
                 if response.status_code == 200:
                     jobs = response.json()["jobs"]
-                    running_jobs = [job for job in jobs if job["status"] == "in_progress"]
-                    completed_jobs = [job for job in jobs if job["status"] == "completed"]
+                    running_jobs = [
+                        job for job in jobs if job["status"] == "in_progress"
+                    ]
+                    completed_jobs = [
+                        job for job in jobs if job["status"] == "completed"
+                    ]
 
                     if running_jobs:
-                        print(f"  RUNNING: {', '.join(job['name'] for job in running_jobs)}")
+                        print(
+                            f"  RUNNING: {', '.join(job['name'] for job in running_jobs)}"
+                        )
                     if completed_jobs:
                         print(f"  COMPLETED: {len(completed_jobs)}/{len(jobs)} jobs")
             except Exception:

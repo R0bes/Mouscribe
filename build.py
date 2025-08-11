@@ -80,7 +80,9 @@ def main():
             # Test the .exe
             print("Testing .exe...")
             try:
-                test_result = subprocess.run([str(exe_path), "--help"], capture_output=True, text=True, timeout=5)
+                test_result = subprocess.run(
+                    [str(exe_path), "--help"], capture_output=True, text=True, timeout=5
+                )
                 print(".exe works")
             except subprocess.TimeoutExpired:
                 print(".exe starts (Timeout = OK)")

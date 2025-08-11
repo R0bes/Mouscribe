@@ -12,11 +12,19 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from src.custom_dictionary import CustomDictionary
+
 # Import der Dictionary Manager Funktionen
-from src.dictionary_manager import (add_word, clear_dictionary, export_words,
-                                    import_words, list_words, main,
-                                    print_dictionary_info, remove_word,
-                                    search_word)
+from src.dictionary_manager import (
+    add_word,
+    clear_dictionary,
+    export_words,
+    import_words,
+    list_words,
+    main,
+    print_dictionary_info,
+    remove_word,
+    search_word,
+)
 
 
 class TestDictionaryManagerFunctions:

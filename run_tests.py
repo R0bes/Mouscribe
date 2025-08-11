@@ -19,7 +19,11 @@ def main():  # noqa: C901
     # Install test dependencies if needed
     print("INSTALL: Installing test dependencies...")
     try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements-dev.txt"], check=True, capture_output=True)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-r", "requirements-dev.txt"],
+            check=True,
+            capture_output=True,
+        )
         print("SUCCESS: Dependencies installed")
     except subprocess.CalledProcessError as e:
         print(f"ERROR: Failed to install dependencies: {e}")
@@ -62,7 +66,9 @@ def main():  # noqa: C901
     # Open coverage HTML in browser (optional)
     coverage_html = "coverage_html/index.html"
     if os.path.exists(coverage_html):
-        print(f"\nBROWSER: Coverage report available at: {os.path.abspath(coverage_html)}")
+        print(
+            f"\nBROWSER: Coverage report available at: {os.path.abspath(coverage_html)}"
+        )
         try:
             import webbrowser
 

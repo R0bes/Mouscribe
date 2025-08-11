@@ -20,7 +20,10 @@ def main():
     # Install development dependencies
     print("\n📦 Installing development dependencies...")
     try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements-dev.txt"], check=True)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-r", "requirements-dev.txt"],
+            check=True,
+        )
         print("✅ Development dependencies installed")
     except subprocess.CalledProcessError as e:
         print(f"❌ Failed to install dependencies: {e}")
@@ -40,21 +43,36 @@ def main():
 
     # Check if tests can run
     try:
-        result = subprocess.run([sys.executable, "-m", "pytest", "--version"], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "--version"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
         print(f"✅ Pytest: {result.stdout.strip()}")
     except Exception:
         print("❌ Pytest not working")
 
     # Check if coverage works
     try:
-        result = subprocess.run([sys.executable, "-m", "coverage", "--version"], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            [sys.executable, "-m", "coverage", "--version"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
         print(f"✅ Coverage: {result.stdout.strip()}")
     except Exception:
         print("❌ Coverage not working")
 
     # Check if black works
     try:
-        result = subprocess.run([sys.executable, "-m", "black", "--version"], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            [sys.executable, "-m", "black", "--version"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
         print(f"✅ Black: {result.stdout.strip()}")
     except Exception:
         print("❌ Black not working")
