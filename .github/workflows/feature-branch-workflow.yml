@@ -10,37 +10,37 @@ jobs:
   validate-feature:
     name: Validate Feature Branch
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         cache: 'pip'
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-linux.txt
         pip install -r requirements-dev.txt
-        
+
     - name: Run linting
       run: |
         flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-        
+
     - name: Run code formatting check
       run: |
         black --check --line-length=127 src/
         isort --check-only --profile=black src/
-        
+
     - name: Run tests
       run: |
         python -m pytest --cov=src --cov-report=xml
-        
+
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
@@ -51,26 +51,26 @@ jobs:
     name: Build Feature Branch
     runs-on: windows-latest
     needs: validate-feature
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         cache: 'pip'
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-windows.txt
         pip install pyinstaller
-        
+
     - name: Build executable
       run: python build.py
-      
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:

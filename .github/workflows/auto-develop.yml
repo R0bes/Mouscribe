@@ -51,17 +51,17 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           FEATURE_NAME="${{ github.event.inputs.feature_name }}"
           BRANCH_NAME="feature/$FEATURE_NAME-$(date +%Y%m%d-%H%M%S)"
-          
+
           echo "Creating feature branch: $BRANCH_NAME"
           git checkout -b "$BRANCH_NAME"
-          
+
           # Hier können automatische Änderungen vorgenommen werden
           # Beispiel: Version aktualisieren, Konfiguration ändern, etc.
           echo "Feature branch $BRANCH_NAME created successfully"
-          
+
           # Branch-Name für nachfolgende Jobs speichern
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
@@ -85,24 +85,24 @@ jobs:
           title: "feat: ${{ github.event.inputs.feature_name }}"
           body: |
             ## Automatisch generierter Pull Request
-            
+
             Dieser PR wurde automatisch durch den CI/CD Workflow erstellt.
-            
+
             **Feature:** ${{ github.event.inputs.feature_name }}
             **Branch:** ${{ env.BRANCH_NAME }}
             **Erstellt:** ${{ github.event.head_commit.timestamp }}
             **Ziel-Branch:** ${{ github.event.inputs.target_branch }}
-            
+
             ### Änderungen
             - Automatische Feature-Entwicklung: ${{ github.event.inputs.feature_name }}
             - Branch: ${{ env.BRANCH_NAME }}
             - Commit: ${{ github.event.inputs.commit_message }}
-            
+
             ### Review erforderlich
             Bitte überprüfe die Änderungen und merge den PR nach dem Review.
-            
+
             Nach dem Merge wird automatisch ein Release gebaut.
-            
+
             ### Automatischer Merge
             ${{ github.event.inputs.auto_merge && '✅ Automatischer Merge aktiviert nach erfolgreichen Tests' || '❌ Automatischer Merge deaktiviert - manueller Merge erforderlich' }}
           labels: |
@@ -167,7 +167,7 @@ jobs:
               state: 'open',
               head: '${{ needs.create-feature.outputs.branch_name }}'
             });
-            
+
             if (pullRequests.length > 0) {
               const pr = pullRequests[0];
               await github.rest.pulls.merge({
@@ -246,20 +246,20 @@ jobs:
           name: "Auto-Release v${{ github.run_number }}"
           body: |
             ## Automatischer Release nach Feature-Entwicklung
-            
+
             **Feature:** ${{ github.event.inputs.feature_name }}
             **Branch:** ${{ needs.create-feature.outputs.branch_name }}
             **Erstellt:** ${{ github.event.head_commit.timestamp }}
-            
+
             ### Build erfolgreich
             - Windows: ✅
-            - Linux: ✅  
+            - Linux: ✅
             - macOS: ✅
-            
+
             ### Änderungen
             - Feature: ${{ github.event.inputs.feature_name }}
             - Commit: ${{ github.event.inputs.commit_message }}
-            
+
             ### Automatischer Workflow
             Dieser Release wurde automatisch nach erfolgreichem Feature-Build erstellt.
         env:

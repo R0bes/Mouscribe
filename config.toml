@@ -68,7 +68,7 @@ min_volume_percent = 5
 [spell_check]
 # Rechtschreibkorrektur aktivieren
 enabled = true
-# Grammatikprüfung aktivieren  
+# Grammatikprüfung aktivieren
 grammar_check = true
 # Sprache für Korrektur ("de", "en", "auto")
 language = "de"

@@ -296,9 +296,9 @@ class PipelineMonitor:
             print("\nDEBUG: All jobs in workflow:")
             for i, job in enumerate(jobs):
                 job_name = job.get("name", "Unknown")
-        job_status = job.get("status", "Unknown")
-        job_conclusion = job.get("conclusion", "Unknown")
-        print(f"  {i+1}. {job_name} - Status: {job_status} - Conclusion: {job_conclusion}")
+                job_status = job.get("status", "Unknown")
+                job_conclusion = job.get("conclusion", "Unknown")
+                print(f"  {i + 1}. {job_name} - Status: {job_status} - Conclusion: {job_conclusion}")
 
         print("FAILED: Some pipelines failed. Check the details above.")
 

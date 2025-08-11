@@ -5,7 +5,6 @@ Handles TOML configuration file loading with sensible defaults.
 """
 
 import tomllib
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
@@ -15,7 +14,7 @@ class Config:
     def __init__(self, config_path: Optional[str] = None):
         """Initialize configuration with optional custom path."""
         self.config_path = config_path or "config.toml"
-        self._config_data = {}
+        self._config_data: Dict[str, Any] = {}
         self._load_config()
 
     def _load_config(self):
@@ -209,3 +208,28 @@ class Config:
     def min_volume_percent(self) -> int:
         """Get minimum volume percentage (alias for system setting)."""
         return self.system_min_volume_percent
+
+    @property
+    def auto_update_enabled(self) -> bool:
+        """Get auto-update enabled setting."""
+        return self._get("auto_update.enabled", True)
+
+    @property
+    def auto_update_check_interval(self) -> Optional[int]:
+        """Get auto-update check interval in seconds."""
+        return self._get("auto_update.check_interval", 86400)  # 24 hours
+
+    @property
+    def auto_update_check_on_startup(self) -> bool:
+        """Get check for updates on startup setting."""
+        return self._get("auto_update.check_on_startup", True)
+
+    @property
+    def auto_update_auto_install(self) -> bool:
+        """Get auto-install updates setting."""
+        return self._get("auto_update.auto_install", False)
+
+    @property
+    def auto_update_include_prereleases(self) -> bool:
+        """Get include pre-releases setting."""
+        return self._get("auto_update.include_prereleases", False)

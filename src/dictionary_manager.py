@@ -6,7 +6,7 @@ Provides easy access to add, remove, and view custom words.
 
 import argparse
 import sys
-from typing import List
+from typing import List, Optional
 
 from .custom_dictionary import CustomDictionary, get_custom_dictionary
 from .spell_checker import get_spell_checker
@@ -15,7 +15,7 @@ from .spell_checker import get_spell_checker
 def print_dictionary_info(dictionary: CustomDictionary) -> None:
     """Zeigt Informationen über das Wörterbuch an."""
     info = dictionary.get_dictionary_info()
-    print(f"\n📚 Benutzerdefiniertes Wörterbuch")
+    print("\n📚 Benutzerdefiniertes Wörterbuch")
     print(f"   Pfad: {info['path']}")
     print(f"   Anzahl Wörter: {info['word_count']}")
     print(f"   Datei existiert: {'Ja' if info['exists'] else 'Nein'}")
@@ -75,7 +75,7 @@ def import_words(dictionary: CustomDictionary, words: List[str]) -> None:
     print(f"✅ {imported} von {len(words)} Wörtern erfolgreich importiert")
 
 
-def export_words(dictionary: CustomDictionary, output_file: str = None) -> None:
+def export_words(dictionary: CustomDictionary, output_file: Optional[str] = None) -> None:
     """Exportiert alle Wörter aus dem Wörterbuch."""
     words = dictionary.export_words()
 

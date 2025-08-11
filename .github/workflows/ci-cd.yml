@@ -17,43 +17,43 @@ jobs:
   test:
     name: Test and Lint
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-linux.txt
         pip install -r requirements-dev.txt
-        
+
     - name: Run linting
       run: |
         flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-        
+
     - name: Run code formatting check
       run: |
         black --check --line-length=127 src/
         isort --check-only --profile=black src/
-        
+
     - name: Run tests
       run: |
         python -m pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing
-        
+
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
         fail_ci_if_error: false
-        
+
     - name: Upload coverage HTML
       uses: actions/upload-artifact@v3
       with:
@@ -64,26 +64,26 @@ jobs:
     name: Build Executable
     runs-on: windows-latest
     needs: test
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-windows.txt
         pip install pyinstaller
-        
+
     - name: Build executable
       run: python build.py
-      
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -95,16 +95,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, build]
     if: github.event_name == 'release'
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Download artifacts
       uses: actions/download-artifact@v3
       with:
         name: mauscribe-executable
-        
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:

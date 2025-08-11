@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import shutil
 import subprocess
@@ -10,8 +9,7 @@ import threading
 import time
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
-from urllib.parse import urlparse
+from typing import Any, Dict, Optional
 
 try:
     import requests
@@ -40,6 +38,7 @@ class UpdateInfo:
         self.prerelease = prerelease
         self.download_size = 0
         self.published_at = ""
+        self.download_path: Optional[Path] = None
 
     def __str__(self) -> str:
         return f"Update {self.version} ({'Pre-release' if self.prerelease else 'Stable'})"
@@ -57,9 +56,9 @@ class AutoUpdater:
     """
 
     def __init__(self) -> None:
-        self._enabled = config.AUTO_UPDATE_ENABLED and REQUESTS_AVAILABLE
-        self._check_interval = config.AUTO_UPDATE_CHECK_INTERVAL or UPDATE_CHECK_INTERVAL
-        self._last_check = 0
+        self._enabled = getattr(config, "auto_update_enabled", False) and REQUESTS_AVAILABLE
+        self._check_interval = getattr(config, "auto_update_check_interval", None) or UPDATE_CHECK_INTERVAL
+        self._last_check: float = 0.0
         self._update_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
         self._is_checking = False
@@ -121,7 +120,7 @@ class AutoUpdater:
 
         if not force and time.time() - self._last_check < self._check_interval:
             remaining = self._check_interval - (time.time() - self._last_check)
-            print(f"Update-Check erst in {int(remaining/60)} Minuten verfügbar")
+            print(f"Update-Check erst in {int(remaining / 60)} Minuten verfügbar")
             return None
 
         try:
@@ -176,15 +175,15 @@ class AutoUpdater:
 
             return update_info
 
-        except requests.exceptions.RequestException as e:
-            print(f"Netzwerkfehler beim Update-Check: {e}")
-            return None
         except Exception as e:
-            print(f"Fehler beim Parsen der Release-Information: {e}")
+            print(f"Fehler beim Update-Check: {e}")
             return None
 
     def _is_newer_version(self, new_version: str) -> bool:
         """Vergleicht Versionen."""
+        if not new_version:
+            return False
+
         try:
             current_parts = [int(x) for x in self._current_version.split(".")]
             new_parts = [int(x) for x in new_version.split(".")]
@@ -198,7 +197,9 @@ class AutoUpdater:
 
         except (ValueError, AttributeError):
             # Fallback: String-Vergleich
-            return new_version > self._current_version
+            if new_version and self._current_version:
+                return new_version > self._current_version
+            return False
 
     def download_update(self, update_info: UpdateInfo, progress_callback=None) -> bool:
         """
@@ -257,24 +258,23 @@ class AutoUpdater:
             print("❌ Kein Download-Pfad verfügbar")
             return False
 
+        backup_path = None
         try:
             print(f"Installiere Update {update_info.version}...")
 
             # Backup des aktuellen Programms erstellen
-            current_exe = Path(sys.executable)
-            backup_dir = current_exe.parent / "backup"
-            backup_dir.mkdir(exist_ok=True)
-
-            backup_path = backup_dir / f"mauscribe_backup_{self._current_version}.exe"
-            shutil.copy2(current_exe, backup_path)
-            print(f"Backup erstellt: {backup_path}")
+            backup_path = self._create_backup()
 
             # Update extrahieren und installieren
-            if update_info.download_path.suffix == ".zip":
+            current_exe = Path(sys.executable)
+            if update_info.download_path and update_info.download_path.suffix == ".zip":
                 self._install_from_zip(update_info.download_path, current_exe.parent)
-            else:
+            elif update_info.download_path:
                 # Direkte .exe Installation
                 shutil.copy2(update_info.download_path, current_exe)
+            else:
+                print("❌ Kein Download-Pfad verfügbar")
+                return False
 
             print("✅ Update erfolgreich installiert!")
             print("Das Programm wird neu gestartet...")
@@ -285,8 +285,20 @@ class AutoUpdater:
 
         except Exception as e:
             print(f"❌ Installation fehlgeschlagen: {e}")
-            self._rollback_update(backup_path)
+            if backup_path:
+                self._rollback_update(backup_path)
             return False
+
+    def _create_backup(self) -> Path:
+        """Erstellt ein Backup des aktuellen Programms."""
+        current_exe = Path(sys.executable)
+        backup_dir = current_exe.parent / "backup"
+        backup_dir.mkdir(exist_ok=True)
+
+        backup_path = backup_dir / f"mauscribe_backup_{self._current_version}.exe"
+        shutil.copy2(current_exe, backup_path)
+        print(f"Backup erstellt: {backup_path}")
+        return backup_path
 
     def _install_from_zip(self, zip_path: Path, install_dir: Path) -> None:
         """Installiert ein Update aus einer ZIP-Datei."""
@@ -319,10 +331,10 @@ class AutoUpdater:
             # Neustart über Batch-Datei
             restart_script = Path(tempfile.mktemp(suffix=".bat"))
             with open(restart_script, "w") as f:
-                f.write(f"@echo off\n")
-                f.write(f"timeout /t 2 /nobreak >nul\n")
+                f.write("@echo off\n")
+                f.write("timeout /t 2 /nobreak >nul\n")
                 f.write(f'start "" "{sys.executable}"\n')
-                f.write(f'del "%~f0"\n')
+                f.write('del "%~f0"\n')
 
             # Batch-Datei ausführen
             subprocess.Popen([str(restart_script)], shell=True)
@@ -339,7 +351,7 @@ class AutoUpdater:
             "last_check": self._last_check,
             "next_check": self._last_check + self._check_interval,
             "current_version": self._current_version,
-            "check_interval_hours": self._check_interval / 3600,
+            "check_interval_hours": int(self._check_interval // 3600),
         }
 
     def stop(self) -> None:

@@ -8,7 +8,7 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import pyautogui
 import pyperclip
@@ -52,13 +52,13 @@ class MauscribeApp:
 
         # Draw microphone icon
         # Microphone body (rectangle)
-        draw.rectangle([20, 15, 44, 45], fill=(70, 130, 180), outline=(50, 100, 150), width=2)
+        draw.rectangle((20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
 
         # Microphone head (circle)
-        draw.ellipse([18, 8, 46, 36], fill=(70, 130, 180), outline=(50, 100, 150), width=2)
+        draw.ellipse((18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
 
         # Microphone stand
-        draw.rectangle([30, 45, 34, 55], fill=(70, 130, 180), outline=(50, 100, 150), width=2)
+        draw.rectangle((30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
 
         # Recording indicator (red dot when recording)
         if self.is_recording:
@@ -66,11 +66,11 @@ class MauscribeApp:
 
         return img
 
-    def _setup_system_tray(self):
+    def _setup_system_tray(self) -> None:
         """Initialize the system tray icon and menu."""
         icon_image = self._create_system_tray_icon()
 
-        def on_clicked(icon, item):
+        def on_clicked(icon: Any, item: Any) -> None:
             """Handle system tray menu item clicks."""
             if str(item) == "Status":
                 self._print_status()
@@ -88,7 +88,7 @@ class MauscribeApp:
 
         self.system_tray = pystray.Icon("mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu)
 
-    def _print_status(self):
+    def _print_status(self) -> None:
         """Print current application status."""
         status = "Recording" if self.is_recording else "Idle"
         print(f"Mauscribe Status: {status}")
@@ -96,7 +96,7 @@ class MauscribeApp:
         print(f"Mouse Button: {self.config.mouse_button_primary}")
         print(f"Audio Device: {self.config.audio_device}")
 
-    def _open_config_file(self):
+    def _open_config_file(self) -> None:
         """Open the configuration file in default editor."""
         config_path = Path("config.toml")
         if config_path.exists():
@@ -109,7 +109,7 @@ class MauscribeApp:
         else:
             print("Configuration file not found")
 
-    def _reduce_volume(self):
+    def _reduce_volume(self) -> None:
         """Reduce system volume during recording."""
         try:
             self._original_volume = self.sound_controller.get_volume()
@@ -119,7 +119,7 @@ class MauscribeApp:
         except Exception as e:
             print(f"Failed to reduce volume: {e}")
 
-    def _restore_volume(self):
+    def _restore_volume(self) -> None:
         """Restore system volume after recording."""
         if self._original_volume is not None:
             try:
@@ -137,7 +137,7 @@ class MauscribeApp:
             finally:
                 self._original_volume = None
 
-    def _on_mouse_click(self, x, y, button, pressed):
+    def _on_mouse_click(self, x: int, y: int, button: Any, pressed: bool) -> None:
         """Handle mouse click events for recording control."""
         if not pressed:
             return
@@ -156,7 +156,7 @@ class MauscribeApp:
         elif str(button) == self.config.mouse_button_secondary:
             self._paste_text()
 
-    def _paste_text(self):
+    def _paste_text(self) -> None:
         """Paste transcribed text to current cursor position."""
         try:
             text = pyperclip.paste()
@@ -168,7 +168,7 @@ class MauscribeApp:
         except Exception as e:
             print(f"Failed to paste text: {e}")
 
-    def start_recording(self):
+    def start_recording(self) -> None:
         """Start voice recording and transcription."""
         if self.is_recording:
             print("Already recording")
@@ -189,7 +189,7 @@ class MauscribeApp:
         if self.system_tray:
             self.system_tray.icon = self._create_system_tray_icon()
 
-    def stop_recording(self):
+    def stop_recording(self) -> None:
         """Stop voice recording and process audio."""
         if not self.is_recording:
             print("Not recording")
@@ -209,7 +209,7 @@ class MauscribeApp:
         if self.system_tray:
             self.system_tray.icon = self._create_system_tray_icon()
 
-    def _recording_worker(self):
+    def _recording_worker(self) -> None:
         """Background worker for audio recording and processing."""
         try:
             # Record audio
@@ -234,7 +234,7 @@ class MauscribeApp:
         except Exception as e:
             print(f"Recording error: {e}")
 
-    def run(self):
+    def run(self) -> None:
         """Start the Mauscribe application."""
         print("Starting Mauscribe...")
 
@@ -248,7 +248,7 @@ class MauscribeApp:
         if self.system_tray:
             self.system_tray.run()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the Mauscribe application."""
         print("Stopping Mauscribe...")
 
@@ -266,7 +266,7 @@ class MauscribeApp:
         print("Mauscribe stopped")
 
 
-def main():
+def main() -> None:
     """Main entry point for the Mauscribe application."""
     app = MauscribeApp()
 

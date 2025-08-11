@@ -4,7 +4,7 @@ Input event handling for Mauscribe application.
 Manages mouse and keyboard input for recording control.
 """
 
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from pynput import keyboard, mouse
 
@@ -12,28 +12,28 @@ from pynput import keyboard, mouse
 class InputHandler:
     """Handles input events for Mauscribe application."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the input handler."""
         self.mouse_listener: Optional[mouse.Listener] = None
         self.keyboard_listener: Optional[keyboard.Listener] = None
         self.mouse_callback: Optional[Callable] = None
         self.keyboard_callback: Optional[Callable] = None
 
-    def setup_mouse_listener(self, callback: Callable):
+    def setup_mouse_listener(self, callback: Callable) -> None:
         """Setup mouse event listener with callback function."""
         self.mouse_callback = callback
         self.mouse_listener = mouse.Listener(on_click=self._on_mouse_click)
         self.mouse_listener.start()
         print("Mouse listener started")
 
-    def setup_keyboard_listener(self, callback: Callable):
+    def setup_keyboard_listener(self, callback: Callable) -> None:
         """Setup keyboard event listener with callback function."""
         self.keyboard_callback = callback
         self.keyboard_listener = keyboard.Listener(on_press=self._on_key_press, on_release=self._on_key_release)
         self.keyboard_listener.start()
         print("Keyboard listener started")
 
-    def _on_mouse_click(self, x: int, y: int, button, pressed: bool):
+    def _on_mouse_click(self, x: int, y: int, button: Any, pressed: bool) -> None:
         """Handle mouse click events."""
         if self.mouse_callback:
             try:
@@ -41,7 +41,7 @@ class InputHandler:
             except Exception as e:
                 print(f"Mouse callback error: {e}")
 
-    def _on_key_press(self, key):
+    def _on_key_press(self, key: Any) -> None:
         """Handle keyboard key press events."""
         if self.keyboard_callback:
             try:
@@ -49,7 +49,7 @@ class InputHandler:
             except Exception as e:
                 print(f"Keyboard callback error: {e}")
 
-    def _on_key_release(self, key):
+    def _on_key_release(self, key: Any) -> None:
         """Handle keyboard key release events."""
         if self.keyboard_callback:
             try:
@@ -57,7 +57,7 @@ class InputHandler:
             except Exception as e:
                 print(f"Keyboard callback error: {e}")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop all input listeners."""
         if self.mouse_listener:
             self.mouse_listener.stop()

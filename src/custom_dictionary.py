@@ -32,7 +32,7 @@ class CustomDictionary:
             # Standard-Pfad im Benutzerverzeichnis
             user_dir = Path.home() / ".mauscribe"
             user_dir.mkdir(exist_ok=True)
-            dictionary_path = user_dir / "custom_dictionary.json"
+            dictionary_path = str(user_dir / "custom_dictionary.json")
 
         self.dictionary_path = Path(dictionary_path)
         self._words: Set[str] = set()
@@ -41,7 +41,7 @@ class CustomDictionary:
     def _load_dictionary(self) -> None:
         """Lädt das Wörterbuch aus der JSON-Datei."""
         try:
-            if self.dictionary_path.exists():
+            if self.dictionary_path and self.dictionary_path.exists():
                 with open(self.dictionary_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self._words = set(data.get("words", []))
@@ -56,6 +56,10 @@ class CustomDictionary:
     def _save_dictionary(self) -> None:
         """Speichert das Wörterbuch in die JSON-Datei."""
         try:
+            if not self.dictionary_path:
+                logger.error("Kein Wörterbuch-Pfad gesetzt")
+                return
+
             # Stelle sicher, dass das Verzeichnis existiert
             self.dictionary_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -213,6 +217,15 @@ class CustomDictionary:
         Returns:
             Dictionary mit Wörterbuch-Informationen
         """
+        if not self.dictionary_path:
+            return {
+                "path": "Nicht gesetzt",
+                "word_count": 0,
+                "words": [],
+                "exists": False,
+                "file_size": 0,
+            }
+
         return {
             "path": str(self.dictionary_path),
             "word_count": self.get_word_count(),

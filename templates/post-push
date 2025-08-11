@@ -19,7 +19,7 @@ echo "🌐 Remote: $REMOTE_URL"
 if [ -f "pipeline_monitor.py" ]; then
     echo "🔍 Starting pipeline monitoring..."
     echo ""
-    
+
     # Use the correct Python command for the platform
     if command -v python3 &> /dev/null; then
         PYTHON_CMD="python3"
@@ -30,11 +30,11 @@ if [ -f "pipeline_monitor.py" ]; then
         echo "💡 Pipeline monitoring will be handled by your CI/CD platform"
         PYTHON_CMD=""
     fi
-    
+
     if [ -n "$PYTHON_CMD" ]; then
         # Run the pipeline monitor
         $PYTHON_CMD pipeline_monitor.py
-        
+
         # Check the exit code
         if [ $? -eq 0 ]; then
             echo ""
@@ -50,7 +50,7 @@ if [ -f "pipeline_monitor.py" ]; then
 else
     echo "⚠️  Pipeline monitor not found"
     echo "💡 Pipeline monitoring will be handled by your CI/CD platform"
-    
+
     # Try to detect CI/CD platform and provide helpful info
     if [[ "$REMOTE_URL" == *"github.com"* ]]; then
         echo "🔗 Check GitHub Actions: https://github.com/$(echo $REMOTE_URL | sed 's/.*github.com[:/]\([^/]*\)\/\([^/]*\)\.git.*/\1\/\2/')/actions"

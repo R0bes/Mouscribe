@@ -25,17 +25,18 @@ class SpellGrammarChecker:
 
     def __init__(self) -> None:
         self._spell_checker: Optional[SpellChecker] = None
-        self._language = config.SPELL_CHECK_LANGUAGE
-        self._enabled = config.SPELL_CHECK_ENABLED and SPELL_CHECKER_AVAILABLE
-        self._grammar_check = config.SPELL_CHECK_GRAMMAR
-        self._auto_correct = config.SPELL_CHECK_AUTO_CORRECT
-        self._suggest_only = config.SPELL_CHECK_SUGGEST_ONLY
+        # Verwende getattr mit Standardwerten für mypy-Kompatibilität
+        self._language = getattr(config, "spell_check_language", "de")
+        self._enabled = getattr(config, "spell_check_enabled", True) and SPELL_CHECKER_AVAILABLE
+        self._grammar_check = getattr(config, "spell_check_grammar", True)
+        self._auto_correct = getattr(config, "spell_check_auto_correct", False)
+        self._suggest_only = getattr(config, "spell_check_suggest_only", False)
 
         # Benutzerdefiniertes Wörterbuch
         self._custom_dictionary: Optional[CustomDictionary] = None
-        self._custom_dict_enabled = config.CUSTOM_DICTIONARY_ENABLED
-        self._auto_add_unknown = config.CUSTOM_DICTIONARY_AUTO_ADD_UNKNOWN
-        self._max_words = config.CUSTOM_DICTIONARY_MAX_WORDS
+        self._custom_dict_enabled = getattr(config, "custom_dictionary_enabled", True)
+        self._auto_add_unknown = getattr(config, "custom_dictionary_auto_add_unknown", False)
+        self._max_words = getattr(config, "custom_dictionary_max_words", 1000)
 
         # Einfache deutsche Grammatikregeln
         self._grammar_patterns = self._setup_grammar_patterns()
@@ -189,7 +190,7 @@ class SpellGrammarChecker:
 
             # Ergebnis ausgeben
             if corrections_made and corrected_text != text:
-                print(f"Korrekturen angewendet:")
+                print("Korrekturen angewendet:")
                 for correction in corrections_made:
                     print(f"  - {correction}")
                 print(f"  Vorher: {text}")
@@ -222,16 +223,17 @@ class SpellGrammarChecker:
         print("=" * 50)
 
         for i, word in enumerate(misspelled, 1):
-            candidates = self._spell_checker.candidates(word)
-            print(f"{i}. Fehler: '{word}'")
+            if self._spell_checker:
+                candidates = self._spell_checker.candidates(word)
+                print(f"{i}. Fehler: '{word}'")
 
-            if candidates:
-                suggestions = list(candidates)[:3]  # Top 3
-                suggestions_str = ", ".join([f"'{s}'" for s in suggestions])
-                print(f"   Vorschläge: {suggestions_str}")
-            else:
-                print("   Keine Vorschläge gefunden")
-            print()
+                if candidates:
+                    suggestions = list(candidates)[:3]  # Top 3
+                    suggestions_str = ", ".join([f"'{s}'" for s in suggestions])
+                    print(f"   Vorschläge: {suggestions_str}")
+                else:
+                    print("   Keine Vorschläge gefunden")
+                print()
 
     def get_suggestions(self, text: str) -> List[Dict[str, Any]]:
         """
@@ -253,18 +255,19 @@ class SpellGrammarChecker:
             else:
                 words_to_check = words
 
-            misspelled = self._spell_checker.unknown(words_to_check)
+            if self._spell_checker:
+                misspelled = self._spell_checker.unknown(words_to_check)
 
-            for word in misspelled:
-                candidates = self._spell_checker.candidates(word)
-                if candidates:
-                    error_info = {
-                        "error_text": word,
-                        "replacements": list(candidates)[:5],  # Top 5 Vorschläge
-                        "message": f"Möglicher Rechtschreibfehler: '{word}'",
-                        "category": "spelling",
-                    }
-                    suggestions.append(error_info)
+                for word in misspelled:
+                    candidates = self._spell_checker.candidates(word)
+                    if candidates:
+                        error_info = {
+                            "error_text": word,
+                            "replacements": list(candidates)[:5],  # Top 5 Vorschläge
+                            "message": f"Möglicher Rechtschreibfehler: '{word}'",
+                            "category": "spelling",
+                        }
+                        suggestions.append(error_info)
 
             return suggestions
 
@@ -294,7 +297,9 @@ class SpellGrammarChecker:
             print("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
             return False
 
-        return self._custom_dictionary.add_word(word)
+        if self._custom_dictionary:
+            return self._custom_dictionary.add_word(word)
+        return False
 
     def remove_custom_word(self, word: str) -> bool:
         """
@@ -310,7 +315,9 @@ class SpellGrammarChecker:
             print("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
             return False
 
-        return self._custom_dictionary.remove_word(word)
+        if self._custom_dictionary:
+            return self._custom_dictionary.remove_word(word)
+        return False
 
     def get_custom_words(self) -> List[str]:
         """
@@ -322,7 +329,9 @@ class SpellGrammarChecker:
         if not self.is_custom_dictionary_enabled():
             return []
 
-        return self._custom_dictionary.get_all_words()
+        if self._custom_dictionary:
+            return self._custom_dictionary.get_all_words()
+        return []
 
     def get_custom_word_count(self) -> int:
         """
@@ -334,7 +343,9 @@ class SpellGrammarChecker:
         if not self.is_custom_dictionary_enabled():
             return 0
 
-        return self._custom_dictionary.get_word_count()
+        if self._custom_dictionary:
+            return self._custom_dictionary.get_word_count()
+        return 0
 
     def clear_custom_dictionary(self) -> bool:
         """
@@ -347,7 +358,9 @@ class SpellGrammarChecker:
             print("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
             return False
 
-        return self._custom_dictionary.clear_dictionary()
+        if self._custom_dictionary:
+            return self._custom_dictionary.clear_dictionary()
+        return False
 
     def close(self) -> None:
         """Schließt den Spell Checker."""
