@@ -31,7 +31,13 @@ USER_AGENT = "Mauscribe-Updater/1.0"
 class UpdateInfo:
     """Container für Update-Informationen."""
 
-    def __init__(self, version: str, download_url: str, release_notes: str, prerelease: bool = False):
+    def __init__(
+        self,
+        version: str,
+        download_url: str,
+        release_notes: str,
+        prerelease: bool = False,
+    ):
         self.version = version
         self.download_url = download_url
         self.release_notes = release_notes
@@ -41,7 +47,9 @@ class UpdateInfo:
         self.download_path: Optional[Path] = None
 
     def __str__(self) -> str:
-        return f"Update {self.version} ({'Pre-release' if self.prerelease else 'Stable'})"
+        return (
+            f"Update {self.version} ({'Pre-release' if self.prerelease else 'Stable'})"
+        )
 
 
 class AutoUpdater:
@@ -56,8 +64,12 @@ class AutoUpdater:
     """
 
     def __init__(self) -> None:
-        self._enabled = getattr(config, "auto_update_enabled", False) and REQUESTS_AVAILABLE
-        self._check_interval = getattr(config, "auto_update_check_interval", None) or UPDATE_CHECK_INTERVAL
+        self._enabled = (
+            getattr(config, "auto_update_enabled", False) and REQUESTS_AVAILABLE
+        )
+        self._check_interval = (
+            getattr(config, "auto_update_check_interval", None) or UPDATE_CHECK_INTERVAL
+        )
         self._last_check: float = 0.0
         self._update_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
@@ -72,7 +84,9 @@ class AutoUpdater:
         if self._update_thread and self._update_thread.is_alive():
             return
 
-        self._update_thread = threading.Thread(target=self._update_check_loop, daemon=True, name="Mauscribe-Updater")
+        self._update_thread = threading.Thread(
+            target=self._update_check_loop, daemon=True, name="Mauscribe-Updater"
+        )
         self._update_thread.start()
         print("Auto-Updater Thread gestartet")
 
@@ -148,7 +162,10 @@ class AutoUpdater:
         """Holt die neueste Release-Information von GitHub."""
         try:
             url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
-            headers = {"User-Agent": USER_AGENT, "Accept": "application/vnd.github.v3+json"}
+            headers = {
+                "User-Agent": USER_AGENT,
+                "Accept": "application/vnd.github.v3+json",
+            }
 
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()

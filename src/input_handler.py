@@ -29,7 +29,9 @@ class InputHandler:
     def setup_keyboard_listener(self, callback: Callable) -> None:
         """Setup keyboard event listener with callback function."""
         self.keyboard_callback = callback
-        self.keyboard_listener = keyboard.Listener(on_press=self._on_key_press, on_release=self._on_key_release)
+        self.keyboard_listener = keyboard.Listener(
+            on_press=self._on_key_press, on_release=self._on_key_release
+        )
         self.keyboard_listener.start()
         print("Keyboard listener started")
 
@@ -71,6 +73,10 @@ class InputHandler:
 
     def is_active(self) -> bool:
         """Check if any input listeners are active."""
-        mouse_active = self.mouse_listener is not None and self.mouse_listener.is_alive()
-        keyboard_active = self.keyboard_listener is not None and self.keyboard_listener.is_alive()
+        mouse_active = (
+            self.mouse_listener is not None and self.mouse_listener.is_alive()
+        )
+        keyboard_active = (
+            self.keyboard_listener is not None and self.keyboard_listener.is_alive()
+        )
         return mouse_active or keyboard_active

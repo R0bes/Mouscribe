@@ -1,4 +1,5 @@
 """Tests for the STT module."""
+
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -83,7 +84,10 @@ class TestSpeechToText:
             mock_result2 = MagicMock()
             mock_result2.text = "Second part"
 
-            stt._model.transcribe.return_value = ([mock_result1, mock_result2], {"language": "en"})
+            stt._model.transcribe.return_value = (
+                [mock_result1, mock_result2],
+                {"language": "en"},
+            )
 
             result = stt.transcribe(mock_audio)
             # Should concatenate all results with spaces
@@ -173,8 +177,12 @@ class TestSpeechToText:
             stt._model.transcribe.assert_called_once()
             call_args = stt._model.transcribe.call_args
             # call_args.args contains positional arguments, call_args.kwargs contains keyword arguments
-            assert "audio" in call_args.kwargs  # Check that audio parameter is passed as keyword argument
-            assert "language" in call_args.kwargs  # Check that language parameter is passed as keyword argument
+            assert (
+                "audio" in call_args.kwargs
+            )  # Check that audio parameter is passed as keyword argument
+            assert (
+                "language" in call_args.kwargs
+            )  # Check that language parameter is passed as keyword argument
 
 
 if __name__ == "__main__":

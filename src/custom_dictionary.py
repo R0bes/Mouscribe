@@ -45,9 +45,13 @@ class CustomDictionary:
                 with open(self.dictionary_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self._words = set(data.get("words", []))
-                logger.info(f"Benutzerdefiniertes Wörterbuch geladen: {len(self._words)} Wörter")
+                logger.info(
+                    f"Benutzerdefiniertes Wörterbuch geladen: {len(self._words)} Wörter"
+                )
             else:
-                logger.info("Kein benutzerdefiniertes Wörterbuch gefunden, erstelle neues")
+                logger.info(
+                    "Kein benutzerdefiniertes Wörterbuch gefunden, erstelle neues"
+                )
                 self._words = set()
         except Exception as e:
             logger.error(f"Fehler beim Laden des Wörterbuchs: {e}")
@@ -65,7 +69,11 @@ class CustomDictionary:
 
             data = {
                 "words": sorted(list(self._words)),
-                "metadata": {"version": "1.0", "created": str(Path().cwd()), "total_words": len(self._words)},
+                "metadata": {
+                    "version": "1.0",
+                    "created": str(Path().cwd()),
+                    "total_words": len(self._words),
+                },
             }
 
             with open(self.dictionary_path, "w", encoding="utf-8") as f:
@@ -231,7 +239,11 @@ class CustomDictionary:
             "word_count": self.get_word_count(),
             "words": self.get_all_words(),
             "exists": self.dictionary_path.exists(),
-            "file_size": self.dictionary_path.stat().st_size if self.dictionary_path.exists() else 0,
+            "file_size": (
+                self.dictionary_path.stat().st_size
+                if self.dictionary_path.exists()
+                else 0
+            ),
         }
 
 

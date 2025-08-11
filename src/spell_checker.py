@@ -27,7 +27,9 @@ class SpellGrammarChecker:
         self._spell_checker: Optional[SpellChecker] = None
         # Verwende getattr mit Standardwerten für mypy-Kompatibilität
         self._language = getattr(config, "spell_check_language", "de")
-        self._enabled = getattr(config, "spell_check_enabled", True) and SPELL_CHECKER_AVAILABLE
+        self._enabled = (
+            getattr(config, "spell_check_enabled", True) and SPELL_CHECKER_AVAILABLE
+        )
         self._grammar_check = getattr(config, "spell_check_grammar", True)
         self._auto_correct = getattr(config, "spell_check_auto_correct", False)
         self._suggest_only = getattr(config, "spell_check_suggest_only", False)
@@ -35,7 +37,9 @@ class SpellGrammarChecker:
         # Benutzerdefiniertes Wörterbuch
         self._custom_dictionary: Optional[CustomDictionary] = None
         self._custom_dict_enabled = getattr(config, "custom_dictionary_enabled", True)
-        self._auto_add_unknown = getattr(config, "custom_dictionary_auto_add_unknown", False)
+        self._auto_add_unknown = getattr(
+            config, "custom_dictionary_auto_add_unknown", False
+        )
         self._max_words = getattr(config, "custom_dictionary_max_words", 1000)
 
         # Einfache deutsche Grammatikregeln
@@ -116,9 +120,13 @@ class SpellGrammarChecker:
         try:
             print("Initialisiere benutzerdefiniertes Wörterbuch...")
             self._custom_dictionary = get_custom_dictionary()
-            print(f"Benutzerdefiniertes Wörterbuch geladen: {self._custom_dictionary.get_word_count()} Wörter")
+            print(
+                f"Benutzerdefiniertes Wörterbuch geladen: {self._custom_dictionary.get_word_count()} Wörter"
+            )
         except Exception as e:
-            print(f"Fehler beim Initialisieren des benutzerdefinierten Wörterbuchs: {e}")
+            print(
+                f"Fehler beim Initialisieren des benutzerdefinierten Wörterbuchs: {e}"
+            )
             self._custom_dictionary = None
             self._custom_dict_enabled = False
 
@@ -145,9 +153,19 @@ class SpellGrammarChecker:
                     if re.search(rule["pattern"], corrected_text, re.IGNORECASE):
                         old_text = corrected_text
                         if "correction" in rule:
-                            corrected_text = re.sub(rule["pattern"], rule["correction"], corrected_text, flags=re.IGNORECASE)
+                            corrected_text = re.sub(
+                                rule["pattern"],
+                                rule["correction"],
+                                corrected_text,
+                                flags=re.IGNORECASE,
+                            )
                         else:
-                            corrected_text = re.sub(rule["pattern"], rule["replacement"], corrected_text, flags=re.IGNORECASE)
+                            corrected_text = re.sub(
+                                rule["pattern"],
+                                rule["replacement"],
+                                corrected_text,
+                                flags=re.IGNORECASE,
+                            )
 
                         if old_text != corrected_text:
                             corrections_made.append(f"Grammatik: {rule['description']}")
@@ -157,7 +175,9 @@ class SpellGrammarChecker:
 
             # Filtere Wörter, die im benutzerdefinierten Wörterbuch sind
             if self._custom_dictionary:
-                words_to_check = [word for word in words if not self._custom_dictionary.has_word(word)]
+                words_to_check = [
+                    word for word in words if not self._custom_dictionary.has_word(word)
+                ]
             else:
                 words_to_check = words
 
@@ -171,22 +191,36 @@ class SpellGrammarChecker:
                     for word in misspelled:
                         candidates = self._spell_checker.candidates(word)
                         if candidates:
-                            best_candidate = min(candidates, key=lambda x: abs(len(x) - len(word)))
+                            best_candidate = min(
+                                candidates, key=lambda x: abs(len(x) - len(word))
+                            )
                             # Nur ersetzen wenn ähnlich genug
                             if self._is_similar_word(word, best_candidate):
                                 corrected_text = re.sub(
-                                    r"\b" + re.escape(word) + r"\b", best_candidate, corrected_text, flags=re.IGNORECASE
+                                    r"\b" + re.escape(word) + r"\b",
+                                    best_candidate,
+                                    corrected_text,
+                                    flags=re.IGNORECASE,
                                 )
-                                corrections_made.append(f"Rechtschreibung: {word} -> {best_candidate}")
+                                corrections_made.append(
+                                    f"Rechtschreibung: {word} -> {best_candidate}"
+                                )
 
                 # Automatisch unbekannte Wörter zum Wörterbuch hinzufügen (falls aktiviert)
                 if self._auto_add_unknown and self._custom_dictionary:
                     for word in misspelled:
-                        if self._custom_dictionary.get_word_count() < self._max_words or self._max_words == 0:
+                        if (
+                            self._custom_dictionary.get_word_count() < self._max_words
+                            or self._max_words == 0
+                        ):
                             if self._custom_dictionary.add_word(word):
-                                print(f"Wort '{word}' automatisch zum Wörterbuch hinzugefügt")
+                                print(
+                                    f"Wort '{word}' automatisch zum Wörterbuch hinzugefügt"
+                                )
                         else:
-                            print(f"Wörterbuch ist voll ({self._max_words} Wörter), kann '{word}' nicht hinzufügen")
+                            print(
+                                f"Wörterbuch ist voll ({self._max_words} Wörter), kann '{word}' nicht hinzufügen"
+                            )
 
             # Ergebnis ausgeben
             if corrections_made and corrected_text != text:
@@ -251,7 +285,9 @@ class SpellGrammarChecker:
 
             # Filtere Wörter, die im benutzerdefinierten Wörterbuch sind
             if self._custom_dictionary:
-                words_to_check = [word for word in words if not self._custom_dictionary.has_word(word)]
+                words_to_check = [
+                    word for word in words if not self._custom_dictionary.has_word(word)
+                ]
             else:
                 words_to_check = words
 

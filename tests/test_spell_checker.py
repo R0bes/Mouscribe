@@ -12,7 +12,6 @@ Testet alle Funktionen des Rechtschreibprüfers inklusive:
 """
 
 import os
-
 # Import des zu testenden Moduls
 import sys
 from unittest.mock import Mock, patch
@@ -21,15 +20,10 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.spell_checker import (
-    SpellGrammarChecker,
-    add_custom_word,
-    check_and_correct_text,
-    get_custom_word_count,
-    get_custom_words,
-    get_spell_checker,
-    remove_custom_word,
-)
+from src.spell_checker import (SpellGrammarChecker, add_custom_word,
+                               check_and_correct_text, get_custom_word_count,
+                               get_custom_words, get_spell_checker,
+                               remove_custom_word)
 
 
 class TestSpellGrammarChecker:
@@ -138,7 +132,9 @@ class TestSpellGrammarChecker:
             if "villen" in str(pattern.get("pattern", "")):
                 pattern_found = True
                 break
-        assert pattern_found, "Deutsche Grammatikregel für 'villen' sollte vorhanden sein"
+        assert (
+            pattern_found
+        ), "Deutsche Grammatikregel für 'villen' sollte vorhanden sein"
 
     @patch("src.spell_checker.SPELL_CHECKER_AVAILABLE", True)
     @patch("src.spell_checker.SpellChecker")
@@ -628,7 +624,9 @@ class TestSpellCheckerIntegration:
 
         # Simuliere komplexe Korrekturszenarien
         mock_spell_checker.unknown.return_value = {"villen", "warscheinlich"}
-        mock_spell_checker.candidates.side_effect = lambda x: {"vielen"} if x == "villen" else {"wahrscheinlich"}
+        mock_spell_checker.candidates.side_effect = lambda x: (
+            {"vielen"} if x == "villen" else {"wahrscheinlich"}
+        )
 
         checker = SpellGrammarChecker()
         result = checker.check_text("Das villen warscheinlich ein test.")
@@ -645,7 +643,10 @@ class TestSpellCheckerIntegration:
         mock_spell_checker_class.return_value = mock_spell_checker
 
         # Simuliere Wörter im benutzerdefinierten Wörterbuch
-        self.mock_dict_instance.has_word.side_effect = lambda x: x in ["fachbegriff", "technologie"]
+        self.mock_dict_instance.has_word.side_effect = lambda x: x in [
+            "fachbegriff",
+            "technologie",
+        ]
         mock_spell_checker.unknown.return_value = set()  # Keine Fehler
 
         checker = SpellGrammarChecker()

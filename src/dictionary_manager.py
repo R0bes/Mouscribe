@@ -75,7 +75,9 @@ def import_words(dictionary: CustomDictionary, words: List[str]) -> None:
     print(f"✅ {imported} von {len(words)} Wörtern erfolgreich importiert")
 
 
-def export_words(dictionary: CustomDictionary, output_file: Optional[str] = None) -> None:
+def export_words(
+    dictionary: CustomDictionary, output_file: Optional[str] = None
+) -> None:
     """Exportiert alle Wörter aus dem Wörterbuch."""
     words = dictionary.export_words()
 
@@ -119,14 +121,33 @@ Beispiele:
     )
 
     parser.add_argument(
-        "command", choices=["list", "add", "remove", "search", "import", "export", "clear", "info"], help="Befehl ausführen"
+        "command",
+        choices=[
+            "list",
+            "add",
+            "remove",
+            "search",
+            "import",
+            "export",
+            "clear",
+            "info",
+        ],
+        help="Befehl ausführen",
     )
 
     parser.add_argument("args", nargs="*", help="Argumente für den Befehl")
 
-    parser.add_argument("--limit", "-l", type=int, default=0, help="Maximale Anzahl von Wörtern beim Auflisten (0 = alle)")
+    parser.add_argument(
+        "--limit",
+        "-l",
+        type=int,
+        default=0,
+        help="Maximale Anzahl von Wörtern beim Auflisten (0 = alle)",
+    )
 
-    parser.add_argument("--output", "-o", type=str, help="Ausgabedatei für Export-Befehl")
+    parser.add_argument(
+        "--output", "-o", type=str, help="Ausgabedatei für Export-Befehl"
+    )
 
     args = parser.parse_args()
 

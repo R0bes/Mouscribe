@@ -13,11 +13,15 @@ from unittest.mock import MagicMock, patch
 
 # Importiere nur das benötigte Modul
 try:
-    from custom_dictionary import CustomDictionary, add_custom_word, get_custom_dictionary, is_custom_word, remove_custom_word
+    from custom_dictionary import (CustomDictionary, add_custom_word,
+                                   get_custom_dictionary, is_custom_word,
+                                   remove_custom_word)
 except ImportError:
     # Füge src zum Python-Pfad hinzu, falls Import fehlschlägt
     sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-    from custom_dictionary import CustomDictionary, add_custom_word, get_custom_dictionary, is_custom_word, remove_custom_word
+    from custom_dictionary import (CustomDictionary, add_custom_word,
+                                   get_custom_dictionary, is_custom_word,
+                                   remove_custom_word)
 
 
 class TestCustomDictionary(unittest.TestCase):
@@ -444,7 +448,9 @@ class TestCustomDictionaryErrorHandling(unittest.TestCase):
         # Versuche das Wort zu entfernen - das Wort wird aus dem Speicher entfernt, aber das Speichern schlägt fehl
         result = dictionary.remove_word("testwort")
         self.assertTrue(result)  # Das Wort wird erfolgreich entfernt
-        self.assertNotIn("testwort", dictionary._words)  # Das Wort ist nicht mehr im Speicher
+        self.assertNotIn(
+            "testwort", dictionary._words
+        )  # Das Wort ist nicht mehr im Speicher
 
     def test_clear_dictionary_save_error_handling(self):
         """Test clear_dictionary when save operation fails."""
@@ -470,7 +476,9 @@ class TestCustomDictionaryErrorHandling(unittest.TestCase):
         # Versuche Wörter zu importieren - die Wörter werden im Speicher hinzugefügt, aber das Speichern schlägt fehl
         words = ["wort1", "wort2", "wort3"]
         imported_count = dictionary.import_words(words)
-        self.assertEqual(imported_count, 3)  # Alle Wörter werden erfolgreich hinzugefügt
+        self.assertEqual(
+            imported_count, 3
+        )  # Alle Wörter werden erfolgreich hinzugefügt
         self.assertEqual(len(dictionary._words), 3)  # Alle Wörter sind im Speicher
 
     def test_load_dictionary_with_corrupted_file(self):
@@ -537,7 +545,9 @@ class TestCustomDictionaryErrorHandling(unittest.TestCase):
         dictionary = CustomDictionary(str(invalid_path))
 
         # Füge ein Wort hinzu, das eine Exception auslöst
-        with patch.object(dictionary, "_save_dictionary", side_effect=Exception("Test exception")):
+        with patch.object(
+            dictionary, "_save_dictionary", side_effect=Exception("Test exception")
+        ):
             result = dictionary.add_word("testwort")
             self.assertFalse(result)  # Sollte False zurückgeben bei Exception
 
@@ -551,7 +561,9 @@ class TestCustomDictionaryErrorHandling(unittest.TestCase):
         dictionary._words.add("testwort")
 
         # Versuche das Wort zu entfernen, was eine Exception auslöst
-        with patch.object(dictionary, "_save_dictionary", side_effect=Exception("Test exception")):
+        with patch.object(
+            dictionary, "_save_dictionary", side_effect=Exception("Test exception")
+        ):
             result = dictionary.remove_word("testwort")
             self.assertFalse(result)  # Sollte False zurückgeben bei Exception
 
@@ -566,7 +578,9 @@ class TestCustomDictionaryErrorHandling(unittest.TestCase):
         dictionary._words.add("wort2")
 
         # Versuche das Wörterbuch zu leeren, was eine Exception auslöst
-        with patch.object(dictionary, "_save_dictionary", side_effect=Exception("Test exception")):
+        with patch.object(
+            dictionary, "_save_dictionary", side_effect=Exception("Test exception")
+        ):
             result = dictionary.clear_dictionary()
             self.assertFalse(result)  # Sollte False zurückgeben bei Exception
 

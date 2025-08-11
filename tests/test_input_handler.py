@@ -1,4 +1,5 @@
 """Tests for the Input Handler module."""
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -49,7 +50,9 @@ class TestInputHandler:
 
         assert handler.keyboard_callback == mock_callback
         assert handler.keyboard_listener == mock_listener_instance
-        mock_keyboard_listener.assert_called_once_with(on_press=handler._on_key_press, on_release=handler._on_key_release)
+        mock_keyboard_listener.assert_called_once_with(
+            on_press=handler._on_key_press, on_release=handler._on_key_release
+        )
         mock_listener_instance.start.assert_called_once()
 
     def test_on_mouse_click_with_callback(self):

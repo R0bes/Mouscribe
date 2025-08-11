@@ -10,7 +10,9 @@ from .config import Config
 
 
 class AudioRecorder:
-    def __init__(self, sample_rate_hz: int | None = None, num_channels: int | None = None) -> None:
+    def __init__(
+        self, sample_rate_hz: int | None = None, num_channels: int | None = None
+    ) -> None:
         config_instance = Config()
         self.sample_rate_hz: int = sample_rate_hz or config_instance.audio_sample_rate
         self.num_channels: int = num_channels or config_instance.audio_channels

@@ -1,4 +1,5 @@
 """Tests for the recorder module."""
+
 from unittest.mock import MagicMock, patch
 
 import numpy as np

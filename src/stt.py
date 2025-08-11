@@ -19,7 +19,9 @@ class SpeechToText:
             compute_type=config_instance.stt_compute_type,
         )
 
-    def transcribe(self, audio_f32_mono: np.ndarray, language: Optional[str] = None) -> str:
+    def transcribe(
+        self, audio_f32_mono: np.ndarray, language: Optional[str] = None
+    ) -> str:
         if audio_f32_mono.size == 0:
             return ""
         # faster-whisper expects 16kHz float32 mono. We record at 16kHz already.

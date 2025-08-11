@@ -1,4 +1,5 @@
 """Tests for the config module."""
+
 import os
 import sys
 import tempfile
@@ -151,7 +152,10 @@ class TestConfig:
     def test_custom_combinations_property(self):
         """Test custom_combinations property."""
         config = Config()
-        expected_combinations = [["ctrl", "shift", "v"], ["alt", "v"]]  # Actual value from config.toml
+        expected_combinations = [
+            ["ctrl", "shift", "v"],
+            ["alt", "v"],
+        ]  # Actual value from config.toml
         assert config.custom_combinations == expected_combinations
 
     def test_audio_device_property(self):
@@ -182,7 +186,9 @@ class TestConfig:
     def test_behavior_paste_double_click_window_property(self):
         """Test behavior_paste_double_click_window property."""
         config = Config()
-        assert config.behavior_paste_double_click_window == 10.0  # Actual value from config.toml
+        assert (
+            config.behavior_paste_double_click_window == 10.0
+        )  # Actual value from config.toml
 
     def test_cursor_enable_property(self):
         """Test cursor_enable property."""
@@ -197,7 +203,9 @@ class TestConfig:
     def test_system_volume_reduction_factor_property(self):
         """Test system_volume_reduction_factor property."""
         config = Config()
-        assert config.system_volume_reduction_factor == 0.15  # Actual value from config.toml
+        assert (
+            config.system_volume_reduction_factor == 0.15
+        )  # Actual value from config.toml
 
     def test_system_min_volume_percent_property(self):
         """Test system_min_volume_percent property."""

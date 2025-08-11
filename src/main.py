@@ -52,17 +52,25 @@ class MauscribeApp:
 
         # Draw microphone icon
         # Microphone body (rectangle)
-        draw.rectangle((20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
+        draw.rectangle(
+            (20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2
+        )
 
         # Microphone head (circle)
-        draw.ellipse((18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
+        draw.ellipse(
+            (18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2
+        )
 
         # Microphone stand
-        draw.rectangle((30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
+        draw.rectangle(
+            (30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2
+        )
 
         # Recording indicator (red dot when recording)
         if self.is_recording:
-            draw.ellipse([50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1)
+            draw.ellipse(
+                [50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1
+            )
 
         return img
 
@@ -86,7 +94,9 @@ class MauscribeApp:
             pystray.MenuItem("Exit", on_clicked),
         )
 
-        self.system_tray = pystray.Icon("mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu)
+        self.system_tray = pystray.Icon(
+            "mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu
+        )
 
     def _print_status(self) -> None:
         """Print current application status."""
@@ -113,7 +123,9 @@ class MauscribeApp:
         """Reduce system volume during recording."""
         try:
             self._original_volume = self.sound_controller.get_volume()
-            target_volume = max(10, int(self._original_volume * self.config.volume_reduction_factor))
+            target_volume = max(
+                10, int(self._original_volume * self.config.volume_reduction_factor)
+            )
             self.sound_controller.set_volume(target_volume)
             print(f"Volume reduced from {self._original_volume}% to {target_volume}%")
         except Exception as e:

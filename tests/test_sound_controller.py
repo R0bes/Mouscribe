@@ -1,4 +1,5 @@
 """Tests for the Sound Controller module."""
+
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -63,7 +64,9 @@ class TestSoundController:
 
         # Mock the volume interface that raises exception
         mock_interface = MagicMock()
-        mock_interface.GetMasterVolumeLevelScalar.side_effect = Exception("Volume access denied")
+        mock_interface.GetMasterVolumeLevelScalar.side_effect = Exception(
+            "Volume access denied"
+        )
         controller._volume_interface = mock_interface
 
         volume = controller.get_volume()
@@ -96,7 +99,9 @@ class TestSoundController:
 
         # Mock the volume interface that raises exception
         mock_interface = MagicMock()
-        mock_interface.SetMasterVolumeLevelScalar.side_effect = Exception("Volume control denied")
+        mock_interface.SetMasterVolumeLevelScalar.side_effect = Exception(
+            "Volume control denied"
+        )
         controller._volume_interface = mock_interface
 
         # Should not raise exception

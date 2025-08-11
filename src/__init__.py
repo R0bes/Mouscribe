@@ -14,7 +14,9 @@ logging.getLogger().setLevel(logging.WARNING)
 
 __version__ = "1.0.0"
 __author__ = "Robs"
-__description__ = "Voice-to-Text Tool mit Push-to-Talk und automatischem Clipboard-Management"
+__description__ = (
+    "Voice-to-Text Tool mit Push-to-Talk und automatischem Clipboard-Management"
+)
 
 from .config import Config
 from .main import MauscribeApp, main

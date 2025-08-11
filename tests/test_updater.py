@@ -13,18 +13,10 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # Importiere das zu testende Modul
-from src.updater import (
-    CURRENT_VERSION,
-    GITHUB_REPO,
-    REQUESTS_AVAILABLE,
-    UPDATE_CHECK_INTERVAL,
-    USER_AGENT,
-    AutoUpdater,
-    UpdateInfo,
-    check_for_updates,
-    get_updater,
-    stop_updater,
-)
+from src.updater import (CURRENT_VERSION, GITHUB_REPO, REQUESTS_AVAILABLE,
+                         UPDATE_CHECK_INTERVAL, USER_AGENT, AutoUpdater,
+                         UpdateInfo, check_for_updates, get_updater,
+                         stop_updater)
 
 
 class TestUpdateInfoSimple(unittest.TestCase):
@@ -234,7 +226,12 @@ class TestAutoUpdaterSimple(unittest.TestCase):
             "tag_name": "v2.0.0",
             "body": "Release notes",
             "prerelease": False,
-            "assets": [{"name": "mauscribe_2.0.0.zip", "browser_download_url": "https://example.com/update.zip"}],
+            "assets": [
+                {
+                    "name": "mauscribe_2.0.0.zip",
+                    "browser_download_url": "https://example.com/update.zip",
+                }
+            ],
         }
         mock_response.raise_for_status.return_value = None
 
@@ -251,7 +248,12 @@ class TestAutoUpdaterSimple(unittest.TestCase):
     def test_fetch_latest_release_no_assets(self):
         """Test fetch when no suitable assets are found."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {"tag_name": "v2.0.0", "body": "Release notes", "prerelease": False, "assets": []}
+        mock_response.json.return_value = {
+            "tag_name": "v2.0.0",
+            "body": "Release notes",
+            "prerelease": False,
+            "assets": [],
+        }
         mock_response.raise_for_status.return_value = None
 
         self.mock_requests.get.return_value = mock_response

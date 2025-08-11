@@ -12,19 +12,11 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from src.custom_dictionary import CustomDictionary
-
 # Import der Dictionary Manager Funktionen
-from src.dictionary_manager import (
-    add_word,
-    clear_dictionary,
-    export_words,
-    import_words,
-    list_words,
-    main,
-    print_dictionary_info,
-    remove_word,
-    search_word,
-)
+from src.dictionary_manager import (add_word, clear_dictionary, export_words,
+                                    import_words, list_words, main,
+                                    print_dictionary_info, remove_word,
+                                    search_word)
 
 
 class TestDictionaryManagerFunctions:
@@ -34,7 +26,13 @@ class TestDictionaryManagerFunctions:
     def temp_dict_file(self):
         """Erstellt eine temporäre Dictionary-Datei für Tests."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump({"words": ["test", "example", "dictionary"], "metadata": {"version": "1.0", "created": "2024-01-01"}}, f)
+            json.dump(
+                {
+                    "words": ["test", "example", "dictionary"],
+                    "metadata": {"version": "1.0", "created": "2024-01-01"},
+                },
+                f,
+            )
             temp_path = f.name
 
         yield temp_path
@@ -117,7 +115,9 @@ class TestDictionaryManagerFunctions:
         captured = capsys.readouterr()
 
         # Assert
-        assert "✅ Wort 'neueswort' erfolgreich zum Wörterbuch hinzugefügt" in captured.out
+        assert (
+            "✅ Wort 'neueswort' erfolgreich zum Wörterbuch hinzugefügt" in captured.out
+        )
         mock_dictionary.add_word.assert_called_once_with("neueswort")
 
     def test_add_word_failure(self, mock_dictionary, capsys):
@@ -143,7 +143,10 @@ class TestDictionaryManagerFunctions:
         captured = capsys.readouterr()
 
         # Assert
-        assert "✅ Wort 'zuentfernendeswort' erfolgreich aus dem Wörterbuch entfernt" in captured.out
+        assert (
+            "✅ Wort 'zuentfernendeswort' erfolgreich aus dem Wörterbuch entfernt"
+            in captured.out
+        )
         mock_dictionary.remove_word.assert_called_once_with("zuentfernendeswort")
 
     def test_remove_word_failure(self, mock_dictionary, capsys):
@@ -182,7 +185,9 @@ class TestDictionaryManagerFunctions:
         captured = capsys.readouterr()
 
         # Assert
-        assert "❌ Wort 'nichtvorhanden' ist nicht im Wörterbuch vorhanden" in captured.out
+        assert (
+            "❌ Wort 'nichtvorhanden' ist nicht im Wörterbuch vorhanden" in captured.out
+        )
         mock_dictionary.has_word.assert_called_once_with("nichtvorhanden")
 
     def test_import_words_success(self, mock_dictionary, capsys):
@@ -391,7 +396,9 @@ class TestDictionaryManagerMain:
         mock_get_dict.return_value = mock_dict
 
         # Act
-        with patch("sys.argv", ["dictionary_manager.py", "import", "wort1,wort2,wort3"]):
+        with patch(
+            "sys.argv", ["dictionary_manager.py", "import", "wort1,wort2,wort3"]
+        ):
             main()
 
         # Assert
