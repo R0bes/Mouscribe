@@ -19,7 +19,7 @@ from .config import Config
 from .input_handler import InputHandler
 from .recorder import AudioRecorder
 from .sound_controller import SoundController
-from .spell_checker import SpellChecker
+from .spell_checker import SpellGrammarChecker
 from .stt import SpeechToText
 
 
@@ -33,7 +33,7 @@ class MauscribeApp:
         self.input_handler = InputHandler()
         self.stt = SpeechToText()
         self.recorder = AudioRecorder()
-        self.spell_checker = SpellChecker()
+        self.spell_checker = SpellGrammarChecker()
 
         self.is_recording = False
         self.recording_thread: Optional[threading.Thread] = None

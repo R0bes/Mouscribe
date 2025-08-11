@@ -6,14 +6,14 @@ from typing import List, Optional
 import numpy as np
 import sounddevice as sd
 
-from . import config
+from .config import Config
 
 
 class AudioRecorder:
-
     def __init__(self, sample_rate_hz: int | None = None, num_channels: int | None = None) -> None:
-        self.sample_rate_hz: int = sample_rate_hz or config.SAMPLE_RATE
-        self.num_channels: int = num_channels or config.CHANNELS
+        config_instance = Config()
+        self.sample_rate_hz: int = sample_rate_hz or config_instance.audio_sample_rate
+        self.num_channels: int = num_channels or config_instance.audio_channels
         self._stream: Optional[sd.InputStream] = None
         self._buffer_lock = threading.Lock()
         self._chunks: List[np.ndarray] = []
