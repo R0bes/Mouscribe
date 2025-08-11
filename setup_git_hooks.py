@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Setup script for Mauscribe Git Hooks
-Automatically installs post-commit and post-push hooks for pipeline monitoring
+Automatically installs pre-push and post-push hooks for pipeline monitoring
 """
 
 import os
@@ -32,11 +32,15 @@ def setup_git_hooks():
         print("💡 Please ensure the templates directory exists")
         return False
     
+    # Define which hooks to install (exclude README and other non-hook files)
+    hook_files = ["pre-push", "post-push"]
+    
     # Install hooks
     hooks_installed = 0
-    for hook_file in templates_dir.glob("*"):
-        if hook_file.is_file() and not hook_file.name.startswith("."):
-            hook_name = hook_file.name
+    for hook_name in hook_files:
+        hook_file = templates_dir / hook_name
+        
+        if hook_file.exists():
             target_hook = hooks_dir / hook_name
             
             try:
@@ -52,12 +56,14 @@ def setup_git_hooks():
                 
             except Exception as e:
                 print(f"❌ Failed to install {hook_name} hook: {e}")
+        else:
+            print(f"⚠️  Hook file {hook_name} not found in templates")
     
     if hooks_installed > 0:
         print(f"\n🎉 Successfully installed {hooks_installed} Git hooks!")
         print("💡 The hooks will now run automatically:")
-        print("   - post-commit: Asks if you want to push and start pipeline monitoring")
-        print("   - post-push: Automatically starts pipeline monitoring")
+        print("   - pre-push: Runs quality checks before push")
+        print("   - post-push: Starts pipeline monitoring after push")
         return True
     else:
         print("❌ No hooks were installed")
