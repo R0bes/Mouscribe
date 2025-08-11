@@ -1,25 +1,25 @@
 # Mauscribe Git Hooks
 
-Dieses Verzeichnis enthält Git Hooks für das Mauscribe Repository, die automatisch Pipeline Monitoring und Qualitätschecks durchführen.
+Dieses Verzeichnis enthält Git Hooks für das Mauscribe Repository, die automatisch Code-Qualitätschecks, Tests und Pipeline Monitoring durchführen.
 
 ## Verfügbare Hooks
 
+### pre-commit
+- **Wird ausgeführt:** Vor jedem `git commit`
+- **Funktionalität:**
+  - Läuft Pre-commit-Checks (Linting, Formatierung)
+  - Überprüft gestagte Dateien auf Probleme
+  - Verhindert Commit bei Fehlern
+- **Verwendung:** Automatisch vor jedem Commit
+
 ### pre-push
 - **Wird ausgeführt:** Vor jedem `git push`
-- **Funktionalität:** 
-  - Überprüft geschützte Branches
+- **Funktionalität:**
   - Läuft Tests vor dem Push
-  - Führt Linting-Checks durch
-  - Verhindert Push bei Fehlern
+  - Startet Pipeline Monitoring
+  - Überprüft geschützte Branches
+  - Verhindert Push bei Test-Fehlern
 - **Verwendung:** Automatisch vor jedem Push
-
-### post-push
-- **Wird ausgeführt:** Nach jedem `git push`
-- **Funktionalität:** 
-  - Startet automatisch das Pipeline Monitoring
-  - Überwacht CI/CD-Pipelines
-  - Zeigt hilfreiche Links zu CI/CD-Platforms
-- **Verwendung:** Automatisch nach jedem Push
 
 ## Installation
 
@@ -32,8 +32,8 @@ python setup_git_hooks.py
 1. Kopiere die gewünschten Hook-Dateien in `.git/hooks/`
 2. Stelle sicher, dass die Dateien ausführbar sind:
    ```bash
+   chmod +x .git/hooks/pre-commit
    chmod +x .git/hooks/pre-push
-   chmod +x .git/hooks/post-push
    ```
 
 ## Für neue Repositories
@@ -45,10 +45,10 @@ python setup_git_hooks.py
 ## Hook-Ablauf
 
 ```
-git push → pre-push → post-push
-     ↓         ↓         ↓
-   Push    Qualitäts-  Pipeline
-         checks      Monitoring
+git commit → pre-commit → git push → pre-push
+     ↓           ↓           ↓         ↓
+   Commit    Linting      Push     Tests +
+            Checks                Pipeline Monitoring
 ```
 
 ## Anpassung
@@ -71,7 +71,12 @@ Die Hooks können nach Bedarf angepasst werden:
 - Stelle sicher, dass Python verfügbar ist
 - Überprüfe die Ausgabe der Hooks für Fehlermeldungen
 
+### Pre-commit Hook blockiert Commit
+- Behebe Linting-Fehler: `pre-commit run --all-files`
+- Überprüfe gestagte Dateien auf Probleme
+- Stelle sicher, dass pre-commit installiert ist
+
 ### Pre-push Hook blockiert Push
 - Führe Tests aus: `python run_tests.py`
-- Behebe Linting-Fehler: `pre-commit run --all-files`
+- Behebe fehlgeschlagene Tests
 - Überprüfe, ob du auf einem geschützten Branch bist

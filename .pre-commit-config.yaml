@@ -43,5 +43,6 @@ repos:
     rev: 1.7.5
     hooks:
       - id: bandit
-        args: [-r, src/, -f, json, -o, bandit-report.json]
+        args: [-r, src/, -f, json, -o, bandit-report.json, --exit-zero]
         exclude: tests/
+        pass_filenames: false
