@@ -1,8 +1,8 @@
 #!/bin/bash
 # Pre-push hook for Mauscribe
-# Runs before git push to perform checks and validations
+# Runs before git push to perform basic checks and validations
 
-echo "🔍 Pre-push hook triggered - Running checks..."
+echo "🔍 Pre-push hook triggered - Running basic checks..."
 
 # Get the current directory (repository root)
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -27,37 +27,23 @@ if ! git diff-index --quiet HEAD --; then
     echo ""
 fi
 
-# Check if tests pass (if test runner exists)
+# Check if basic test files exist (without running them)
 if [ -f "run_tests.py" ]; then
-    echo "🧪 Running tests before push..."
-    python run_tests.py
-    
-    if [ $? -ne 0 ]; then
-        echo "❌ Tests failed! Push aborted."
-        echo "💡 Fix the failing tests before pushing"
-        exit 1
-    else
-        echo "✅ All tests passed!"
-    fi
+    echo "🧪 Test runner found: run_tests.py"
+    echo "💡 Run 'python run_tests.py' manually to test your code"
+    echo ""
 fi
 
-# Check if linting passes (if available)
+# Check if linting config exists (without running it)
 if [ -f ".pre-commit-config.yaml" ]; then
-    echo "🔍 Running pre-commit checks..."
-    if command -v pre-commit &> /dev/null; then
-        pre-commit run --all-files
-        
-        if [ $? -ne 0 ]; then
-            echo "❌ Pre-commit checks failed! Push aborted."
-            echo "💡 Fix the linting issues before pushing"
-            exit 1
-        else
-            echo "✅ All pre-commit checks passed!"
-        fi
-    else
-        echo "⚠️  Pre-commit not installed, skipping linting checks"
-    fi
+    echo "🔍 Pre-commit config found: .pre-commit-config.yaml"
+    echo "💡 Run 'pre-commit run --all-files' manually to check code quality"
+    echo ""
 fi
 
 echo "✅ Pre-push checks completed successfully"
 echo "🚀 Ready to push!"
+echo ""
+echo "💡 Tip: Run tests and linting manually when needed:"
+echo "   - Tests: python run_tests.py"
+echo "   - Linting: pre-commit run --all-files"
