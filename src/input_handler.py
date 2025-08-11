@@ -4,7 +4,6 @@ Input event handling for Mauscribe application.
 Manages mouse and keyboard input for recording control.
 """
 
-import time
 from typing import Callable, Optional
 
 from pynput import keyboard, mouse
@@ -72,6 +71,6 @@ class InputHandler:
 
     def is_active(self) -> bool:
         """Check if any input listeners are active."""
-        return (self.mouse_listener and self.mouse_listener.is_alive()) or (
-            self.keyboard_listener and self.keyboard_listener.is_alive()
-        )
+        mouse_active = self.mouse_listener is not None and self.mouse_listener.is_alive()
+        keyboard_active = self.keyboard_listener is not None and self.keyboard_listener.is_alive()
+        return mouse_active or keyboard_active
