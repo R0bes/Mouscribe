@@ -1,2 +1,0 @@
-# Test file for pipeline monitoring
-# This will trigger the post-commit hook
