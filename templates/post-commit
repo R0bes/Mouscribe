@@ -1,0 +1,46 @@
+#!/bin/bash
+# Post-commit hook for Mauscribe pipeline monitoring
+# Asks if user wants to push immediately and starts pipeline monitoring
+
+echo "🚀 Post-commit hook triggered!"
+echo ""
+
+# Check if we're in a push workflow (have upstream branch)
+if git rev-parse --verify origin/$(git branch --show-current) >/dev/null 2>&1; then
+    echo "📤 Upstream branch exists - Ready to push"
+    echo ""
+    echo "🤔 Soll direkt 'git push' ausgeführt werden? [y/N]"
+    read -r response
+    
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        echo "🚀 Pushing to remote repository..."
+        git push
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ Push erfolgreich! CI/CD Pipeline startet..."
+            echo ""
+            echo "🔍 Starte Pipeline Monitoring..."
+            
+            # Get the repository root
+            REPO_ROOT="$(git rev-parse --show-toplevel)"
+            cd "$REPO_ROOT"
+            
+            # Check if pipeline monitor exists and run it
+            if [ -f "pipeline_monitor.py" ]; then
+                python pipeline_monitor.py
+            else
+                echo "⚠️  Pipeline monitor nicht gefunden"
+                echo "💡 Pipeline läuft auf GitHub Actions"
+            fi
+        else
+            echo "❌ Push fehlgeschlagen"
+        fi
+    else
+        echo "💡 Push übersprungen. Führe 'git push' manuell aus um Pipeline zu starten."
+    fi
+else
+    echo "🔍 No upstream branch - This is likely a local commit"
+    echo "💡 Tip: Run 'git push --set-upstream origin $(git branch --show-current)' to set upstream and trigger pipeline"
+fi
+
+echo "✅ Post-commit hook completed"
