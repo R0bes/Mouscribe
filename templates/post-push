@@ -1,0 +1,53 @@
+#!/bin/bash
+# Post-push hook to automatically monitor CI/CD pipelines
+# This hook runs after every git push
+
+echo "🚀 Post-push hook triggered - Monitoring CI/CD pipelines..."
+
+# Get the current directory (repository root)
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Get current branch and remote info
+CURRENT_BRANCH=$(git branch --show-current)
+REMOTE_URL=$(git config --get remote.origin.url)
+
+echo "📤 Pushed branch: $CURRENT_BRANCH"
+echo "🌐 Remote: $REMOTE_URL"
+
+# Check if pipeline monitor exists
+if [ -f "pipeline_monitor.py" ]; then
+    echo "🔍 Starting pipeline monitoring..."
+    echo ""
+    
+    # Run the pipeline monitor
+    python pipeline_monitor.py
+    
+    # Check the exit code
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo "✅ Pipeline monitoring completed successfully"
+        echo "💡 Your CI/CD pipelines are being monitored"
+    else
+        echo ""
+        echo "❌ Pipeline monitoring failed or pipelines failed"
+        echo "💡 Check the output above for details"
+        echo "🔗 Check your CI/CD platform for pipeline status"
+    fi
+else
+    echo "⚠️  Pipeline monitor not found"
+    echo "💡 Pipeline monitoring will be handled by your CI/CD platform"
+    
+    # Try to detect CI/CD platform and provide helpful info
+    if [[ "$REMOTE_URL" == *"github.com"* ]]; then
+        echo "🔗 Check GitHub Actions: https://github.com/$(echo $REMOTE_URL | sed 's/.*github.com[:/]\([^/]*\)\/\([^/]*\)\.git.*/\1\/\2/')/actions"
+    elif [[ "$REMOTE_URL" == *"gitlab.com"* ]]; then
+        echo "🔗 Check GitLab CI: $(echo $REMOTE_URL | sed 's/\.git$//')/-/pipelines"
+    elif [[ "$REMOTE_URL" == *"bitbucket.org"* ]]; then
+        echo "🔗 Check Bitbucket Pipelines: $(echo $REMOTE_URL | sed 's/\.git$//')/pipelines"
+    fi
+fi
+
+echo ""
+echo "🏁 Post-push hook completed"
+echo "🎉 Your code is now deployed and being monitored!"

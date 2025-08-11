@@ -1,0 +1,63 @@
+#!/bin/bash
+# Pre-push hook for Mauscribe
+# Runs before git push to perform checks and validations
+
+echo "🔍 Pre-push hook triggered - Running checks..."
+
+# Get the current directory (repository root)
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Check if we're on a protected branch
+CURRENT_BRANCH=$(git branch --show-current)
+PROTECTED_BRANCHES=("main" "master" "develop")
+
+for branch in "${PROTECTED_BRANCHES[@]}"; do
+    if [[ "$CURRENT_BRANCH" == "$branch" ]]; then
+        echo "⚠️  Warning: Pushing to protected branch '$CURRENT_BRANCH'"
+        echo "💡 Make sure your changes are reviewed and tested"
+        echo ""
+    fi
+done
+
+# Check if there are uncommitted changes
+if ! git diff-index --quiet HEAD --; then
+    echo "⚠️  Warning: You have uncommitted changes"
+    echo "💡 Consider committing or stashing them before pushing"
+    echo ""
+fi
+
+# Check if tests pass (if test runner exists)
+if [ -f "run_tests.py" ]; then
+    echo "🧪 Running tests before push..."
+    python run_tests.py
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Tests failed! Push aborted."
+        echo "💡 Fix the failing tests before pushing"
+        exit 1
+    else
+        echo "✅ All tests passed!"
+    fi
+fi
+
+# Check if linting passes (if available)
+if [ -f ".pre-commit-config.yaml" ]; then
+    echo "🔍 Running pre-commit checks..."
+    if command -v pre-commit &> /dev/null; then
+        pre-commit run --all-files
+        
+        if [ $? -ne 0 ]; then
+            echo "❌ Pre-commit checks failed! Push aborted."
+            echo "💡 Fix the linting issues before pushing"
+            exit 1
+        else
+            echo "✅ All pre-commit checks passed!"
+        fi
+    else
+        echo "⚠️  Pre-commit not installed, skipping linting checks"
+    fi
+fi
+
+echo "✅ Pre-push checks completed successfully"
+echo "🚀 Ready to push!"
