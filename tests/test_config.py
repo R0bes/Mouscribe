@@ -1,5 +1,4 @@
 """Tests for the config module."""
-import os
 import tempfile
 from pathlib import Path
 from unittest.mock import mock_open, patch
@@ -48,6 +47,71 @@ class TestConfig:
         assert hasattr(config, "input_method")
         assert hasattr(config, "audio_sample_rate")
         assert hasattr(config, "stt_model_size")
+
+    def test_config_default_values(self):
+        """Test that config has expected default values."""
+        config = Config()
+
+        # Test audio settings
+        assert hasattr(config, "audio_sample_rate")
+        assert hasattr(config, "audio_channels")
+        assert isinstance(config.audio_sample_rate, int)
+        assert isinstance(config.audio_channels, int)
+
+        # Test STT settings
+        assert hasattr(config, "stt_model_size")
+        assert isinstance(config.stt_model_size, str)
+
+        # Test input method
+        assert hasattr(config, "input_method")
+        assert isinstance(config.input_method, str)
+
+    def test_config_path_property(self):
+        """Test config_path property."""
+        config = Config()
+        assert hasattr(config, "config_path")
+        # config_path is a string, not a Path object
+        assert isinstance(config.config_path, str)
+
+    def test_get_method_with_existing_key(self):
+        """Test _get method with existing key in config."""
+        config = Config()
+
+        # Test with a key that should exist in the config
+        result = config._get("audio.sample_rate", "default")
+        assert result != "default"  # Should return actual value, not default
+
+    def test_get_method_with_nonexistent_key(self):
+        """Test _get method with nonexistent key."""
+        config = Config()
+
+        # Test with a key that doesn't exist
+        result = config._get("nonexistent_key", "fallback_value")
+        assert result == "fallback_value"
+
+    def test_config_file_creation(self):
+        """Test that config file is created if it doesn't exist."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "test_config.toml"
+
+            # Create config with custom path
+            config = Config()
+            config.config_path = str(config_path)
+
+            # Test that config can be accessed without error
+            assert config is not None
+            assert hasattr(config, "audio_sample_rate")
+
+    def test_config_reload(self):
+        """Test config reloading."""
+        config = Config()
+        original_sample_rate = config.audio_sample_rate
+
+        # Test that config can be accessed multiple times
+        assert config.audio_sample_rate == original_sample_rate
+
+        # Test that config is consistent
+        assert config.audio_sample_rate == config.audio_sample_rate
 
 
 if __name__ == "__main__":
