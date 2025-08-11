@@ -44,8 +44,16 @@ def setup_git_hooks():
             target_hook = hooks_dir / hook_name
             
             try:
-                # Copy hook file
-                shutil.copy2(hook_file, target_hook)
+                # Read the template file and convert line endings
+                with open(hook_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Convert Windows line endings to Unix line endings
+                content = content.replace('\r\n', '\n')
+                
+                # Write the hook with correct line endings
+                with open(target_hook, 'w', encoding='utf-8', newline='\n') as f:
+                    f.write(content)
                 
                 # Make executable (Unix-like systems)
                 if os.name != 'nt':  # Not Windows

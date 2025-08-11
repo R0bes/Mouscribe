@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pre-push hook for Mauscribe
-# Runs before git push to perform basic checks and validations
+# Runs before git push to perform basic checks and then monitors pipelines after push
 
 echo "🔍 Pre-push hook triggered - Running basic checks..."
 
@@ -44,6 +44,112 @@ fi
 echo "✅ Pre-push checks completed successfully"
 echo "🚀 Ready to push!"
 echo ""
-echo "💡 Tip: Run tests and linting manually when needed:"
-echo "   - Tests: python run_tests.py"
-echo "   - Linting: pre-commit run --all-files"
+
+# Store current branch for post-push monitoring
+echo "$CURRENT_BRANCH" > .push_branch_info
+
+# After push, start pipeline monitoring
+echo "💡 After push, pipeline monitoring will start automatically..."
+echo "   - Run 'python pipeline_monitor.py' to check pipeline status"
+echo "   - Or check GitHub Actions directly"
+
+# Start pipeline monitoring in background after a short delay
+(
+    sleep 5  # Wait for push to complete
+    echo ""
+    echo "🚀 Post-push hook triggered - Monitoring CI/CD pipelines..."
+    
+    # Get current branch and remote info
+    CURRENT_BRANCH=$(cat .push_branch_info 2>/dev/null || git branch --show-current)
+    REMOTE_URL=$(git config --get remote.origin.url)
+    
+    echo "📤 Pushed branch: $CURRENT_BRANCH"
+    echo "🌐 Remote: $REMOTE_URL"
+    echo ""
+    
+    # Check if pipeline monitor exists
+    if [ -f "pipeline_monitor.py" ]; then
+        # Use the correct Python command for the platform
+        if command -v python3 &> /dev/null; then
+            PYTHON_CMD="python3"
+        elif command -v python &> /dev/null; then
+            PYTHON_CMD="python"
+        else
+            echo "❌ Python not found in PATH"
+            echo "💡 Pipeline monitoring will be handled by your CI/CD platform"
+            PYTHON_CMD=""
+        fi
+        
+        if [ -n "$PYTHON_CMD" ]; then
+            # Run the pipeline monitor and capture output
+            echo "🔍 Starting pipeline monitoring..."
+            echo "=================================================="
+            
+            # Capture the output to analyze the result
+            PIPELINE_OUTPUT=$($PYTHON_CMD pipeline_monitor.py 2>&1)
+            PIPELINE_EXIT_CODE=$?
+            
+            # Display the pipeline output
+            echo "$PIPELINE_OUTPUT"
+            
+            # Add summary at the end
+            echo ""
+            echo "=================================================="
+            echo "📊 PIPELINE MONITORING SUMMARY"
+            echo "=================================================="
+            
+            if [ $PIPELINE_EXIT_CODE -eq 0 ]; then
+                echo "✅ Pipeline monitoring completed successfully"
+                echo "💡 Your CI/CD pipelines are being monitored"
+                
+                # Check if pipeline succeeded or failed from output
+                if echo "$PIPELINE_OUTPUT" | grep -q "❌ Pipeline failed"; then
+                    echo "⚠️  Note: Pipeline failed but monitoring worked"
+                    echo "🔗 Check the details above for failure reasons"
+                elif echo "$PIPELINE_OUTPUT" | grep -q "✅ Pipeline succeeded"; then
+                    echo "🎉 Pipeline succeeded! All checks passed."
+                else
+                    echo "ℹ️  Pipeline status: Check the output above"
+                fi
+            else
+                echo "❌ Pipeline monitoring failed"
+                echo "💡 Check the output above for details"
+                echo "🔗 Check your CI/CD platform for pipeline status"
+            fi
+            
+            # Extract key information for summary
+            if echo "$PIPELINE_OUTPUT" | grep -q "🔗 URL:"; then
+                echo ""
+                echo "🔗 Pipeline Details:"
+                echo "$(echo "$PIPELINE_OUTPUT" | grep "🔗 URL:" | head -1)"
+                echo "$(echo "$PIPELINE_OUTPUT" | grep "⏱️  Duration:" | head -1)"
+            fi
+            
+            # Show GitHub Actions link
+            if [[ "$REMOTE_URL" == *"github.com"* ]]; then
+                GITHUB_ACTIONS_URL="https://github.com/$(echo $REMOTE_URL | sed 's/.*github.com[:/]\([^/]*\)\/\([^/]*\)\.git.*/\1\/\2/')/actions"
+                echo ""
+                echo "🔗 GitHub Actions: $GITHUB_ACTIONS_URL"
+            fi
+        fi
+    else
+        echo "⚠️  Pipeline monitor not found"
+        echo "💡 Pipeline monitoring will be handled by your CI/CD platform"
+        
+        # Try to detect CI/CD platform and provide helpful info
+        if [[ "$REMOTE_URL" == *"github.com"* ]]; then
+            echo "🔗 Check GitHub Actions: https://github.com/$(echo $REMOTE_URL | sed 's/.*github.com[:/]\([^/]*\)\/\([^/]*\)\.git.*/\1\/\2/')/actions"
+        elif [[ "$REMOTE_URL" == *"gitlab.com"* ]]; then
+            echo "🔗 Check GitLab CI: $(echo $REMOTE_URL | sed 's/\.git$//')/-/pipelines"
+        elif [[ "$REMOTE_URL" == *"bitbucket.org"* ]]; then
+            echo "🔗 Check Bitbucket Pipelines: $(echo $REMOTE_URL | sed 's/\.git$//')/pipelines"
+        fi
+    fi
+    
+    echo ""
+    echo "🏁 Post-push hook completed"
+    echo "🎉 Your code is now deployed and being monitored!"
+    
+    # Clean up temporary file
+    rm -f .push_branch_info
+) &

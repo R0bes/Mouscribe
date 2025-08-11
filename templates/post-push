@@ -20,19 +20,32 @@ if [ -f "pipeline_monitor.py" ]; then
     echo "🔍 Starting pipeline monitoring..."
     echo ""
     
-    # Run the pipeline monitor
-    python pipeline_monitor.py
-    
-    # Check the exit code
-    if [ $? -eq 0 ]; then
-        echo ""
-        echo "✅ Pipeline monitoring completed successfully"
-        echo "💡 Your CI/CD pipelines are being monitored"
+    # Use the correct Python command for the platform
+    if command -v python3 &> /dev/null; then
+        PYTHON_CMD="python3"
+    elif command -v python &> /dev/null; then
+        PYTHON_CMD="python"
     else
-        echo ""
-        echo "❌ Pipeline monitoring failed or pipelines failed"
-        echo "💡 Check the output above for details"
-        echo "🔗 Check your CI/CD platform for pipeline status"
+        echo "❌ Python not found in PATH"
+        echo "💡 Pipeline monitoring will be handled by your CI/CD platform"
+        PYTHON_CMD=""
+    fi
+    
+    if [ -n "$PYTHON_CMD" ]; then
+        # Run the pipeline monitor
+        $PYTHON_CMD pipeline_monitor.py
+        
+        # Check the exit code
+        if [ $? -eq 0 ]; then
+            echo ""
+            echo "✅ Pipeline monitoring completed successfully"
+            echo "💡 Your CI/CD pipelines are being monitored"
+        else
+            echo ""
+            echo "❌ Pipeline monitoring failed or pipelines failed"
+            echo "💡 Check the output above for details"
+            echo "🔗 Check your CI/CD platform for pipeline status"
+        fi
     fi
 else
     echo "⚠️  Pipeline monitor not found"
