@@ -105,7 +105,7 @@ class PipelineMonitor:
             return []
     
     def get_workflow_details(self, workflow_id: int) -> Optional[Dict]:
-        """Get detailed information about a specific workflow run."""
+        """Get detailed workflow information including jobs."""
         if not self.github_token:
             return None
             
@@ -115,10 +115,22 @@ class PipelineMonitor:
         }
         
         try:
+            # First get the workflow run
             url = f"{self.base_url}/actions/runs/{workflow_id}"
             response = requests.get(url, headers=headers)
             response.raise_for_status()
-            return response.json()
+            workflow_run = response.json()
+            
+            # Then get the jobs using the jobs_url
+            if 'jobs_url' in workflow_run:
+                jobs_response = requests.get(workflow_run['jobs_url'], headers=headers)
+                jobs_response.raise_for_status()
+                jobs = jobs_response.json()['jobs']
+                
+                # Add jobs to the workflow run data
+                workflow_run['jobs'] = jobs
+            
+            return workflow_run
         except requests.RequestException:
             return None
     
@@ -133,11 +145,26 @@ class PipelineMonitor:
         }
         
         try:
+            # Try the jobs logs endpoint first
             url = f"{self.base_url}/actions/runs/{workflow_id}/jobs/{job_id}/logs"
             response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            return response.text
-        except requests.RequestException:
+            
+            if response.status_code == 200:
+                return response.text
+            elif response.status_code == 404:
+                # Try alternative endpoint
+                url = f"{self.base_url}/actions/jobs/{job_id}/logs"
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200:
+                    return response.text
+            
+            # If still not working, return error info
+            print(f"   🔍 Debug: Logs API returned status {response.status_code}")
+            print(f"   🔍 Debug: Response headers: {dict(response.headers)}")
+            
+            return None
+        except requests.RequestException as e:
+            print(f"   🔍 Debug: Request error: {e}")
             return None
     
     def monitor_pipelines(self, max_wait_time: int = 300) -> bool:
@@ -236,47 +263,61 @@ class PipelineMonitor:
                 pass
     
     def _show_failure_details(self, run: Dict):
-        """Show detailed failure information."""
+        """Show detailed failure information including job logs."""
         print("\n❌ Pipeline Failure Details:")
         print("-" * 30)
         print(f"🔗 Workflow: {run['name']}")
         print(f"🔗 URL: {run['html_url']}")
+        print(f"⏱️  Duration: {self._format_duration(run['created_at'], run['updated_at'])}")
+        print()
         
-        # Get detailed workflow information
+        # Get workflow details to see all jobs
         workflow_details = self.get_workflow_details(run['id'])
-        if workflow_details:
-            print(f"⏱️  Duration: {self._format_duration(run['created_at'], run['updated_at'])}")
-            
-            # Show failed jobs
-            if 'jobs_url' in run:
-                try:
-                    headers = {'Authorization': f'token {self.github_token}'} if self.github_token else {}
-                    response = requests.get(run['jobs_url'], headers=headers)
-                    if response.status_code == 200:
-                        jobs = response.json()['jobs']
-                        failed_jobs = [job for job in jobs if job['conclusion'] == 'failure']
-                        
-                        if failed_jobs:
-                            print(f"\n❌ Failed Jobs ({len(failed_jobs)}):")
-                            for job in failed_jobs:
-                                print(f"  🔥 {job['name']}")
-                                print(f"     Started: {job['started_at']}")
-                                print(f"     Completed: {job['completed_at']}")
-                                
-                                # Try to get job logs
-                                if 'id' in job:
-                                    logs = self.get_job_logs(run['id'], job['id'])
-                                    if logs:
-                                        # Extract error summary from logs
-                                        error_lines = [line for line in logs.split('\n') if 'ERROR' in line or 'FAILED' in line]
-                                        if error_lines:
-                                            print(f"     Recent errors:")
-                                            for error in error_lines[-3:]:  # Last 3 error lines
-                                                print(f"       {error.strip()}")
-                                        else:
-                                            print(f"     Check logs at: {job['html_url']}")
-                except Exception as e:
-                    print(f"     Could not fetch job details: {e}")
+        if not workflow_details:
+            print("⚠️  Could not fetch workflow details")
+            return
+        
+        print(f"🔍 Debug: Workflow details keys: {list(workflow_details.keys())}")
+        
+        jobs = workflow_details.get('jobs', [])
+        print(f"🔍 Debug: Found {len(jobs)} jobs")
+        
+        failed_jobs = [job for job in jobs if job.get('conclusion') == 'failure']
+        print(f"🔍 Debug: Found {len(failed_jobs)} failed jobs")
+        
+        if failed_jobs:
+            print(f"❌ Failed Jobs ({len(failed_jobs)}):")
+            for job in failed_jobs:
+                print(f"  🔥 {job['name']}")
+                print(f"     Started: {job['started_at']}")
+                print(f"     Completed: {job['completed_at']}")
+                
+                # Fetch and display job logs
+                print(f"\n📋 Job Logs for '{job['name']}':")
+                print("-" * 40)
+                logs = self.get_job_logs(run['id'], job['id'])
+                if logs:
+                    # Show last 20 lines of logs (most relevant for errors)
+                    log_lines = logs.split('\n')
+                    if len(log_lines) > 20:
+                        print("... (showing last 20 lines)")
+                        log_lines = log_lines[-20:]
+                    
+                    for line in log_lines:
+                        if line.strip():
+                            print(f"   {line}")
+                else:
+                    print("   ⚠️  Could not fetch job logs")
+                print("-" * 40)
+                print()
+        else:
+            print("⚠️  No failed jobs found in workflow details")
+            # Show all jobs for debugging
+            print("\n🔍 All jobs in workflow:")
+            for i, job in enumerate(jobs):
+                print(f"  {i+1}. {job.get('name', 'Unknown')} - Status: {job.get('status', 'Unknown')} - Conclusion: {job.get('conclusion', 'Unknown')}")
+        
+        print("❌ Some pipelines failed. Check the details above.")
     
     def _show_progress(self, run: Dict):
         """Show progress of running pipeline."""

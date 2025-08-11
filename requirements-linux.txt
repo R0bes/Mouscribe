@@ -16,4 +16,4 @@ pyspellchecker
 requests
 
 # Linux-spezifische Audio-Pakete
-pyaudio
+# pyaudio  # Commented out for CI/CD compatibility - install manually if needed for local development
