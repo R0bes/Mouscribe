@@ -5,10 +5,10 @@ Allows users to add their own words to be considered correct during spell checki
 """
 
 import json
+import logging
 import os
 from pathlib import Path
-from typing import Set, List, Optional
-import logging
+from typing import List, Optional, Set
 
 logger = logging.getLogger(__name__)
 

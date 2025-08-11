@@ -4,12 +4,12 @@ Graphical user interface for managing the custom dictionary.
 Provides a user-friendly way to add, remove, and view custom words.
 """
 
-import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
-from typing import List, Optional
 import threading
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+from typing import List, Optional
 
-from .custom_dictionary import get_custom_dictionary, CustomDictionary
+from .custom_dictionary import CustomDictionary, get_custom_dictionary
 
 
 class DictionaryGUI:

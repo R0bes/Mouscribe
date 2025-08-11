@@ -8,7 +8,7 @@ import argparse
 import sys
 from typing import List
 
-from .custom_dictionary import get_custom_dictionary, CustomDictionary
+from .custom_dictionary import CustomDictionary, get_custom_dictionary
 from .spell_checker import get_spell_checker
 
 

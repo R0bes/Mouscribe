@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Optional, List, Dict, Any, Set
+
 import re
+from typing import Any, Dict, List, Optional, Set
 
 try:
     from spellchecker import SpellChecker
@@ -11,7 +12,7 @@ except ImportError:
     print("Warnung: pyspellchecker nicht verfügbar. Rechtschreibprüfung deaktiviert.")
 
 from . import config
-from .custom_dictionary import get_custom_dictionary, CustomDictionary
+from .custom_dictionary import CustomDictionary, get_custom_dictionary
 
 
 class SpellGrammarChecker:

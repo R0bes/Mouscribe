@@ -6,7 +6,8 @@ Manages mouse and keyboard input for recording control.
 
 import time
 from typing import Callable, Optional
-from pynput import mouse, keyboard
+
+from pynput import keyboard, mouse
 
 
 class InputHandler:

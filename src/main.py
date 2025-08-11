@@ -5,22 +5,22 @@ Main application logic and system tray integration
 """
 
 import sys
-import time
 import threading
+import time
 from pathlib import Path
 from typing import Optional
 
+import pyautogui
+import pyperclip
 import pystray
 from PIL import Image, ImageDraw
-import pyperclip
-import pyautogui
 
 from .config import Config
-from .sound_controller import SoundController
 from .input_handler import InputHandler
-from .stt import SpeechToText
 from .recorder import AudioRecorder
+from .sound_controller import SoundController
 from .spell_checker import SpellChecker
+from .stt import SpeechToText
 
 
 class MauscribeApp:

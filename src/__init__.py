@@ -2,8 +2,8 @@
 Mauscribe - Voice-to-Text Tool
 """
 
-import warnings
 import logging
+import warnings
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -16,11 +16,11 @@ __version__ = "1.0.0"
 __author__ = "Robs"
 __description__ = "Voice-to-Text Tool mit Push-to-Talk und automatischem Clipboard-Management"
 
-from .main import MauscribeController, main
 from .config import *
+from .main import MauscribeController, main
 from .recorder import AudioRecorder
-from .stt import SpeechToText
 from .sound_controller import SoundController
+from .stt import SpeechToText
 
 __all__ = [
     "MauscribeController",
