@@ -24,7 +24,7 @@ from .sound_controller import SoundController
 
 __all__ = [
     "MauscribeController",
-    "main", 
+    "main",
     "AudioRecorder",
     "SpeechToText",
     "SoundController",

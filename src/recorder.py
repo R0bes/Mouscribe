@@ -8,6 +8,7 @@ import sounddevice as sd
 
 from . import config
 
+
 class AudioRecorder:
 
     def __init__(self, sample_rate_hz: int | None = None, num_channels: int | None = None) -> None:

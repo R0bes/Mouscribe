@@ -19,24 +19,24 @@ def print_dictionary_info(dictionary: CustomDictionary) -> None:
     print(f"   Pfad: {info['path']}")
     print(f"   Anzahl Wörter: {info['word_count']}")
     print(f"   Datei existiert: {'Ja' if info['exists'] else 'Nein'}")
-    if info['exists']:
+    if info["exists"]:
         print(f"   Dateigröße: {info['file_size']} Bytes")
 
 
 def list_words(dictionary: CustomDictionary, limit: int = 0) -> None:
     """Zeigt alle Wörter im Wörterbuch an."""
     words = dictionary.get_all_words()
-    
+
     if not words:
         print("📝 Das Wörterbuch ist leer.")
         return
-    
+
     print(f"\n📝 Wörter im Wörterbuch ({len(words)}):")
-    
+
     if limit > 0:
         words = words[:limit]
         print(f"   (Zeige nur die ersten {limit} Wörter)")
-    
+
     for i, word in enumerate(words, 1):
         print(f"   {i:3d}. {word}")
 
@@ -70,7 +70,7 @@ def import_words(dictionary: CustomDictionary, words: List[str]) -> None:
     if not words:
         print("❌ Keine Wörter zum Importieren angegeben")
         return
-    
+
     imported = dictionary.import_words(words)
     print(f"✅ {imported} von {len(words)} Wörtern erfolgreich importiert")
 
@@ -78,12 +78,12 @@ def import_words(dictionary: CustomDictionary, words: List[str]) -> None:
 def export_words(dictionary: CustomDictionary, output_file: str = None) -> None:
     """Exportiert alle Wörter aus dem Wörterbuch."""
     words = dictionary.export_words()
-    
+
     if output_file:
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 for word in words:
-                    f.write(word + '\n')
+                    f.write(word + "\n")
             print(f"✅ {len(words)} Wörter nach '{output_file}' exportiert")
         except Exception as e:
             print(f"❌ Fehler beim Exportieren: {e}")
@@ -115,83 +115,68 @@ Beispiele:
   %(prog)s import "wort1,wort2"    # Wörter importieren
   %(prog)s export output.txt       # Wörter exportieren
   %(prog)s clear                   # Wörterbuch leeren
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        'command',
-        choices=['list', 'add', 'remove', 'search', 'import', 'export', 'clear', 'info'],
-        help='Befehl ausführen'
+        "command", choices=["list", "add", "remove", "search", "import", "export", "clear", "info"], help="Befehl ausführen"
     )
-    
-    parser.add_argument(
-        'args',
-        nargs='*',
-        help='Argumente für den Befehl'
-    )
-    
-    parser.add_argument(
-        '--limit', '-l',
-        type=int,
-        default=0,
-        help='Maximale Anzahl von Wörtern beim Auflisten (0 = alle)'
-    )
-    
-    parser.add_argument(
-        '--output', '-o',
-        type=str,
-        help='Ausgabedatei für Export-Befehl'
-    )
-    
+
+    parser.add_argument("args", nargs="*", help="Argumente für den Befehl")
+
+    parser.add_argument("--limit", "-l", type=int, default=0, help="Maximale Anzahl von Wörtern beim Auflisten (0 = alle)")
+
+    parser.add_argument("--output", "-o", type=str, help="Ausgabedatei für Export-Befehl")
+
     args = parser.parse_args()
-    
+
     try:
         # Wörterbuch initialisieren
         dictionary = get_custom_dictionary()
-        
+
         # Befehle ausführen
-        if args.command == 'info':
+        if args.command == "info":
             print_dictionary_info(dictionary)
-            
-        elif args.command == 'list':
+
+        elif args.command == "list":
             list_words(dictionary, args.limit)
-            
-        elif args.command == 'add':
+
+        elif args.command == "add":
             if not args.args:
                 print("❌ Bitte geben Sie ein Wort zum Hinzufügen an")
                 sys.exit(1)
             add_word(dictionary, args.args[0])
-            
-        elif args.command == 'remove':
+
+        elif args.command == "remove":
             if not args.args:
                 print("❌ Bitte geben Sie ein Wort zum Entfernen an")
                 sys.exit(1)
             remove_word(dictionary, args.args[0])
-            
-        elif args.command == 'search':
+
+        elif args.command == "search":
             if not args.args:
                 print("❌ Bitte geben Sie ein Wort zum Suchen an")
                 sys.exit(1)
             search_word(dictionary, args.args[0])
-            
-        elif args.command == 'import':
+
+        elif args.command == "import":
             if not args.args:
                 print("❌ Bitte geben Sie Wörter zum Importieren an (kommagetrennt)")
                 sys.exit(1)
-            words = [w.strip() for w in args.args[0].split(',')]
+            words = [w.strip() for w in args.args[0].split(",")]
             import_words(dictionary, words)
-            
-        elif args.command == 'export':
+
+        elif args.command == "export":
             output_file = args.output or args.args[0] if args.args else None
             export_words(dictionary, output_file)
-            
-        elif args.command == 'clear':
+
+        elif args.command == "clear":
             clear_dictionary(dictionary)
-        
+
         # Aktualisierte Informationen anzeigen
-        if args.command not in ['info', 'list']:
+        if args.command not in ["info", "list"]:
             print_dictionary_info(dictionary)
-            
+
     except KeyboardInterrupt:
         print("\n\n👋 Programm durch Benutzer beendet")
         sys.exit(0)
