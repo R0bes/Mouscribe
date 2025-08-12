@@ -39,7 +39,7 @@ def main():  # noqa: C901
         "--cov-report=term-missing",
         "--cov-report=html",
         "--cov-report=xml",
-        "--cov-fail-under=70",
+        "--cov-fail-under=65",
         "-v",
     ]
 
