@@ -12,7 +12,6 @@ Testet alle Funktionen des Rechtschreibprüfers inklusive:
 """
 
 import os
-
 # Import des zu testenden Moduls
 import sys
 from unittest.mock import Mock, patch
@@ -21,15 +20,10 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.spell_checker import (
-    SpellGrammarChecker,
-    add_custom_word,
-    check_and_correct_text,
-    get_custom_word_count,
-    get_custom_words,
-    get_spell_checker,
-    remove_custom_word,
-)
+from src.spell_checker import (SpellGrammarChecker, add_custom_word,
+                               check_and_correct_text, get_custom_word_count,
+                               get_custom_words, get_spell_checker,
+                               remove_custom_word)
 
 
 class TestSpellGrammarChecker:

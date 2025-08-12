@@ -13,18 +13,10 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # Importiere das zu testende Modul
-from src.updater import (
-    CURRENT_VERSION,
-    GITHUB_REPO,
-    REQUESTS_AVAILABLE,
-    UPDATE_CHECK_INTERVAL,
-    USER_AGENT,
-    AutoUpdater,
-    UpdateInfo,
-    check_for_updates,
-    get_updater,
-    stop_updater,
-)
+from src.updater import (CURRENT_VERSION, GITHUB_REPO, REQUESTS_AVAILABLE,
+                         UPDATE_CHECK_INTERVAL, USER_AGENT, AutoUpdater,
+                         UpdateInfo, check_for_updates, get_updater,
+                         stop_updater)
 
 
 class TestUpdateInfoSimple(unittest.TestCase):
