@@ -24,7 +24,7 @@ class SpellGrammarChecker:
     """
 
     def __init__(self) -> None:
-        self._spell_checker: Optional[SpellChecker] = None
+        self._spell_checker: SpellChecker | None = None
         # Verwende getattr mit Standardwerten für mypy-Kompatibilität
         self._language = getattr(config, "spell_check_language", "de")
         self._enabled = (
@@ -35,7 +35,7 @@ class SpellGrammarChecker:
         self._suggest_only = getattr(config, "spell_check_suggest_only", False)
 
         # Benutzerdefiniertes Wörterbuch
-        self._custom_dictionary: Optional[CustomDictionary] = None
+        self._custom_dictionary: CustomDictionary | None = None
         self._custom_dict_enabled = getattr(config, "custom_dictionary_enabled", True)
         self._auto_add_unknown = getattr(
             config, "custom_dictionary_auto_add_unknown", False
@@ -51,7 +51,7 @@ class SpellGrammarChecker:
         if self._custom_dict_enabled:
             self._initialize_custom_dictionary()
 
-    def _setup_grammar_patterns(self) -> List[Dict[str, Any]]:
+    def _setup_grammar_patterns(self) -> list[dict[str, Any]]:
         """Erstellt einfache Grammatikregeln für Deutsch."""
         patterns = []
 
@@ -130,7 +130,7 @@ class SpellGrammarChecker:
             self._custom_dictionary = None
             self._custom_dict_enabled = False
 
-    def check_text(self, text: str) -> Optional[str]:
+    def check_text(self, text: str) -> str | None:
         """
         Prüft und korrigiert einen Text.
 
@@ -251,7 +251,7 @@ class SpellGrammarChecker:
         similarity = len(common_chars) / max(len(word1), len(word2))
         return similarity >= 0.6
 
-    def _print_suggestions(self, text: str, misspelled: Set[str]) -> None:
+    def _print_suggestions(self, text: str, misspelled: set[str]) -> None:
         """Zeigt Korrekturvorschläge an."""
         print(f"\nRechtschreibprüfung für: '{text}'")
         print("=" * 50)
@@ -269,7 +269,7 @@ class SpellGrammarChecker:
                     print("   Keine Vorschläge gefunden")
                 print()
 
-    def get_suggestions(self, text: str) -> List[Dict[str, Any]]:
+    def get_suggestions(self, text: str) -> list[dict[str, Any]]:
         """
         Gibt eine Liste von Korrekturvorschlägen zurück.
 
@@ -355,7 +355,7 @@ class SpellGrammarChecker:
             return self._custom_dictionary.remove_word(word)
         return False
 
-    def get_custom_words(self) -> List[str]:
+    def get_custom_words(self) -> list[str]:
         """
         Gibt alle Wörter aus dem benutzerdefinierten Wörterbuch zurück.
 
@@ -415,7 +415,7 @@ class SpellGrammarChecker:
 
 
 # Globale Instanz für einfache Nutzung
-_spell_checker: Optional[SpellGrammarChecker] = None
+_spell_checker: SpellGrammarChecker | None = None
 
 
 def get_spell_checker() -> SpellGrammarChecker:
@@ -469,7 +469,7 @@ def remove_custom_word(word: str) -> bool:
     return checker.remove_custom_word(word)
 
 
-def get_custom_words() -> List[str]:
+def get_custom_words() -> list[str]:
     """
     Convenience-Funktion zum Abrufen aller Wörter aus dem benutzerdefinierten Wörterbuch.
 

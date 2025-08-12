@@ -35,14 +35,14 @@ class CustomDictionary:
             dictionary_path = str(user_dir / "custom_dictionary.json")
 
         self.dictionary_path = Path(dictionary_path)
-        self._words: Set[str] = set()
+        self._words: set[str] = set()
         self._load_dictionary()
 
     def _load_dictionary(self) -> None:
         """Lädt das Wörterbuch aus der JSON-Datei."""
         try:
             if self.dictionary_path and self.dictionary_path.exists():
-                with open(self.dictionary_path, "r", encoding="utf-8") as f:
+                with open(self.dictionary_path, encoding="utf-8") as f:
                     data = json.load(f)
                     self._words = set(data.get("words", []))
                 logger.info(
@@ -154,7 +154,7 @@ class CustomDictionary:
 
         return word.strip().lower() in self._words
 
-    def get_all_words(self) -> List[str]:
+    def get_all_words(self) -> list[str]:
         """
         Gibt alle Wörter aus dem benutzerdefinierten Wörterbuch zurück.
 
@@ -188,7 +188,7 @@ class CustomDictionary:
             logger.error(f"Fehler beim Leeren des Wörterbuchs: {e}")
             return False
 
-    def import_words(self, words: List[str]) -> int:
+    def import_words(self, words: list[str]) -> int:
         """
         Importiert eine Liste von Wörtern in das Wörterbuch.
 
@@ -209,7 +209,7 @@ class CustomDictionary:
         logger.info(f"{imported_count} von {len(words)} Wörtern erfolgreich importiert")
         return imported_count
 
-    def export_words(self) -> List[str]:
+    def export_words(self) -> list[str]:
         """
         Exportiert alle Wörter aus dem Wörterbuch.
 

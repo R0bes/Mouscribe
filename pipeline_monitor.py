@@ -79,7 +79,7 @@ class PipelineMonitor:
         except subprocess.CalledProcessError:
             return ""
 
-    def get_workflow_runs(self, branch: str, commit_sha: str) -> List[Dict]:
+    def get_workflow_runs(self, branch: str, commit_sha: str) -> list[dict]:
         """Get workflow runs for a specific branch and commit."""
         if not self.github_token:
             print("WARNING: No GitHub token found. Cannot check pipeline status.")
@@ -111,7 +111,7 @@ class PipelineMonitor:
             print(f"ERROR: Error fetching workflow runs: {e}")
             return []
 
-    def get_workflow_details(self, workflow_id: int) -> Optional[Dict]:
+    def get_workflow_details(self, workflow_id: int) -> Optional[dict]:
         """Get detailed workflow information including jobs."""
         if not self.github_token:
             return None
@@ -252,7 +252,7 @@ class PipelineMonitor:
         print("Pipeline may still be running. Check GitHub Actions manually.")
         return False
 
-    def _show_success_summary(self, run: Dict):
+    def _show_success_summary(self, run: dict):
         """Show summary of successful pipeline run."""
         print("\nSUCCESS: Pipeline Success Summary:")
         print("-" * 30)
@@ -282,7 +282,7 @@ class PipelineMonitor:
             except Exception:
                 pass
 
-    def _show_failure_details(self, run: Dict):
+    def _show_failure_details(self, run: dict):
         """Show detailed failure information including job logs."""
         print("\n❌ Pipeline Failure Details:")
         print("-" * 30)
@@ -346,7 +346,7 @@ class PipelineMonitor:
 
         print("FAILED: Some pipelines failed. Check the details above.")
 
-    def _show_progress(self, run: Dict):
+    def _show_progress(self, run: dict):
         """Show progress of running pipeline."""
         if "jobs_url" in run:
             try:

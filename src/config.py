@@ -14,7 +14,7 @@ class Config:
     def __init__(self, config_path: Optional[str] = None):
         """Initialize configuration with optional custom path."""
         self.config_path = config_path or "config.toml"
-        self._config_data: Dict[str, Any] = {}
+        self._config_data: dict[str, Any] = {}
         self._load_config()
 
     def _load_config(self):
@@ -74,7 +74,7 @@ class Config:
         return self._get("keyboard.secondary", "f9")
 
     @property
-    def custom_combinations(self) -> List[Dict[str, Any]]:
+    def custom_combinations(self) -> list[dict[str, Any]]:
         """Get custom key combinations."""
         return self._get("custom.combinations", [])
 
@@ -201,13 +201,18 @@ class Config:
 
     @property
     def volume_reduction_factor(self) -> float:
-        """Get volume reduction factor (alias for system setting)."""
-        return self.system_volume_reduction_factor
+        """Get volume reduction factor."""
+        return self._get("system.volume_reduction_factor", 0.15)
 
     @property
     def min_volume_percent(self) -> int:
-        """Get minimum volume percentage (alias for system setting)."""
-        return self.system_min_volume_percent
+        """Get minimum volume percentage."""
+        return self._get("system.min_volume_percent", 5)
+
+    @property
+    def recording_timeout_seconds(self) -> int:
+        """Get recording timeout in seconds."""
+        return self._get("recording.timeout_seconds", 60)
 
     @property
     def auto_update_enabled(self) -> bool:

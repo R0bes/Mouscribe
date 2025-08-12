@@ -65,7 +65,7 @@ def search_word(dictionary: CustomDictionary, word: str) -> None:
         print(f"❌ Wort '{word}' ist nicht im Wörterbuch vorhanden")
 
 
-def import_words(dictionary: CustomDictionary, words: List[str]) -> None:
+def import_words(dictionary: CustomDictionary, words: list[str]) -> None:
     """Importiert eine Liste von Wörtern."""
     if not words:
         print("❌ Keine Wörter zum Importieren angegeben")

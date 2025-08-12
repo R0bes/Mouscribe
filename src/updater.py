@@ -44,7 +44,7 @@ class UpdateInfo:
         self.prerelease = prerelease
         self.download_size = 0
         self.published_at = ""
-        self.download_path: Optional[Path] = None
+        self.download_path: Path | None = None
 
     def __str__(self) -> str:
         return (
@@ -71,7 +71,7 @@ class AutoUpdater:
             getattr(config, "auto_update_check_interval", None) or UPDATE_CHECK_INTERVAL
         )
         self._last_check: float = 0.0
-        self._update_thread: Optional[threading.Thread] = None
+        self._update_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
         self._is_checking = False
         self._current_version = CURRENT_VERSION
@@ -118,7 +118,7 @@ class AutoUpdater:
         except Exception as e:
             print(f"Stiller Update-Check fehlgeschlagen: {e}")
 
-    def check_for_updates(self, force: bool = False) -> Optional[UpdateInfo]:
+    def check_for_updates(self, force: bool = False) -> UpdateInfo | None:
         """
         Prüft manuell auf Updates.
 
@@ -158,7 +158,7 @@ class AutoUpdater:
         finally:
             self._is_checking = False
 
-    def _fetch_latest_release(self) -> Optional[UpdateInfo]:
+    def _fetch_latest_release(self) -> UpdateInfo | None:
         """Holt die neueste Release-Information von GitHub."""
         try:
             url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
@@ -360,7 +360,7 @@ class AutoUpdater:
             print(f"Fehler beim Neustart: {e}")
             print("Bitte starten Sie das Programm manuell neu.")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Gibt den aktuellen Status des Updaters zurück."""
         return {
             "enabled": self._enabled,
@@ -380,7 +380,7 @@ class AutoUpdater:
 
 
 # Globale Instanz
-_updater_instance: Optional[AutoUpdater] = None
+_updater_instance: AutoUpdater | None = None
 
 
 def get_updater() -> AutoUpdater:
@@ -391,7 +391,7 @@ def get_updater() -> AutoUpdater:
     return _updater_instance
 
 
-def check_for_updates(force: bool = False) -> Optional[UpdateInfo]:
+def check_for_updates(force: bool = False) -> UpdateInfo | None:
     """Convenience-Funktion für Update-Checks."""
     return get_updater().check_for_updates(force)
 

@@ -20,7 +20,7 @@ class SpeechToText:
         )
 
     def transcribe(
-        self, audio_f32_mono: np.ndarray, language: Optional[str] = None
+        self, audio_f32_mono: np.ndarray, language: str | None = None
     ) -> str:
         if audio_f32_mono.size == 0:
             return ""

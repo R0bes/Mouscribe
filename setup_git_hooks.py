@@ -44,7 +44,7 @@ def setup_git_hooks():
 
             try:
                 # Read the template file and convert line endings
-                with open(hook_file, "r", encoding="utf-8") as f:
+                with open(hook_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # Convert Windows line endings to Unix line endings

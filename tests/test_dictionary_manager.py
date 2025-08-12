@@ -12,11 +12,19 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from src.custom_dictionary import CustomDictionary
+
 # Import der Dictionary Manager Funktionen
-from src.dictionary_manager import (add_word, clear_dictionary, export_words,
-                                    import_words, list_words, main,
-                                    print_dictionary_info, remove_word,
-                                    search_word)
+from src.dictionary_manager import (
+    add_word,
+    clear_dictionary,
+    export_words,
+    import_words,
+    list_words,
+    main,
+    print_dictionary_info,
+    remove_word,
+    search_word,
+)
 
 
 class TestDictionaryManagerFunctions:
@@ -251,7 +259,7 @@ class TestDictionaryManagerFunctions:
 
         # Assert
         assert os.path.exists(export_file)
-        with open(export_file, "r", encoding="utf-8") as f:
+        with open(export_file, encoding="utf-8") as f:
             content = f.read()
             assert "test" in content
             assert "example" in content

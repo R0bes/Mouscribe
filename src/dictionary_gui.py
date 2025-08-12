@@ -287,7 +287,7 @@ class DictionaryGUI:
             return
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 words = [line.strip() for line in f if line.strip()]
 
             if not words:

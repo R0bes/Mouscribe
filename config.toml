@@ -7,8 +7,8 @@ method = "mouse_button"
 
 # Maus-Button Konfiguration
 [mouse_button]
-primary = "x2"      # Primärer Button (meist rechte Maustaste)
-secondary = "x1"    # Sekundärer Button (meist mittlere Maustaste)
+primary = "x2"      # Primärer Button (5. Maustaste - meist rechte Maustaste)
+secondary = "x1"    # Sekundärer Button (4. Maustaste - meist mittlere Maustaste)
 left_with_ctrl = true  # Strg + Linke Maus aktivieren
 
 # Tastatur-Konfiguration
@@ -90,8 +90,14 @@ max_words = 1000
 
 # Debug-Modus
 [debug]
+# enabled = true  # Standardwert: false
+level = "INFO"
 verbose = true
 log_errors = true
+
+# Aufnahme-Timeout (in Sekunden)
+[recording]
+timeout_seconds = 60
 
 # Auto-Updater
 [auto_update]

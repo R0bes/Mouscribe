@@ -24,11 +24,27 @@ class SoundController:
         try:
             # Get default audio device
             devices = AudioUtilities.GetSpeakers()
+            if not devices:
+                print("No audio devices found")
+                self._volume_interface = None
+                return
+
             interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+            if not interface:
+                print("Failed to activate audio interface")
+                self._volume_interface = None
+                return
+
             self._volume_interface = cast(interface, POINTER(IAudioEndpointVolume))
-            print("Audio interface initialized successfully")
+
+            # Test if interface is working
+            test_volume = self._volume_interface.GetMasterVolumeLevelScalar()
+            print(
+                f"Audio interface initialized successfully (current volume: {int(test_volume * 100)}%)"
+            )
         except Exception as e:
             print(f"Failed to initialize audio interface: {e}")
+            print("Audio control will be disabled")
             self._volume_interface = None
 
     def get_volume(self) -> int:

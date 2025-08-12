@@ -1,7 +1,7 @@
 # Mouscribe Makefile
 # Einfache Workflows für Entwicklung und Deployment
 
-.PHONY: help install test lint format clean commit push all workflow pre-commit
+.PHONY: help install test lint format clean commit push all workflow pre-commit build build-windows
 
 # Standardziel
 all: lint test
@@ -9,16 +9,18 @@ all: lint test
 # Hilfe anzeigen
 help:
 	@echo "Verfuegbare Ziele:"
-	@echo "  install    - Abhaengigkeiten installieren"
-	@echo "  test       - Tests ausfuehren"
-	@echo "  lint       - Code-Qualitaet pruefen"
-	@echo "  format     - Code formatieren"
-	@echo "  clean      - Build-Dateien bereinigen"
-	@echo "  commit     - Aenderungen committen (mit Checks)"
-	@echo "  push       - Aenderungen pushen"
-	@echo "  workflow   - Kompletter Workflow"
-	@echo "  all        - Lint und Tests ausfuehren"
-	@echo "  pre-commit - Code-Qualitaets-Checks ausfuehren"
+	@echo "  install       - Abhaengigkeiten installieren"
+	@echo "  test          - Tests ausfuehren"
+	@echo "  lint          - Code-Qualitaet pruefen"
+	@echo "  format        - Code formatieren"
+	@echo "  clean         - Build-Dateien bereinigen"
+	@echo "  commit        - Aenderungen committen (mit Checks)"
+	@echo "  push          - Aenderungen pushen"
+	@echo "  workflow      - Kompletter Workflow"
+	@echo "  all           - Lint und Tests ausfuehren"
+	@echo "  pre-commit    - Code-Qualitaets-Checks ausfuehren"
+	@echo "  build         - Executable erstellen (alle Plattformen)"
+	@echo "  build-windows - Windows .exe erstellen"
 
 # Abhängigkeiten installieren
 install:
@@ -29,13 +31,16 @@ install:
 # Tests ausführen
 test:
 	@echo "Running tests..."
-	python -m pytest tests/ -v --cov=src --cov-report=html -k "not test_sound_controller"
+	python -m pytest tests/ -v --cov=src --cov-report=html
 	@echo "Tests completed!"
 
 # Code-Qualität prüfen
 lint:
 	@echo "Running code quality checks..."
 	flake8 src/ tests/
+	black --check src/ tests/
+	isort --check-only src/ tests/
+	mypy src/ --ignore-missing-imports
 	@echo "Code quality checks completed!"
 
 # Code formatieren
@@ -67,6 +72,9 @@ ifeq ($(OS),Windows_NT)
 	if exist .coverage del .coverage
 	if exist coverage.xml del coverage.xml
 	if exist bandit-report.json del bandit-report.json
+	if exist __pycache__ rmdir /s /q __pycache__
+	if exist *.spec del *.spec
+	if exist *.pyc del *.pyc
 else
 	rm -rf build/
 	rm -rf dist/
@@ -77,6 +85,24 @@ else
 	rm -f .coverage
 	rm -f coverage.xml
 	rm -f bandit-report.json
+	rm -rf __pycache__/
+	rm -f *.spec
+	rm -f *.pyc
+endif
+
+# Executable erstellen (alle Plattformen)
+build: clean
+	@echo "Building executable..."
+	python build.py
+
+# Windows .exe erstellen
+build-windows: clean
+ifeq ($(OS),Windows_NT)
+	@echo "Building Windows executable..."
+	python build.py
+else
+	@echo "This target is only available on Windows"
+	@exit 1
 endif
 
 # Änderungen committen (mit Code-Qualitäts-Checks)
@@ -93,8 +119,12 @@ endif
 # Änderungen pushen
 push:
 	@echo "Pushing changes..."
-	git push origin feature/custom-dictionary
+	git push origin main
 
 # Workflow: Alles committen und pushen
 workflow: format lint test commit push
 	@echo "Workflow abgeschlossen!"
+
+# Vollständiger Build-Workflow
+build-workflow: clean lint test build
+	@echo "Build workflow completed!"

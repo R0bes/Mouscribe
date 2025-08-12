@@ -1,4 +1,3 @@
-#!/bin/bash
 # Pre-push hook for Mauscribe
 # Runs before git push to perform tests and start pipeline monitoring
 
