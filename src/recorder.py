@@ -32,7 +32,7 @@ class AudioRecorder:
         device_id: int | None = None,
     ) -> None:
         """Initialisiere den Audio-Recorder."""
-        self.logger = get_logger(__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
 
         # Konfiguration laden
         config = Config()
@@ -54,7 +54,8 @@ class AudioRecorder:
         self._initialize_audio_devices()
 
         # Audio-Interface initialisieren
-        self._volume_interface = None
+        self._volume_interface: Any | None = None
+        self._system_volume: float | None = None
         self._setup_audio_interface()
 
     def _setup_audio_interface(self):
@@ -188,7 +189,7 @@ class AudioRecorder:
             raise RuntimeError("Kein funktionierendes Audio-Gerät verfügbar")
 
     def _audio_callback(
-        self, indata: np.ndarray, frames: int, time: Any, status: Any
+        self, indata: np.ndarray, frames: int, _: Any, status: Any
     ) -> None:
         """Callback für eingehende Audio-Daten."""
         if not self._active or indata is None:
@@ -348,7 +349,9 @@ class AudioRecorder:
                     f"✅ Lautstärke wiederhergestellt auf {self._system_volume:.2f}"
                 )
             except Exception as e:
-                self.logger.error(f"❌ Fehler beim Wiederherstellen der Lautstärke: {e}")
+                self.logger.error(
+                    f"❌ Fehler beim Wiederherstellen der Lautstärke: {e}"
+                )
         elif self._volume_interface:
             self.logger.warning("⚠️  Keine ursprüngliche Lautstärke gespeichert")
         else:

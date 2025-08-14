@@ -68,7 +68,7 @@ class AutoUpdater:
     """
 
     def __init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(self.__class__.__name__)
 
         self._enabled = (
             getattr(config, "auto_update_enabled", False) and REQUESTS_AVAILABLE

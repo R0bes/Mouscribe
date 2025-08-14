@@ -16,7 +16,7 @@ class InputHandler:
 
     def __init__(self) -> None:
         """Initialize the input handler."""
-        self.logger = get_logger(__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
         self.mouse_listener: Optional[mouse.Listener] = None
         self.keyboard_listener: Optional[keyboard.Listener] = None
         self.mouse_callback: Optional[Callable] = None

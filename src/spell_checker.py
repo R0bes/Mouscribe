@@ -28,7 +28,7 @@ class SpellChecker:
     """
 
     def __init__(self) -> None:
-        self.logger = get_logger(__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
 
         self._spell_checker: SC | None = None
         # Verwende getattr mit Standardwerten für mypy-Kompatibilität

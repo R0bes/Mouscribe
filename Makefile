@@ -1,7 +1,7 @@
 # Mouscribe Makefile
 # Einfache Workflows für Entwicklung und Deployment
 
-.PHONY: help install test lint format clean commit push all workflow pre-commit build build-windows
+.PHONY: help install test lint format clean commit stage push workflow build build-windows
 
 # Standardziel
 all: lint test
@@ -44,20 +44,6 @@ else
 endif
 	@echo "Tests completed!"
 
-# Coverage-Bericht generieren (Windows-kompatibel)
-coverage:
-	@echo "Generating coverage report..."
-ifeq ($(OS),Windows_NT)
-	@echo "Windows detected - using coverage.py..."
-	python -m coverage run -m pytest tests/ --quiet
-	python -m coverage report
-	python -m coverage html --directory=coverage_html
-	@echo "Coverage report generated in coverage_html/"
-else
-	@echo "Using pytest-cov for coverage..."
-	python -m pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
-endif
-	@echo "Coverage completed!"
 
 # Code-Qualität prüfen
 lint:
@@ -75,15 +61,6 @@ format:
 	isort src/ tests/
 	@echo "Code formatting completed!"
 
-# Pre-commit Checks ausfuehren
-pre-commit:
-	@echo "Running pre-commit checks..."
-ifeq ($(OS),Windows_NT)
-	python -m pre_commit run --all-files
-else
-	pre-commit run --all-files
-endif
-	@echo "Pre-commit checks completed!"
 
 # Build-Dateien bereinigen (plattformunabhängig)
 clean:
@@ -115,6 +92,44 @@ else
 	rm -f *.pyc
 endif
 
+# Änderungen committen (mit Code-Qualitäts-Checks)
+commit:
+	@echo "Committing changes..."
+ifeq ($(OS),Windows_NT)
+	@if "$(filter-out $@,$(MAKECMDGOALS))"=="" ( \
+		set /p message="Commit message: " && git commit -m "!message!" --no-verify \
+	) else ( \
+		git commit -m "$(filter-out $@,$(MAKECMDGOALS))" --no-verify \
+	)
+else
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		read -p "Commit message: " message; git commit -m "$$message" --no-verify; \
+	else \
+		git commit -m "$(filter-out $@,$(MAKECMDGOALS))" --no-verify; \
+	fi
+endif
+
+stage: 
+	@echo "Staging changes..."
+	git add .
+	@$(MAKE) commit $(filter-out $@,$(MAKECMDGOALS))
+	@echo "Staging completed!"
+
+# Änderungen pushen
+push:
+	@echo "Pushing changes..."
+	git push
+
+# Workflow: Alles committen und pushen
+workflow: format lint test coverage
+	@echo "Staging changes..."
+	git add .
+	@$(MAKE) commit $(filter-out $@,$(MAKECMDGOALS))
+	@echo "Pushing changes..."
+	@$(MAKE) push
+	@echo "Workflow abgeschlossen!"
+
+
 # Executable erstellen (alle Plattformen)
 build: clean
 	@echo "Building executable..."
@@ -129,27 +144,3 @@ else
 	@echo "This target is only available on Windows"
 	@exit 1
 endif
-
-# Änderungen committen (mit Code-Qualitäts-Checks)
-commit:
-	@echo "Committing changes..."
-	@echo "Adding any reformatted files..."
-	git add .
-ifeq ($(OS),Windows_NT)
-	@set /p message="Commit message: " && git commit -m "!message!" --no-verify
-else
-	@read -p "Commit message: " message; git commit -m "$$message" --no-verify
-endif
-
-# Änderungen pushen
-push:
-	@echo "Pushing changes..."
-	git push origin main
-
-# Workflow: Alles committen und pushen
-workflow: format lint test coverage commit push
-	@echo "Workflow abgeschlossen!"
-
-# Vollständiger Build-Workflow
-build-workflow: clean lint test build
-	@echo "Build workflow completed!"

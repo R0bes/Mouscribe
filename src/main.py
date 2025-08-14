@@ -158,7 +158,9 @@ class MauscribeApp:
 
                 subprocess.run(["notepad", str(config_path)], shell=True)
             except Exception as e:
-                logger.error(f"❌ Konfigurationsdatei konnte nicht geöffnet werden: {e}")
+                logger.error(
+                    f"❌ Konfigurationsdatei konnte nicht geöffnet werden: {e}"
+                )
         else:
             logger.warning("⚠️  Konfigurationsdatei nicht gefunden")
 
@@ -264,7 +266,7 @@ class MauscribeApp:
             # Process audio data immediately if available
             if audio_data is not None and len(audio_data) > 0:
                 logger.info(
-                    f"🔊 Audio-Daten: {len(audio_data)} Samples, {len(audio_data)/self.recorder.sample_rate_hz:.2f}s"
+                    f"🔊 Audio-Daten: {len(audio_data)} Samples, {len(audio_data) / self.recorder.sample_rate_hz:.2f}s"
                 )
 
                 # Transcribe audio (ohne Spellchecking für schnelle Rückgabe)
@@ -273,15 +275,13 @@ class MauscribeApp:
                 raw_text = self.stt.transcribe_raw(audio_data)
 
                 if raw_text and raw_text.strip():
-                    logger.info(f"Raw transcription: {raw_text}")
-
-                    logger.info(f"✨ STT-Transkription abgeschlossen!")
+                    logger.info("✨ STT-Transkription abgeschlossen!")
                     logger.info(f"📝 Roher Text: '{raw_text}'")
 
                     # Sofort rohe Transkription in Clipboard kopieren
-                    logger.info(f"📋 Kopiere rohen Text in Clipboard...")
+                    logger.info("📋 Kopiere rohen Text in Clipboard...")
                     pyperclip.copy(raw_text)
-                    logger.info(f"✅ Roher Text in Clipboard verfügbar!")
+                    logger.info("✅ Roher Text in Clipboard verfügbar!")
                     logger.info(f"🎤 Transkribiert (roh): {raw_text}")
 
                     # Im Hintergrund Spellchecking machen
@@ -308,33 +308,33 @@ class MauscribeApp:
                 logger.info("🔄 Hintergrund-Spellchecking gestartet...")
 
                 logger.info(f"📝 Analysiere Text: '{raw_text}'")
-                logger.info(f"🔍 Starte Rechtschreibprüfung...")
+                logger.info("🔍 Starte Rechtschreibprüfung...")
 
                 # Spell check and correct
                 corrected_text = self.spell_checker.check_text(raw_text)
                 logger.info(f"Corrected text: {corrected_text}")
 
-                logger.info(f"✨ Spellchecking abgeschlossen!")
+                logger.info("✨ Spellchecking abgeschlossen!")
                 logger.info(f"📖 Ursprünglicher Text: '{raw_text}'")
                 logger.info(f"✅ Korrigierter Text: '{corrected_text}'")
 
                 # Nur aktualisieren wenn sich was geändert hat
                 if corrected_text != raw_text:
-                    logger.info(f"🔄 Text hat sich geändert - aktualisiere Clipboard...")
+                    logger.info("🔄 Text hat sich geändert - aktualisiere Clipboard...")
                     pyperclip.copy(corrected_text)
-                    logger.info(f"📋 Clipboard aktualisiert mit korrigiertem Text!")
+                    logger.info("📋 Clipboard aktualisiert mit korrigiertem Text!")
                     logger.info(f"🎯 Korrektur: '{raw_text}' → '{corrected_text}'")
                 else:
                     logger.info("✅ Keine Korrekturen nötig - Text ist bereits korrekt")
                     logger.info("📋 Clipboard bleibt unverändert")
 
-                logger.info(f"🏁 Hintergrund-Spellchecking abgeschlossen")
+                logger.info("🏁 Hintergrund-Spellchecking abgeschlossen")
 
             except Exception as spell_error:
                 logger.warning(f"❌ Spellchecking fehlgeschlagen: {spell_error}")
-                logger.warning(f"⚠️  Verwende ursprünglichen Text ohne Korrekturen")
+                logger.warning("⚠️  Verwende ursprünglichen Text ohne Korrekturen")
 
-        logger.info(f"🚀 Starte Spellchecking-Thread im Hintergrund...")
+        logger.info("🚀 Starte Spellchecking-Thread im Hintergrund...")
         # Starte Spellchecking im Hintergrund
         spellcheck_thread = threading.Thread(target=spellcheck_worker)
         spellcheck_thread.daemon = True
@@ -387,6 +387,11 @@ class MauscribeApp:
 
     def _run_system_tray(self) -> None:
         """Run system tray in a separate thread."""
+        if self.system_tray is None:
+            logger.error("❌ System Tray ist nicht verfügbar")
+            self.shutdown_event.set()
+            return
+
         try:
             self.system_tray.run()
         except Exception as e:
@@ -486,7 +491,7 @@ class MauscribeApp:
             if hasattr(self.recorder, "stop_recording"):
                 try:
                     self.recorder.stop_recording()
-                except:
+                except Exception:
                     pass
 
         # Stelle Lautstärke sicher wieder her
@@ -512,7 +517,7 @@ def main() -> None:
         app.shutdown_event.set()
     except Exception as e:
         logger.error(f"❌ Unerwarteter Fehler: {e}")
-        logger.error(f"Unexpected error in main: {e}", exc_info=True)
+        logger.error(f"Unexpected error in main: {e}")
         app.shutdown_event.set()
     finally:
         logger.info("🔄 Beende Anwendung...")

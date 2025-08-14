@@ -12,7 +12,7 @@ from .spell_checker import check_and_correct_text
 
 class SpeechToText:
     def __init__(self) -> None:
-        self.logger = get_logger(__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
         device = "cpu"  # Use CPU for better compatibility
         config_instance = Config()
         self._model = WhisperModel(

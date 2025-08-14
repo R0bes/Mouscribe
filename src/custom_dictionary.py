@@ -26,7 +26,7 @@ class CustomDict:
         Args:
             dictionary_path: Pfad zur Wörterbuch-Datei (optional)
         """
-        self.logger = get_logger(__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
 
         if dictionary_path is None:
             # Standard-Pfad im Benutzerverzeichnis

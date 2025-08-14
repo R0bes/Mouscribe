@@ -15,7 +15,7 @@ class Config:
 
     def __init__(self, config_path: Optional[str] = None):
         """Initialize configuration with optional custom path."""
-        self.logger = get_logger(__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
         self.config_path = config_path or "config.toml"
         self._config_data: dict[str, Any] = {}
         self._load_config()

@@ -1,6 +1,7 @@
 """
 Mauscribe - Voice-to-Text Tool
 """
+
 from .config import Config
 from .logger import MauscribeLogger, get_logger, setup_logging
 from .main import MauscribeApp, main
