@@ -45,9 +45,7 @@ class CustomDict:
                     data = json.load(f)
                     self._words = set(data.get("words", []))
             else:
-                self.logger.info(
-                    "Kein benutzerdefiniertes Wörterbuch gefunden, erstelle neues"
-                )
+                self.logger.info("Kein benutzerdefiniertes Wörterbuch gefunden, erstelle neues")
                 self._words = set()
         except Exception as e:
             self.logger.error(f"Fehler beim Laden des Wörterbuchs: {e}")
@@ -202,9 +200,7 @@ class CustomDict:
             if self.add_word(word):
                 imported_count += 1
 
-        self.logger.info(
-            f"{imported_count} von {len(words)} Wörtern erfolgreich importiert"
-        )
+        self.logger.info(f"{imported_count} von {len(words)} Wörtern erfolgreich importiert")
         return imported_count
 
     def export_words(self) -> list[str]:
@@ -237,11 +233,7 @@ class CustomDict:
             "word_count": self.get_word_count(),
             "words": self.get_all_words(),
             "exists": self.dictionary_path.exists(),
-            "file_size": (
-                self.dictionary_path.stat().st_size
-                if self.dictionary_path.exists()
-                else 0
-            ),
+            "file_size": (self.dictionary_path.stat().st_size if self.dictionary_path.exists() else 0),
         }
 
 

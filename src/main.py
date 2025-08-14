@@ -64,9 +64,7 @@ class MauscribeApp:
             self.spell_checker = SpellChecker()
             logger.info("✏️  Rechtschreibprüfung erfolgreich initialisiert")
         except Exception as e:
-            logger.error(
-                f"❌ Rechtschreibprüfung konnte nicht initialisiert werden: {e}"
-            )
+            logger.error(f"❌ Rechtschreibprüfung konnte nicht initialisiert werden: {e}")
             sys.exit(1)
 
         self.is_recording = False
@@ -87,25 +85,17 @@ class MauscribeApp:
 
         # Draw microphone icon
         # Microphone body (rectangle)
-        draw.rectangle(
-            (20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2
-        )
+        draw.rectangle((20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
 
         # Microphone head (circle)
-        draw.ellipse(
-            (18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2
-        )
+        draw.ellipse((18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
 
         # Microphone stand
-        draw.rectangle(
-            (30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2
-        )
+        draw.rectangle((30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
 
         # Recording indicator (red dot when recording)
         if self.is_recording:
-            draw.ellipse(
-                [50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1
-            )
+            draw.ellipse([50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1)
 
         return img
 
@@ -130,15 +120,11 @@ class MauscribeApp:
                 pystray.MenuItem("Exit", on_clicked),
             )
 
-            self.system_tray = pystray.Icon(
-                "mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu
-            )
+            self.system_tray = pystray.Icon("mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu)
             logger.info("🖥️  System Tray erfolgreich initialisiert")
         except Exception as e:
             logger.error(f"❌ System Tray konnte nicht initialisiert werden: {e}")
-            logger.warning(
-                "⚠️  System Tray nicht verfügbar - Anwendung läuft im Konsolenmodus"
-            )
+            logger.warning("⚠️  System Tray nicht verfügbar - Anwendung läuft im Konsolenmodus")
             self.system_tray = None
 
     def _log_status(self) -> None:
@@ -158,9 +144,7 @@ class MauscribeApp:
 
                 subprocess.run(["notepad", str(config_path)], shell=True)
             except Exception as e:
-                logger.error(
-                    f"❌ Konfigurationsdatei konnte nicht geöffnet werden: {e}"
-                )
+                logger.error(f"❌ Konfigurationsdatei konnte nicht geöffnet werden: {e}")
         else:
             logger.warning("⚠️  Konfigurationsdatei nicht gefunden")
 
@@ -184,9 +168,7 @@ class MauscribeApp:
 
                 if self.is_recording:
                     # If recording: stop recording and insert text
-                    logger.info(
-                        "Double-click X2 while recording - stopping and inserting text"
-                    )
+                    logger.info("Double-click X2 while recording - stopping and inserting text")
                     self.stop_recording()
                     # Wait a moment for recording to finish, then insert text
                     time.sleep(0.5)
@@ -339,9 +321,7 @@ class MauscribeApp:
         spellcheck_thread = threading.Thread(target=spellcheck_worker)
         spellcheck_thread.daemon = True
         spellcheck_thread.start()
-        logger.info(
-            f"✅ Spellchecking-Thread gestartet (Thread-ID: {spellcheck_thread.ident})"
-        )
+        logger.info(f"✅ Spellchecking-Thread gestartet (Thread-ID: {spellcheck_thread.ident})")
 
     def run(self) -> None:
         """Start the Mauscribe application."""
@@ -404,9 +384,7 @@ class MauscribeApp:
         logger.info("📋 Verwendung:")
         logger.info("- X2-Maustaste (einfach): Aufnahme starten/stoppen")
         logger.info("- X2-Maustaste (doppelklick): Text einfügen")
-        logger.info(
-            "- X2-Doppelklick während Aufnahme: Stoppt Aufnahme und fügt Text ein"
-        )
+        logger.info("- X2-Doppelklick während Aufnahme: Stoppt Aufnahme und fügt Text ein")
         logger.info("- Drücken Sie Strg+C um zu beenden")
 
         try:
@@ -479,9 +457,7 @@ class MauscribeApp:
         """Handle system signals for graceful shutdown."""
         signal_name = "SIGINT" if signum == signal.SIGINT else "SIGTERM"
         logger.info(f"🛑 Signal {signal_name} empfangen - starte graceful shutdown...")
-        logger.info(
-            f"Received signal {signum} ({signal_name}). Initiating graceful shutdown."
-        )
+        logger.info(f"Received signal {signum} ({signal_name}). Initiating graceful shutdown.")
         self.shutdown_event.set()
 
         # Force stop recording if active

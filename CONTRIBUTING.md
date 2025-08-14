@@ -81,7 +81,7 @@ pytest tests/test_recorder.py
 
 # Linting
 flake8 src/
-black --check src/
+black --check --line-length=127 src/
 ```
 
 ### Test Coverage

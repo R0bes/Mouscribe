@@ -51,7 +51,7 @@ endif
 lint:
 	@echo "Running code quality checks..."
 	flake8 src/ tests/
-	black --check src/ tests/
+	black --check --line-length=127 src/ tests/
 	isort --check-only src/ tests/
 	mypy src/ --ignore-missing-imports
 	@echo "Code quality checks completed!"
@@ -59,7 +59,7 @@ lint:
 # Code formatieren
 format:
 	@echo "Formatting code..."
-	black src/ tests/
+	black src/ tests/ --line-length=127 src/ tests/
 	isort src/ tests/
 	@echo "Code formatting completed!"
 
@@ -145,12 +145,7 @@ pr-interactive:
 	gh pr create --interactive
 
 # Workflow: Alles committen und pushen
-workflow: format lint test coverage
-	@echo "Staging changes..."
-	git add .
-	@$(MAKE) commit $(filter-out $@,$(MAKECMDGOALS))
-	@echo "Pushing changes..."
-	@$(MAKE) push
+workflow: stage push
 	@echo "Workflow abgeschlossen!"
 
 

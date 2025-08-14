@@ -98,9 +98,7 @@ class AudioRecorder:
                                 "index": i,
                                 "name": input_device.get("name", f"Device {i}"),
                                 "max_inputs": input_device.get("max_inputs", 1),
-                                "default_samplerate": input_device.get(
-                                    "default_samplerate", 44100
-                                ),
+                                "default_samplerate": input_device.get("default_samplerate", 44100),
                                 "is_default": i == default_input["index"],
                             }
                         )
@@ -188,9 +186,7 @@ class AudioRecorder:
         except Exception:
             raise RuntimeError("Kein funktionierendes Audio-Gerät verfügbar")
 
-    def _audio_callback(
-        self, indata: np.ndarray, frames: int, _: Any, status: Any
-    ) -> None:
+    def _audio_callback(self, indata: np.ndarray, frames: int, _: Any, status: Any) -> None:
         """Callback für eingehende Audio-Daten."""
         if not self._active or indata is None:
             return
@@ -217,21 +213,15 @@ class AudioRecorder:
         if self._volume_interface:
             try:
                 # Aktuelle System-Lautstärke speichern
-                self._system_volume = (
-                    self._volume_interface.GetMasterVolumeLevelScalar()
-                )
+                self._system_volume = self._volume_interface.GetMasterVolumeLevelScalar()
                 # Lautstärke auf 10% reduzieren (0.1 = 10%)
                 self._volume_interface.SetMasterVolumeLevelScalar(0.1, None)
-                self.logger.debug(
-                    f"Lautstärke reduziert von {self._system_volume:.2f} auf 0.10"
-                )
+                self.logger.debug(f"Lautstärke reduziert von {self._system_volume:.2f} auf 0.10")
             except Exception as e:
                 self.logger.warning(f"Fehler beim Ändern der Lautstärke: {e}")
                 self._system_volume = None
         else:
-            self.logger.debug(
-                "Kein Lautstärke-Interface verfügbar - überspringe Lautstärke-Änderung"
-            )
+            self.logger.debug("Kein Lautstärke-Interface verfügbar - überspringe Lautstärke-Änderung")
             self._system_volume = None
 
         # Audio-Stream starten
@@ -262,22 +252,14 @@ class AudioRecorder:
         # Lautstärke nur wiederherstellen wenn Interface verfügbar ist und ursprüngliche Lautstärke gespeichert wurde
         if self._volume_interface and self._system_volume is not None:
             try:
-                self._volume_interface.SetMasterVolumeLevelScalar(
-                    self._system_volume, None
-                )
-                self.logger.debug(
-                    f"Lautstärke wiederhergestellt auf {self._system_volume:.2f}"
-                )
+                self._volume_interface.SetMasterVolumeLevelScalar(self._system_volume, None)
+                self.logger.debug(f"Lautstärke wiederhergestellt auf {self._system_volume:.2f}")
             except Exception as e:
                 self.logger.error(f"Fehler beim Wiederherstellen der Lautstärke: {e}")
         elif self._volume_interface:
-            self.logger.warning(
-                "Keine ursprüngliche Lautstärke gespeichert - überspringe Wiederherstellung"
-            )
+            self.logger.warning("Keine ursprüngliche Lautstärke gespeichert - überspringe Wiederherstellung")
         else:
-            self.logger.debug(
-                "Kein Lautstärke-Interface verfügbar - überspringe Lautstärke-Wiederherstellung"
-            )
+            self.logger.debug("Kein Lautstärke-Interface verfügbar - überspringe Lautstärke-Wiederherstellung")
 
         # Audio-Daten verarbeiten
         with self._buffer_lock:
@@ -342,16 +324,10 @@ class AudioRecorder:
         """Stelle die ursprüngliche System-Lautstärke wieder her."""
         if self._volume_interface and self._system_volume is not None:
             try:
-                self._volume_interface.SetMasterVolumeLevelScalar(
-                    self._system_volume, None
-                )
-                self.logger.info(
-                    f"✅ Lautstärke wiederhergestellt auf {self._system_volume:.2f}"
-                )
+                self._volume_interface.SetMasterVolumeLevelScalar(self._system_volume, None)
+                self.logger.info(f"✅ Lautstärke wiederhergestellt auf {self._system_volume:.2f}")
             except Exception as e:
-                self.logger.error(
-                    f"❌ Fehler beim Wiederherstellen der Lautstärke: {e}"
-                )
+                self.logger.error(f"❌ Fehler beim Wiederherstellen der Lautstärke: {e}")
         elif self._volume_interface:
             self.logger.warning("⚠️  Keine ursprüngliche Lautstärke gespeichert")
         else:

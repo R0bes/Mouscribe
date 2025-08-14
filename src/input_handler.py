@@ -42,9 +42,7 @@ class InputHandler:
     def setup_keyboard_listener(self, callback: Callable) -> None:
         """Setup keyboard event listener with callback function."""
         self.keyboard_callback = callback
-        self.keyboard_listener = keyboard.Listener(
-            on_press=self._on_key_press, on_release=self._on_key_release
-        )
+        self.keyboard_listener = keyboard.Listener(on_press=self._on_key_press, on_release=self._on_key_release)
         self.keyboard_listener.start()
         self.logger.debug("Keyboard listener started")
 

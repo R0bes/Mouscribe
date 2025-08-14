@@ -138,7 +138,7 @@ jobs:
 
       - name: Format check with black
         run: |
-          black --check --diff src/
+          black --check --diff --line-length=127 src/
 
       - name: Test with pytest
         run: |

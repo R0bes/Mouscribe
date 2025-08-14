@@ -21,9 +21,7 @@ class SpeechToText:
             compute_type=config_instance.stt_compute_type,
         )
 
-    def transcribe_raw(
-        self, audio_f32_mono: np.ndarray, language: str | None = None
-    ) -> str:
+    def transcribe_raw(self, audio_f32_mono: np.ndarray, language: str | None = None) -> str:
         """Transkribiere Audio ohne Rechtschreibkorrektur für schnelle Rückgabe."""
         if audio_f32_mono.size == 0:
             return ""
@@ -43,18 +41,12 @@ class SpeechToText:
         raw_text = " ".join([t for t in text_parts if t])
         return raw_text
 
-    def transcribe(
-        self, audio_f32_mono: np.ndarray, language: str | None = None
-    ) -> str:
+    def transcribe(self, audio_f32_mono: np.ndarray, language: str | None = None) -> str:
         """Transkribiere Audio mit Rechtschreibkorrektur (für Kompatibilität)."""
         raw_text = self.transcribe_raw(audio_f32_mono, language)
 
         # Rechtschreibkorrektur anwenden falls aktiviert
-        if (
-            raw_text
-            and hasattr(Config(), "spell_check_enabled")
-            and Config().spell_check_enabled
-        ):
+        if raw_text and hasattr(Config(), "spell_check_enabled") and Config().spell_check_enabled:
             try:
                 corrected_text = check_and_correct_text(raw_text)
                 return corrected_text

@@ -12,6 +12,9 @@ ipython>=8.0.0
 isort>=5.12.0
 mypy>=1.0.0
 
+# Type Stubs for mypy
+types-requests>=2.31.0
+
 # Pre-commit Hooks
 pre-commit>=3.0.0
 

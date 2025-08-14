@@ -27,9 +27,7 @@ class Config:
                 self._config_data = tomllib.load(f)
             self.logger.debug(f"Configuration loaded from {self.config_path}")
         except FileNotFoundError:
-            self.logger.info(
-                f"Configuration file {self.config_path} not found, using defaults"
-            )
+            self.logger.info(f"Configuration file {self.config_path} not found, using defaults")
             self._config_data = {}
         except Exception as e:
             self.logger.error(f"Error loading configuration: {e}, using defaults")
