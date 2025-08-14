@@ -10,7 +10,8 @@ all: lint test
 help:
 	@echo "Verfuegbare Ziele:"
 	@echo "  install       - Abhaengigkeiten installieren"
-	@echo "  test          - Tests ausfuehren"
+	@echo "  test          - Tests ausfuehren (mit Coverage)"
+	@echo "  coverage      - Coverage-Bericht generieren"
 	@echo "  lint          - Code-Qualitaet pruefen"
 	@echo "  format        - Code formatieren"
 	@echo "  clean         - Build-Dateien bereinigen"
@@ -31,8 +32,32 @@ install:
 # Tests ausführen
 test:
 	@echo "Running tests..."
+ifeq ($(OS),Windows_NT)
+	@echo "Windows detected - using alternative coverage method..."
+	python -m pytest tests/ -v
+	@echo "Generating coverage report with coverage.py..."
+	python -m coverage run -m pytest tests/
+	python -m coverage report
+	@echo "Coverage report generated!"
+else
 	python -m pytest tests/ -v --cov=src --cov-report=html
+endif
 	@echo "Tests completed!"
+
+# Coverage-Bericht generieren (Windows-kompatibel)
+coverage:
+	@echo "Generating coverage report..."
+ifeq ($(OS),Windows_NT)
+	@echo "Windows detected - using coverage.py..."
+	python -m coverage run -m pytest tests/ --quiet
+	python -m coverage report
+	python -m coverage html --directory=coverage_html
+	@echo "Coverage report generated in coverage_html/"
+else
+	@echo "Using pytest-cov for coverage..."
+	python -m pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
+endif
+	@echo "Coverage completed!"
 
 # Code-Qualität prüfen
 lint:
@@ -122,7 +147,7 @@ push:
 	git push origin main
 
 # Workflow: Alles committen und pushen
-workflow: format lint test commit push
+workflow: format lint test coverage commit push
 	@echo "Workflow abgeschlossen!"
 
 # Vollständiger Build-Workflow

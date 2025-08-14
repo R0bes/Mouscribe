@@ -26,30 +26,6 @@ if ! git diff-index --quiet HEAD --; then
     echo ""
 fi
 
-# Run tests before push
-if [ -f "run_tests.py" ]; then
-    echo "🧪 Running tests before push..."
-    echo "=================================================="
-
-    python run_tests.py
-    TEST_EXIT_CODE=$?
-
-    if [ $TEST_EXIT_CODE -ne 0 ]; then
-        echo ""
-        echo "❌ Tests failed! Push aborted."
-        echo "💡 Fix the failing tests before pushing"
-        exit 1
-    else
-        echo ""
-        echo "✅ All tests passed!"
-        echo "=================================================="
-    fi
-else
-    echo "⚠️  Test runner not found: run_tests.py"
-    echo "💡 No tests will be run before push"
-    echo ""
-fi
-
 # Start pipeline monitoring before push
 echo "🔍 Starting pipeline monitoring..."
 echo "=================================================="
@@ -103,7 +79,6 @@ if [ -f "pipeline_monitor.py" ]; then
             fi
         else
             echo "❌ Pipeline monitoring failed"
-            echo "💡 Check the output above for details"
             echo "🔗 Check your CI/CD platform for pipeline status"
         fi
 

@@ -5,15 +5,13 @@ Allows users to add their own words to be considered correct during spell checki
 """
 
 import json
-import logging
-import os
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import Optional
 
-logger = logging.getLogger(__name__)
+from .logger import get_logger
 
 
-class CustomDictionary:
+class CustomDict:
     """
     Verwaltet ein benutzerdefiniertes Wörterbuch für die Rechtschreibprüfung.
 
@@ -28,12 +26,13 @@ class CustomDictionary:
         Args:
             dictionary_path: Pfad zur Wörterbuch-Datei (optional)
         """
+        self.logger = get_logger(__class__.__name__)
+
         if dictionary_path is None:
             # Standard-Pfad im Benutzerverzeichnis
             user_dir = Path.home() / ".mauscribe"
             user_dir.mkdir(exist_ok=True)
             dictionary_path = str(user_dir / "custom_dictionary.json")
-
         self.dictionary_path = Path(dictionary_path)
         self._words: set[str] = set()
         self._load_dictionary()
@@ -45,23 +44,20 @@ class CustomDictionary:
                 with open(self.dictionary_path, encoding="utf-8") as f:
                     data = json.load(f)
                     self._words = set(data.get("words", []))
-                logger.info(
-                    f"Benutzerdefiniertes Wörterbuch geladen: {len(self._words)} Wörter"
-                )
             else:
-                logger.info(
+                self.logger.info(
                     "Kein benutzerdefiniertes Wörterbuch gefunden, erstelle neues"
                 )
                 self._words = set()
         except Exception as e:
-            logger.error(f"Fehler beim Laden des Wörterbuchs: {e}")
+            self.logger.error(f"Fehler beim Laden des Wörterbuchs: {e}")
             self._words = set()
 
     def _save_dictionary(self) -> None:
         """Speichert das Wörterbuch in die JSON-Datei."""
         try:
             if not self.dictionary_path:
-                logger.error("Kein Wörterbuch-Pfad gesetzt")
+                self.logger.error("Kein Wörterbuch-Pfad gesetzt")
                 return
 
             # Stelle sicher, dass das Verzeichnis existiert
@@ -79,9 +75,9 @@ class CustomDictionary:
             with open(self.dictionary_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
-            logger.info(f"Wörterbuch gespeichert: {len(self._words)} Wörter")
+            self.logger.info(f"Wörterbuch gespeichert: {len(self._words)} Wörter")
         except Exception as e:
-            logger.error(f"Fehler beim Speichern des Wörterbuchs: {e}")
+            self.logger.error(f"Fehler beim Speichern des Wörterbuchs: {e}")
 
     def add_word(self, word: str) -> bool:
         """
@@ -94,21 +90,21 @@ class CustomDictionary:
             True wenn erfolgreich hinzugefügt, False bei Fehlern
         """
         if not word or not word.strip():
-            logger.warning("Leeres Wort kann nicht hinzugefügt werden")
+            self.logger.warning("Leeres Wort kann nicht hinzugefügt werden")
             return False
 
         word = word.strip().lower()
         if word in self._words:
-            logger.info(f"Wort '{word}' ist bereits im Wörterbuch vorhanden")
+            self.logger.info(f"Wort '{word}' ist bereits im Wörterbuch vorhanden")
             return True
 
         try:
             self._words.add(word)
             self._save_dictionary()
-            logger.info(f"Wort '{word}' erfolgreich zum Wörterbuch hinzugefügt")
+            self.logger.info(f"Wort '{word}' erfolgreich zum Wörterbuch hinzugefügt")
             return True
         except Exception as e:
-            logger.error(f"Fehler beim Hinzufügen des Wortes '{word}': {e}")
+            self.logger.error(f"Fehler beim Hinzufügen des Wortes '{word}': {e}")
             return False
 
     def remove_word(self, word: str) -> bool:
@@ -122,21 +118,21 @@ class CustomDictionary:
             True wenn erfolgreich entfernt, False bei Fehlern
         """
         if not word or not word.strip():
-            logger.warning("Leeres Wort kann nicht entfernt werden")
+            self.logger.warning("Leeres Wort kann nicht entfernt werden")
             return False
 
         word = word.strip().lower()
         if word not in self._words:
-            logger.info(f"Wort '{word}' ist nicht im Wörterbuch vorhanden")
+            self.logger.info(f"Wort '{word}' ist nicht im Wörterbuch vorhanden")
             return False
 
         try:
             self._words.remove(word)
             self._save_dictionary()
-            logger.info(f"Wort '{word}' erfolgreich aus dem Wörterbuch entfernt")
+            self.logger.info(f"Wort '{word}' erfolgreich aus dem Wörterbuch entfernt")
             return True
         except Exception as e:
-            logger.error(f"Fehler beim Entfernen des Wortes '{word}': {e}")
+            self.logger.error(f"Fehler beim Entfernen des Wortes '{word}': {e}")
             return False
 
     def has_word(self, word: str) -> bool:
@@ -182,10 +178,10 @@ class CustomDictionary:
         try:
             self._words.clear()
             self._save_dictionary()
-            logger.info("Wörterbuch erfolgreich geleert")
+            self.logger.info("Wörterbuch erfolgreich geleert")
             return True
         except Exception as e:
-            logger.error(f"Fehler beim Leeren des Wörterbuchs: {e}")
+            self.logger.error(f"Fehler beim Leeren des Wörterbuchs: {e}")
             return False
 
     def import_words(self, words: list[str]) -> int:
@@ -206,7 +202,9 @@ class CustomDictionary:
             if self.add_word(word):
                 imported_count += 1
 
-        logger.info(f"{imported_count} von {len(words)} Wörtern erfolgreich importiert")
+        self.logger.info(
+            f"{imported_count} von {len(words)} Wörtern erfolgreich importiert"
+        )
         return imported_count
 
     def export_words(self) -> list[str]:
@@ -248,14 +246,14 @@ class CustomDictionary:
 
 
 # Globale Instanz für einfache Nutzung
-_custom_dictionary: Optional[CustomDictionary] = None
+_custom_dictionary: Optional[CustomDict] = None
 
 
-def get_custom_dictionary() -> CustomDictionary:
+def get_custom_dictionary() -> CustomDict:
     """Gibt die globale CustomDictionary-Instanz zurück."""
     global _custom_dictionary
     if _custom_dictionary is None:
-        _custom_dictionary = CustomDictionary()
+        _custom_dictionary = CustomDict()
     return _custom_dictionary
 
 

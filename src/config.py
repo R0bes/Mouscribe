@@ -7,12 +7,15 @@ Handles TOML configuration file loading with sensible defaults.
 import tomllib
 from typing import Any, Dict, List, Optional
 
+from .logger import get_logger
+
 
 class Config:
     """Configuration manager for Mauscribe application."""
 
     def __init__(self, config_path: Optional[str] = None):
         """Initialize configuration with optional custom path."""
+        self.logger = get_logger(__class__.__name__)
         self.config_path = config_path or "config.toml"
         self._config_data: dict[str, Any] = {}
         self._load_config()
@@ -22,12 +25,14 @@ class Config:
         try:
             with open(self.config_path, "rb") as f:
                 self._config_data = tomllib.load(f)
-            print(f"Configuration loaded from {self.config_path}")
+            self.logger.debug(f"Configuration loaded from {self.config_path}")
         except FileNotFoundError:
-            print(f"Configuration file {self.config_path} not found, using defaults")
+            self.logger.info(
+                f"Configuration file {self.config_path} not found, using defaults"
+            )
             self._config_data = {}
         except Exception as e:
-            print(f"Error loading configuration: {e}, using defaults")
+            self.logger.error(f"Error loading configuration: {e}, using defaults")
             self._config_data = {}
 
     def _get(self, key: str, default: Any = None) -> Any:
@@ -92,6 +97,26 @@ class Config:
     def audio_device(self) -> Optional[int]:
         """Get audio device ID."""
         return self._get("audio.device", None)
+
+    @property
+    def audio_device_name(self) -> Optional[str]:
+        """Get audio device name preference."""
+        return self._get("audio.device_name", None)
+
+    @property
+    def audio_auto_select_device(self) -> bool:
+        """Get whether to automatically select the best audio device."""
+        return self._get("audio.auto_select_device", True)
+
+    @property
+    def audio_test_device_on_startup(self) -> bool:
+        """Get whether to test audio device on startup."""
+        return self._get("audio.test_device_on_startup", True)
+
+    @property
+    def audio_fallback_to_default(self) -> bool:
+        """Get whether to fallback to default device if selected device fails."""
+        return self._get("audio.fallback_to_default", True)
 
     @property
     def stt_model_size(self) -> str:

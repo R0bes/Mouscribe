@@ -67,7 +67,7 @@ def setup_git_hooks():
             print(f"⚠️  Hook file {hook_name} not found in templates")
 
     if hooks_installed > 0:
-        print(f"\n🎉 Successfully installed {hooks_installed} Git hooks!")
+        print(f"🎉 Successfully installed {hooks_installed} Git hooks!")
         print("💡 The hooks will now run automatically:")
         print("   - pre-commit: Runs linting and code quality checks")
         print("   - pre-push: Runs tests and starts pipeline monitoring")

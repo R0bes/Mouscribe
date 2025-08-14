@@ -3,19 +3,23 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional, Set
 
+from .logger import get_logger
+
 try:
-    from spellchecker import SpellChecker
+    from spellchecker import SpellChecker as SC
 
     SPELL_CHECKER_AVAILABLE = True
 except ImportError:
     SPELL_CHECKER_AVAILABLE = False
-    print("Warnung: pyspellchecker nicht verfügbar. Rechtschreibprüfung deaktiviert.")
+    get_logger(__name__).warning(
+        "Warnung: pyspellchecker nicht verfügbar. Rechtschreibprüfung deaktiviert."
+    )
 
 from . import config
-from .custom_dictionary import CustomDictionary, get_custom_dictionary
+from .custom_dictionary import CustomDict, get_custom_dictionary
 
 
-class SpellGrammarChecker:
+class SpellChecker:
     """
     Einfacher Rechtschreibprüfer für deutsche und englische Texte.
 
@@ -24,7 +28,9 @@ class SpellGrammarChecker:
     """
 
     def __init__(self) -> None:
-        self._spell_checker: SpellChecker | None = None
+        self.logger = get_logger(__class__.__name__)
+
+        self._spell_checker: SC | None = None
         # Verwende getattr mit Standardwerten für mypy-Kompatibilität
         self._language = getattr(config, "spell_check_language", "de")
         self._enabled = (
@@ -35,7 +41,7 @@ class SpellGrammarChecker:
         self._suggest_only = getattr(config, "spell_check_suggest_only", False)
 
         # Benutzerdefiniertes Wörterbuch
-        self._custom_dictionary: CustomDictionary | None = None
+        self._custom_dictionary: CustomDict | None = None
         self._custom_dict_enabled = getattr(config, "custom_dictionary_enabled", True)
         self._auto_add_unknown = getattr(
             config, "custom_dictionary_auto_add_unknown", False
@@ -93,12 +99,16 @@ class SpellGrammarChecker:
     def _initialize_spell_checker(self) -> None:
         """Initialisiert den PySpellChecker."""
         if not SPELL_CHECKER_AVAILABLE:
-            print("PySpellChecker nicht verfügbar - Rechtschreibprüfung deaktiviert")
+            self.logger.warning(
+                "PySpellChecker nicht verfügbar - Rechtschreibprüfung deaktiviert"
+            )
             self._enabled = False
             return
 
         try:
-            print(f"Initialisiere Rechtschreibprüfung für Sprache: {self._language}")
+            self.logger.info(
+                f"Initialisiere Rechtschreibprüfung für Sprache: {self._language}"
+            )
 
             # Sprachcode anpassen
             lang_code = self._language
@@ -109,22 +119,25 @@ class SpellGrammarChecker:
             else:
                 lang_code = "en"  # Fallback
 
-            self._spell_checker = SpellChecker(language=lang_code)
-            print("Rechtschreibprüfung erfolgreich initialisiert")
+            self._spell_checker = SC(language=lang_code)
+            self.logger.info("Rechtschreibprüfung erfolgreich initialisiert")
         except Exception as e:
-            print(f"Fehler beim Initialisieren der Rechtschreibprüfung: {e}")
+            self.logger.error(
+                f"Fehler beim Initialisieren der Rechtschreibprüfung: {e}"
+            )
             self._enabled = False
 
     def _initialize_custom_dictionary(self) -> None:
         """Initialisiert das benutzerdefinierte Wörterbuch."""
         try:
-            print("Initialisiere benutzerdefiniertes Wörterbuch...")
+            self.logger.info("Initialisiere benutzerdefiniertes Wörterbuch...")
             self._custom_dictionary = get_custom_dictionary()
-            print(
+
+            self.logger.info(
                 f"Benutzerdefiniertes Wörterbuch geladen: {self._custom_dictionary.get_word_count()} Wörter"
             )
         except Exception as e:
-            print(
+            self.logger.error(
                 f"Fehler beim Initialisieren des benutzerdefinierten Wörterbuchs: {e}"
             )
             self._custom_dictionary = None
@@ -214,26 +227,26 @@ class SpellGrammarChecker:
                             or self._max_words == 0
                         ):
                             if self._custom_dictionary.add_word(word):
-                                print(
+                                self.logger.info(
                                     f"Wort '{word}' automatisch zum Wörterbuch hinzugefügt"
                                 )
                         else:
-                            print(
+                            self.logger.warning(
                                 f"Wörterbuch ist voll ({self._max_words} Wörter), kann '{word}' nicht hinzufügen"
                             )
 
             # Ergebnis ausgeben
             if corrections_made and corrected_text != text:
-                print("Korrekturen angewendet:")
+                self.logger.info("Korrekturen angewendet:")
                 for correction in corrections_made:
-                    print(f"  - {correction}")
-                print(f"  Vorher: {text}")
-                print(f"  Nachher: {corrected_text}")
+                    self.logger.info(f"  - {correction}")
+                self.logger.info(f"  Vorher: {text}")
+                self.logger.info(f"  Nachher: {corrected_text}")
 
             return corrected_text
 
         except Exception as e:
-            print(f"Fehler bei der Rechtschreibprüfung: {e}")
+            self.logger.error(f"Fehler bei der Rechtschreibprüfung: {e}")
             return text
 
     def _is_similar_word(self, word1: str, word2: str) -> bool:
@@ -253,21 +266,21 @@ class SpellGrammarChecker:
 
     def _print_suggestions(self, text: str, misspelled: set[str]) -> None:
         """Zeigt Korrekturvorschläge an."""
-        print(f"\nRechtschreibprüfung für: '{text}'")
-        print("=" * 50)
+        self.logger.info(f"\nRechtschreibprüfung für: '{text}'")
+        self.logger.info("=" * 50)
 
         for i, word in enumerate(misspelled, 1):
             if self._spell_checker:
                 candidates = self._spell_checker.candidates(word)
-                print(f"{i}. Fehler: '{word}'")
+                self.logger.info(f"{i}. Fehler: '{word}'")
 
                 if candidates:
                     suggestions = list(candidates)[:3]  # Top 3
                     suggestions_str = ", ".join([f"'{s}'" for s in suggestions])
-                    print(f"   Vorschläge: {suggestions_str}")
+                    self.logger.info(f"   Vorschläge: {suggestions_str}")
                 else:
-                    print("   Keine Vorschläge gefunden")
-                print()
+                    self.logger.info("   Keine Vorschläge gefunden")
+                self.logger.info("")
 
     def get_suggestions(self, text: str) -> list[dict[str, Any]]:
         """
@@ -308,7 +321,7 @@ class SpellGrammarChecker:
             return suggestions
 
         except Exception as e:
-            print(f"Fehler beim Abrufen der Vorschläge: {e}")
+            self.logger.error(f"Fehler beim Abrufen der Vorschläge: {e}")
             return []
 
     def is_enabled(self) -> bool:
@@ -330,7 +343,7 @@ class SpellGrammarChecker:
             True wenn erfolgreich, False bei Fehlern
         """
         if not self.is_custom_dictionary_enabled():
-            print("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
+            self.logger.warning("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
             return False
 
         if self._custom_dictionary:
@@ -348,7 +361,7 @@ class SpellGrammarChecker:
             True wenn erfolgreich, False bei Fehlern
         """
         if not self.is_custom_dictionary_enabled():
-            print("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
+            self.logger.warning("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
             return False
 
         if self._custom_dictionary:
@@ -391,7 +404,7 @@ class SpellGrammarChecker:
             True wenn erfolgreich, False bei Fehlern
         """
         if not self.is_custom_dictionary_enabled():
-            print("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
+            self.logger.warning("Benutzerdefiniertes Wörterbuch ist nicht aktiviert")
             return False
 
         if self._custom_dictionary:
@@ -403,9 +416,9 @@ class SpellGrammarChecker:
         if self._spell_checker:
             try:
                 # PySpellChecker braucht kein explizites Schließen
-                print("SpellChecker geschlossen")
+                self.logger.info("SpellChecker geschlossen")
             except Exception as e:
-                print(f"Fehler beim Schließen des SpellCheckers: {e}")
+                self.logger.error(f"Fehler beim Schließen des SpellCheckers: {e}")
             finally:
                 self._spell_checker = None
 
@@ -415,14 +428,14 @@ class SpellGrammarChecker:
 
 
 # Globale Instanz für einfache Nutzung
-_spell_checker: SpellGrammarChecker | None = None
+_spell_checker: SpellChecker | None = None
 
 
-def get_spell_checker() -> SpellGrammarChecker:
+def get_spell_checker() -> SpellChecker:
     """Gibt die globale SpellGrammarChecker-Instanz zurück."""
     global _spell_checker
     if _spell_checker is None:
-        _spell_checker = SpellGrammarChecker()
+        _spell_checker = SpellChecker()
     return _spell_checker
 
 

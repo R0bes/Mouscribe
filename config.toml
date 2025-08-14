@@ -29,6 +29,16 @@ sample_rate = 16000
 channels = 1
 chunk_size = 1024
 format = "int16"
+# Audio-Gerät ID (leer lassen für automatische Auswahl)
+device = 1
+# Bevorzugter Gerätename (z.B. "USB Microphone")
+device_name = ""
+# Automatisch bestes Gerät auswählen
+auto_select_device = true
+# Gerät beim Start testen
+test_device_on_startup = true
+# Bei Fehler zu Standard-Gerät wechseln
+fallback_to_default = true
 
 # STT-Einstellungen
 [stt]

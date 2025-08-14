@@ -11,13 +11,17 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from .logger import get_logger
+
 try:
     import requests
 
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
-    print("Warnung: requests nicht verfügbar. Auto-Updater deaktiviert.")
+    get_logger(__name__).warning(
+        "Warnung: requests nicht verfügbar. Auto-Updater deaktiviert."
+    )
 
 from . import config
 
@@ -64,6 +68,8 @@ class AutoUpdater:
     """
 
     def __init__(self) -> None:
+        self.logger = logging.getLogger(__name__)
+
         self._enabled = (
             getattr(config, "auto_update_enabled", False) and REQUESTS_AVAILABLE
         )
@@ -88,7 +94,7 @@ class AutoUpdater:
             target=self._update_check_loop, daemon=True, name="Mauscribe-Updater"
         )
         self._update_thread.start()
-        print("Auto-Updater Thread gestartet")
+        self.logger.info("Auto-Updater Thread gestartet")
 
     def _update_check_loop(self) -> None:
         """Hauptschleife für Update-Checks."""
@@ -104,7 +110,7 @@ class AutoUpdater:
                 self._check_for_updates_silent()
 
             except Exception as e:
-                print(f"Fehler im Update-Check-Thread: {e}")
+                self.logger.error(f"Fehler im Update-Check-Thread: {e}")
                 time.sleep(60)  # Kurze Pause bei Fehlern
 
     def _check_for_updates_silent(self) -> None:
@@ -112,11 +118,11 @@ class AutoUpdater:
         try:
             update_info = self._fetch_latest_release()
             if update_info and self._is_newer_version(update_info.version):
-                print(f"Neues Update verfügbar: {update_info.version}")
+                self.logger.info(f"Neues Update verfügbar: {update_info.version}")
                 # Hier könnte eine Benachrichtigung gesendet werden
 
         except Exception as e:
-            print(f"Stiller Update-Check fehlgeschlagen: {e}")
+            self.logger.error(f"Stiller Update-Check fehlgeschlagen: {e}")
 
     def check_for_updates(self, force: bool = False) -> UpdateInfo | None:
         """
@@ -129,31 +135,35 @@ class AutoUpdater:
             UpdateInfo wenn Update verfügbar, sonst None
         """
         if not self._enabled:
-            print("Auto-Updater ist deaktiviert")
+            self.logger.info("Auto-Updater ist deaktiviert")
             return None
 
         if not force and time.time() - self._last_check < self._check_interval:
             remaining = self._check_interval - (time.time() - self._last_check)
-            print(f"Update-Check erst in {int(remaining / 60)} Minuten verfügbar")
+            self.logger.info(
+                f"Update-Check erst in {int(remaining / 60)} Minuten verfügbar"
+            )
             return None
 
         try:
             self._is_checking = True
-            print("Prüfe auf Updates...")
+            self.logger.info("Prüfe auf Updates...")
 
             update_info = self._fetch_latest_release()
             self._last_check = time.time()
 
             if update_info and self._is_newer_version(update_info.version):
-                print(f"✅ Update verfügbar: {update_info.version}")
-                print(f"📝 Release Notes: {update_info.release_notes[:100]}...")
+                self.logger.info(f"✅ Update verfügbar: {update_info.version}")
+                self.logger.info(
+                    f"📝 Release Notes: {update_info.release_notes[:100]}..."
+                )
                 return update_info
             else:
-                print("✅ Keine Updates verfügbar")
+                self.logger.info("✅ Keine Updates verfügbar")
                 return None
 
         except Exception as e:
-            print(f"❌ Update-Check fehlgeschlagen: {e}")
+            self.logger.error(f"❌ Update-Check fehlgeschlagen: {e}")
             return None
         finally:
             self._is_checking = False
@@ -180,7 +190,7 @@ class AutoUpdater:
                     break
 
             if not download_url:
-                print("Keine passende Download-Datei gefunden")
+                self.logger.warning("Keine passende Download-Datei gefunden")
                 return None
 
             update_info = UpdateInfo(
@@ -193,7 +203,7 @@ class AutoUpdater:
             return update_info
 
         except Exception as e:
-            print(f"Fehler beim Update-Check: {e}")
+            self.logger.error(f"Fehler beim Update-Check: {e}")
             return None
 
     def _is_newer_version(self, new_version: str) -> bool:
@@ -230,7 +240,7 @@ class AutoUpdater:
             True wenn Download erfolgreich
         """
         try:
-            print(f"Lade Update {update_info.version} herunter...")
+            self.logger.info(f"Lade Update {update_info.version} herunter...")
 
             # Temporäres Verzeichnis erstellen
             temp_dir = Path(tempfile.mkdtemp(prefix="mauscribe_update_"))
@@ -253,12 +263,12 @@ class AutoUpdater:
                             progress = (downloaded / total_size) * 100
                             progress_callback(progress)
 
-            print(f"✅ Download abgeschlossen: {download_path}")
+            self.logger.info(f"✅ Download abgeschlossen: {download_path}")
             update_info.download_path = download_path
             return True
 
         except Exception as e:
-            print(f"❌ Download fehlgeschlagen: {e}")
+            self.logger.error(f"❌ Download fehlgeschlagen: {e}")
             return False
 
     def install_update(self, update_info: UpdateInfo) -> bool:
@@ -272,12 +282,12 @@ class AutoUpdater:
             True wenn Installation erfolgreich
         """
         if not hasattr(update_info, "download_path"):
-            print("❌ Kein Download-Pfad verfügbar")
+            self.logger.error("❌ Kein Download-Pfad verfügbar")
             return False
 
         backup_path = None
         try:
-            print(f"Installiere Update {update_info.version}...")
+            self.logger.info(f"Installiere Update {update_info.version}...")
 
             # Backup des aktuellen Programms erstellen
             backup_path = self._create_backup()
@@ -290,18 +300,18 @@ class AutoUpdater:
                 # Direkte .exe Installation
                 shutil.copy2(update_info.download_path, current_exe)
             else:
-                print("❌ Kein Download-Pfad verfügbar")
+                self.logger.error("❌ Kein Download-Pfad verfügbar")
                 return False
 
-            print("✅ Update erfolgreich installiert!")
-            print("Das Programm wird neu gestartet...")
+            self.logger.info("✅ Update erfolgreich installiert!")
+            self.logger.info("Das Programm wird neu gestartet...")
 
             # Neustart vorbereiten
             self._schedule_restart()
             return True
 
         except Exception as e:
-            print(f"❌ Installation fehlgeschlagen: {e}")
+            self.logger.error(f"❌ Installation fehlgeschlagen: {e}")
             if backup_path:
                 self._rollback_update(backup_path)
             return False
@@ -314,7 +324,7 @@ class AutoUpdater:
 
         backup_path = backup_dir / f"mauscribe_backup_{self._current_version}.exe"
         shutil.copy2(current_exe, backup_path)
-        print(f"Backup erstellt: {backup_path}")
+        self.logger.info(f"Backup erstellt: {backup_path}")
         return backup_path
 
     def _install_from_zip(self, zip_path: Path, install_dir: Path) -> None:
@@ -332,12 +342,12 @@ class AutoUpdater:
     def _rollback_update(self, backup_path: Path) -> None:
         """Rollback bei fehlgeschlagener Installation."""
         try:
-            print("Führe Rollback durch...")
+            self.logger.info("Führe Rollback durch...")
             current_exe = Path(sys.executable)
             shutil.copy2(backup_path, current_exe)
-            print("✅ Rollback erfolgreich")
+            self.logger.info("✅ Rollback erfolgreich")
         except Exception as e:
-            print(f"❌ Rollback fehlgeschlagen: {e}")
+            self.logger.error(f"❌ Rollback fehlgeschlagen: {e}")
 
     def _schedule_restart(self) -> None:
         """Plant einen Neustart des Programms."""
@@ -357,8 +367,8 @@ class AutoUpdater:
             subprocess.Popen([str(restart_script)], shell=True)
 
         except Exception as e:
-            print(f"Fehler beim Neustart: {e}")
-            print("Bitte starten Sie das Programm manuell neu.")
+            self.logger.error(f"Fehler beim Neustart: {e}")
+            self.logger.warning("Bitte starten Sie das Programm manuell neu.")
 
     def get_status(self) -> dict[str, Any]:
         """Gibt den aktuellen Status des Updaters zurück."""
@@ -376,7 +386,7 @@ class AutoUpdater:
         self._stop_event.set()
         if self._update_thread and self._update_thread.is_alive():
             self._update_thread.join(timeout=5)
-        print("Auto-Updater gestoppt")
+        self.logger.info("Auto-Updater gestoppt")
 
 
 # Globale Instanz

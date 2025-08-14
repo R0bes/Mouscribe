@@ -9,7 +9,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from typing import List, Optional
 
-from .custom_dictionary import CustomDictionary, get_custom_dictionary
+from .custom_dictionary import CustomDict, get_custom_dictionary
 
 
 class DictionaryGUI:
