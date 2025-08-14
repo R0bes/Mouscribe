@@ -61,9 +61,7 @@ class AutoUpdater:
     def __init__(self) -> None:
         self.logger = get_logger(self.__class__.__name__)
 
-        self._enabled = (
-            getattr(config, "auto_update_enabled", False)
-        )
+        self._enabled = getattr(config, "auto_update_enabled", False)
         self._check_interval = (
             getattr(config, "auto_update_check_interval", None) or UPDATE_CHECK_INTERVAL
         )
