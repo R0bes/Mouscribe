@@ -17,6 +17,8 @@ help:
 	@echo "  clean         - Build-Dateien bereinigen"
 	@echo "  commit        - Aenderungen committen (mit Checks)"
 	@echo "  push          - Aenderungen pushen"
+	@echo "  pr            - Pull Request erstellen"
+	@echo "  pr-interactive- Pull Request interaktiv erstellen"
 	@echo "  workflow      - Kompletter Workflow"
 	@echo "  all           - Lint und Tests ausfuehren"
 	@echo "  pre-commit    - Code-Qualitaets-Checks ausfuehren"
@@ -109,7 +111,7 @@ else
 	fi
 endif
 
-stage: 
+stage:
 	@echo "Staging changes..."
 	git add .
 	@$(MAKE) commit $(filter-out $@,$(MAKECMDGOALS))
@@ -119,6 +121,28 @@ stage:
 push:
 	@echo "Pushing changes..."
 	git push
+
+# Pull Request erstellen
+pr:
+	@echo "Creating pull request..."
+ifeq ($(OS),Windows_NT)
+	@if "$(filter-out $@,$(MAKECMDGOALS))"=="" ( \
+		set /p title="PR title: " && set /p body="PR description: " && gh pr create --title "!title!" --body "!body!" \
+	) else ( \
+		gh pr create --title "$(filter-out $@,$(MAKECMDGOALS))" \
+	)
+else
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		read -p "PR title: " title; read -p "PR description: " body; gh pr create --title "$$title" --body "$$body"; \
+	else \
+		gh pr create --title "$(filter-out $@,$(MAKECMDGOALS))"; \
+	fi
+endif
+
+# Pull Request mit interaktiver Eingabe erstellen
+pr-interactive:
+	@echo "Creating pull request interactively..."
+	gh pr create --interactive
 
 # Workflow: Alles committen und pushen
 workflow: format lint test coverage
