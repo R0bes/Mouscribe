@@ -7,13 +7,14 @@ import sys
 import tempfile
 import threading
 import time
-import requests
 import zipfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .logger import get_logger
+import requests
+
 from . import config
+from .logger import get_logger
 
 # Konfiguration
 GITHUB_REPO = "R0bes/Mauscribe"  # GitHub-Repository für Mauscribe
@@ -61,7 +62,7 @@ class AutoUpdater:
         self.logger = get_logger(self.__class__.__name__)
 
         self._enabled = (
-            getattr(config, "auto_update_enabled", False) and REQUESTS_AVAILABLE
+            getattr(config, "auto_update_enabled", False)
         )
         self._check_interval = (
             getattr(config, "auto_update_check_interval", None) or UPDATE_CHECK_INTERVAL
