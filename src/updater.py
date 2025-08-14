@@ -7,22 +7,12 @@ import sys
 import tempfile
 import threading
 import time
+import requests
 import zipfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from .logger import get_logger
-
-try:
-    import requests
-
-    REQUESTS_AVAILABLE = True
-except ImportError:
-    REQUESTS_AVAILABLE = False
-    get_logger(__name__).warning(
-        "Warnung: requests nicht verfügbar. Auto-Updater deaktiviert."
-    )
-
 from . import config
 
 # Konfiguration
