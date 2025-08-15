@@ -318,10 +318,9 @@ class PipelineMonitor:
         
         # Show direct pipeline link before starting monitoring
         pipeline_url = f"https://github.com/{self.repo_owner}/{self.repo_name}/actions"
-        print(f"🔗 Pipeline: {pipeline_url}\n")
+        print(f"\n🔗 Pipeline: {pipeline_url}\n")
 
         # Show initial detailed status
-        print("🔍 Lade initialen Pipeline-Status...")
         workflow_runs = self.get_workflow_runs(current_branch, last_commit_full)
         if workflow_runs:
             self._show_detailed_pipeline_status(workflow_runs[0])
@@ -459,7 +458,7 @@ class PipelineMonitor:
             return
 
         print("\n" + "=" * 60)
-        print("📊 DETAILLIERTER PIPELINE-STATUS")
+        print(f"📊 DETAILLIERTER PIPELINE-STATUS {workflow_name}")
         print("=" * 60)
         
         # Workflow info
@@ -467,7 +466,6 @@ class PipelineMonitor:
         created_at = workflow_run.get('created_at')
         updated_at = workflow_run.get('updated_at')
         
-        print(f"🏗️  Workflow: {workflow_name}")
         if created_at:
             try:
                 created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
