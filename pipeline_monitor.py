@@ -232,9 +232,10 @@ class PipelineMonitor:
         if not logs:
             return "No logs available"
 
+        # Look for specific error patterns first
         for line in logs:
             l = line.lower()
-            # Python-specific
+            # Python-specific errors
             if "syntaxerror:" in l:
                 return f"Syntax Error: {line.strip()}"
             if "importerror:" in l:
@@ -247,23 +248,32 @@ class PipelineMonitor:
                 return f"Type Error: {line.strip()}"
             if "nameerror:" in l:
                 return f"Name Error: {line.strip()}"
+            if "library stubs not installed" in l:
+                return f"Missing Type Stubs: {line.strip()}"
+            if "import-untyped" in l:
+                return f"Import Type Issue: {line.strip()}"
 
-            # General
+            # General errors
             if "traceback" in l:
                 return f"Traceback: {line.strip()}"
             if "exception" in l:
                 return f"Exception: {line.strip()}"
-            if "error" in l:
+            if "error:" in l:
                 return f"Error: {line.strip()}"
-            if "failed" in l or "failure" in l:
+            if "failed:" in l or "failure:" in l:
                 return f"Failed: {line.strip()}"
             if "returned exit code" in l or "exit code" in l:
                 return f"Process Failed: {line.strip()}"
 
-        # Fallback: first non-empty line
+        # Fallback: show first few non-empty lines for context
+        context_lines = []
         for line in logs:
-            if line.strip():
-                return f"Log Entry: {line.strip()}"
+            if line.strip() and len(context_lines) < 3:
+                context_lines.append(line.strip())
+        
+        if context_lines:
+            return f"Context: {' | '.join(context_lines)}"
+        
         return "Unknown error occurred"
 
     # ---------------------------
@@ -422,28 +432,37 @@ class PipelineMonitor:
                     
                     # Try to get logs via API and show error summary
                     if job_id:
-                        logs = self.get_job_logs_by_id(job_id, max_lines=100)
+                        logs = self.get_job_logs_by_id(job_id, max_lines=200)
                         if logs:
                             # Extract and show error summary
                             error_summary = self.extract_error_summary(logs)
                             print(f"   Error: {error_summary}")
                             
-                            # Show key error lines (last 10 relevant lines)
+                            # Show key error lines (more comprehensive)
                             error_lines = []
-                            for line in logs[-20:]:  # Check last 20 lines
+                            for line in logs[-50:]:  # Check last 50 lines for more context
                                 line_lower = line.lower()
                                 if any(keyword in line_lower for keyword in [
                                     "error:", "failed:", "exception:", "traceback:",
                                     "syntax error", "import error", "type error",
-                                    "flake8", "mypy", "black", "isort"
+                                    "flake8", "mypy", "black", "isort", "library stubs",
+                                    "types-requests", "import-untyped"
                                 ]):
                                     error_lines.append(line.strip())
                             
                             if error_lines:
-                                print(f"   Key errors:")
-                                for line in error_lines[-5:]:  # Show last 5 error lines
-                                    if len(line) > 80:
-                                        line = line[:77] + "..."
+                                print(f"   Key errors ({len(error_lines)} found):")
+                                # Show more error lines for better debugging
+                                for line in error_lines[-15:]:  # Show last 15 error lines
+                                    if len(line) > 100:
+                                        line = line[:97] + "..."
+                                    print(f"     {line}")
+                            else:
+                                # If no specific error lines found, show last 10 lines for context
+                                print(f"   Last 10 log lines for context:")
+                                for line in logs[-10:]:
+                                    if len(line) > 100:
+                                        line = line[:97] + "..."
                                     print(f"     {line}")
                         else:
                             print(f"   ⚠️  Logs not available via API")
