@@ -297,7 +297,25 @@ endif
 .PHONY: push
 push:
 	@echo 📤 Pushe Änderungen zum Remote-Repository...
-	@git push && echo ✅ Push erfolgreich abgeschlossen!
+	@echo 🔍 Git Push wird ausgeführt...
+	@git push
+	@echo ✅ Push erfolgreich abgeschlossen!
+
+.PHONY: monitor
+monitor:
+	@echo 🔍 Pipeline-Monitor startet...
+	@python pipeline_monitor.py
+
+.PHONY: push-and-monitor
+push-and-monitor: push
+	@echo 
+	@echo 🔍 Pipeline-Monitor startet in 3 Sekunden...
+ifeq ($(OS),Windows_NT)
+	@timeout /t 3 /nobreak >nul
+else
+	@sleep 3
+endif
+	@$(MAKE) monitor
 
 .PHONY: git
 git: commit push

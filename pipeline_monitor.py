@@ -318,10 +318,10 @@ class PipelineMonitor:
         
         # Show direct pipeline link before starting monitoring
         pipeline_url = f"https://github.com/{self.repo_owner}/{self.repo_name}/actions"
-        print(f"\n🔗 Pipeline: {pipeline_url}\n")
+        print(f"\n[LINK] Pipeline: {pipeline_url}\n")
 
         # Show initial detailed status
-        print("🔍 Suche nach Pipeline-Run für aktuellen Commit...")
+        print("[INFO] Suche nach Pipeline-Run für aktuellen Commit...")
         workflow_runs = self.get_workflow_runs(current_branch, last_commit_full)
         if workflow_runs:
             print(f"✅ Pipeline-Run für Commit {last_commit_short} gefunden!")
@@ -504,7 +504,7 @@ class PipelineMonitor:
             print(f"   ❌ Fehlgeschlagen: {len(failed_jobs)}")
         
         # Show detailed job status
-        print(f"\n🔍 Job-Details:")
+        print(f"\n[INFO] Job-Details:")
         for i, job in enumerate(jobs, 1):
             name = job.get('name', 'Unknown Job')
             status = job.get('status', 'unknown')
