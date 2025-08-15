@@ -29,20 +29,19 @@ help:
 	@echo     clean        - 🧹 Räumt temporäre Dateien auf
 	@echo 
 	@echo 📝 Git Commands:
-	@echo     commit       - 💾 Git commit mit Pre-Commit Checks
-	@echo     commit MSG   - 💾 Git commit mit Nachricht + Pre-Commit
-	@echo     commit-quick - 🚀 Schneller Commit ohne Checks
-	@echo     push         - 📤 Git push zum Remote-Repository
-	@echo     commit-push  - 🚀 Commit und Push in einem Schritt
+	@echo     commit MSG="message"       - 💾 Git commit mit Nachricht + Pre-Commit
+	@echo     fcommit MSG="message"      - 🚀 Schneller Commit ohne Checks
+	@echo     push                        - 📤 Git push zum Remote-Repository
+	@echo     git MSG="message"          - 🚀 Commit und Push in einem Schritt
 	@echo 
 	@echo 🔒 Pre-Commit Checks:
 	@echo     pre-commit   - 🔒 Führt Tests und Linting aus
 	@echo     lint-check   - 🔍 Prüft Code-Format und Qualität
 	@echo 
 	@echo 💡 Beispiele:
-	@echo     make commit           - Commit mit Pre-Commit Checks
-	@echo     make commit 'Fix bug' - Commit mit Nachricht + Checks
-	@echo     make commit-quick     - Schneller Commit ohne Checks
+	@echo     make commit MSG="Fix bug"           - Commit mit Nachricht + Pre-Commit Checks
+	@echo     make fcommit MSG="Quick fix"        - Schneller Commit ohne Checks
+	@echo     make git MSG="Update code"          - Commit und Push in einem Schritt
 	@echo 
 	@echo 🧪 Testing:
 	@echo     test-all     - 🧪 Alle Tests ausführen
@@ -178,7 +177,7 @@ test-module: test-install
 	@echo ✅ Modul-Test abgeschlossen!
 
 # 📊 Show test coverage
-coverage-show: test-coverage
+coverage: test-coverage
 	@echo 📊 Öffne Coverage-Report...
 	@if command -v open >/dev/null 2>&1; then \
 		open htmlcov/index.html; \
@@ -211,7 +210,7 @@ test-help:
 	@echo 
 	@echo 🧹 Wartung:
 	@echo   test-clean      - 🧹 Test-Artefakte aufräumen
-	@echo   coverage-show   - 📊 Coverage-Report im Browser öffnen
+	@echo   coverage        - 📊 Coverage-Report im Browser öffnen
 	@echo 
 	@echo 💡 Beispiel: make test-module MODULE=server.api
 
@@ -224,16 +223,16 @@ commit: pre-commit
 	@echo 💾 Committing changes...
 	@git add .
 ifeq ($(OS),Windows_NT)
-	@if "$(filter-out $@,$(MAKECMDGOALS))"=="" ( \
+	@if "$(MSG)"=="" ( \
 		set /p message="Commit message: " && git commit -m "!message!" --no-verify \
 	) else ( \
-		git commit -m "$(filter-out $@,$(MAKECMDGOALS))" --no-verify \
+		git commit -m "$(MSG)" --no-verify \
 	)
 else
-	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+	@if [ -z "$(MSG)" ]; then \
 		read -p "Commit message: " message; git commit -m "$$message" --no-verify; \
 	else \
-		git commit -m "$(filter-out $@,$(MAKECMDGOALS))" --no-verify; \
+		git commit -m "$(MSG)" --no-verify; \
 	fi
 endif
 	@echo ✅ Commit erfolgreich!
@@ -263,9 +262,9 @@ lint:
 	mypy src/ --ignore-missing-imports || echo ⚠️  Typ-Check mit Warnungen abgeschlossen
 	@echo ✅ Linting-Checks abgeschlossen!
 
-# 🚀 Quick Commit (ohne Pre-Commit Checks)
-.PHONY: commit-quick
-commit-quick:
+# 🚀 Fast Commit (ohne Pre-Commit Checks)
+.PHONY: fcommit
+fcommit:
 	@echo 🚀 Schneller Commit ohne Pre-Commit Checks...
 	@echo 📝 Git Status:
 	@git status --short
@@ -273,16 +272,16 @@ commit-quick:
 	@echo 💾 Committing changes...
 	@git add .
 ifeq ($(OS),Windows_NT)
-	@if "$(filter-out $@,$(MAKECMDGOALS))"=="" ( \
+	@if "$(MSG)"=="" ( \
 		set /p message="Commit message: " && git commit -m "!message!" --no-verify \
 	) else ( \
-		git commit -m "$(filter-out $@,$(MAKECMDGOALS))" --no-verify \
+		git commit -m "$(MSG)" --no-verify \
 	)
 else
-	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+	@if [ -z "$(MSG)" ]; then \
 		read -p "Commit message: " message; git commit -m "$$message" --no-verify; \
 	else \
-		git commit -m "$(filter-out $@,$(MAKECMDGOALS))" --no-verify; \
+		git commit -m "$(MSG)" --no-verify; \
 	fi
 endif
 	@echo ✅ Schneller Commit erfolgreich!
@@ -293,10 +292,6 @@ push:
 	@git push
 	@echo ✅ Push erfolgreich abgeschlossen!
 
-.PHONY: commit-push
-commit-push: commit push
+.PHONY: git
+git: commit push
 	@echo 🎉 Commit und Push erfolgreich abgeschlossen! 🚀
-
-# 🎯 Alias für einfache Ausführung
-test: test-all
-tests: test-all
