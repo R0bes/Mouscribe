@@ -520,7 +520,7 @@ def main():
         "--open", action="store_true", help="Open pipeline status in browser"
     )
     parser.add_argument(
-        "--timeout", type=int, default=60, help="Maximum wait time in seconds"
+        "--timeout", type=int, default=120, help="Maximum wait time in seconds"
     )
 
     args = parser.parse_args()
