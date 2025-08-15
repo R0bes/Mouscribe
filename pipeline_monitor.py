@@ -291,12 +291,26 @@ class PipelineMonitor:
 
         print(f"Branch: {current_branch}")
         print(f"Commit: {last_commit_short}")
-        print(f"Max wait time: {max_wait_time} seconds\n")
+        print(f"Initial timeout: 60 seconds, extended timeout: {max_wait_time} seconds\n")
 
         start_time = time.time()
+        pipeline_started = False
         last_status = None
 
-        while time.time() - start_time < max_wait_time:
+        while True:
+            # Calculate current timeout
+            elapsed = time.time() - start_time
+            if not pipeline_started:
+                current_timeout = 60  # Initial timeout
+                if elapsed >= current_timeout:
+                    print(f"\n⏰ Initial timeout after {current_timeout} seconds - no pipeline activity")
+                    return False
+            else:
+                current_timeout = max_wait_time  # Extended timeout
+                if elapsed >= current_timeout:
+                    print(f"\n⏰ Extended timeout after {current_timeout} seconds")
+                    return False
+
             # Try to get workflow runs for the specific commit first
             workflow_runs = self.get_workflow_runs(current_branch, last_commit_full)
 
@@ -331,6 +345,9 @@ class PipelineMonitor:
                 elif status == "in_progress":
                     print("🔄 Pipeline is running...")
                     self._show_running_jobs(latest_run)
+                    if not pipeline_started:
+                        pipeline_started = True
+                        print(f"🚀 Pipeline started! Extended timeout to {max_wait_time} seconds")
                 elif status == "queued":
                     print("⏳ Pipeline is queued...")
                 elif status == "waiting":
@@ -339,9 +356,6 @@ class PipelineMonitor:
                 last_status = status
 
             time.sleep(15)  # Check every 15 seconds
-
-        print(f"\n⏰ Timeout after {max_wait_time} seconds")
-        return False
 
     def _show_running_jobs(self, workflow_run: dict) -> None:
         """Show currently running jobs."""
