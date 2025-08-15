@@ -412,13 +412,3 @@ class Config:
     def stt_model(self) -> str:
         """Get STT model size setting."""
         return self._get("stt.model", "medium")
-
-    @property
-    def stt_language(self) -> str:
-        """Get STT language setting."""
-        return self._get("stt.language", "de")
-
-    @property
-    def stt_compute_type(self) -> str:
-        """Get STT compute type setting."""
-        return self._get("stt.compute_type", "float32")

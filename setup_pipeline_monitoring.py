@@ -111,12 +111,12 @@ cd /d "%REPO_ROOT%"
 REM Check if pipeline monitor exists
 if exist "pipeline_monitor.py" (
     echo 🔍 Starting pipeline monitoring...
-
+    
     REM Run the pipeline monitor
     python pipeline_monitor.py
-    set EXIT_CODE=%ERRORLEVEL%
-
-    if %EXIT_CODE% EQU 0 (
+    set exitCode=%ERRORLEVEL%
+    
+    if %exitCode% equ 0 (
         echo ✅ Pipeline monitoring completed successfully
     ) else (
         echo ❌ Pipeline monitoring failed or pipelines failed
@@ -129,18 +129,19 @@ if exist "pipeline_monitor.py" (
 echo 🏁 Post-push hook completed
 """
 
-        # Write both hook files
+        # Write PowerShell hook
         with open(hook_script, "w", encoding="utf-8") as f:
             f.write(hook_content)
 
+        # Write batch hook
         with open(batch_hook, "w", encoding="utf-8") as f:
             f.write(batch_content)
 
         print(f"✅ Created PowerShell hook: {hook_script}")
-        print(f"✅ Created Batch hook: {batch_hook}")
+        print(f"✅ Created batch hook: {batch_hook}")
 
     else:
-        # Unix/Linux/macOS
+        # Unix/Linux/macOS hook
         hook_script = hooks_dir / "post-push"
         hook_content = """#!/bin/bash
 # Post-push hook to automatically monitor CI/CD pipelines
@@ -149,18 +150,18 @@ echo 🏁 Post-push hook completed
 echo "🚀 Post-push hook triggered - Monitoring CI/CD pipelines..."
 
 # Get the current directory (repository root)
-REPO_ROOT="$(git rev-parse --show-toplevel)"
+REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT"
 
 # Check if pipeline monitor exists
 if [ -f "pipeline_monitor.py" ]; then
     echo "🔍 Starting pipeline monitoring..."
-
+    
     # Run the pipeline monitor
-    python pipeline_monitor.py
-
-    # Check the exit code
-    if [ $? -eq 0 ]; then
+    python3 pipeline_monitor.py
+    exit_code=$?
+    
+    if [ $exit_code -eq 0 ]; then
         echo "✅ Pipeline monitoring completed successfully"
     else
         echo "❌ Pipeline monitoring failed or pipelines failed"
@@ -173,101 +174,105 @@ fi
 echo "🏁 Post-push hook completed"
 """
 
+        # Write Unix hook
         with open(hook_script, "w", encoding="utf-8") as f:
             f.write(hook_content)
 
-        # Make the hook executable
+        # Make it executable
         os.chmod(hook_script, 0o755)
-        print(f"✅ Created executable hook: {hook_script}")
 
-    # Create a pre-push hook that ensures the post-push hook runs
-    pre_push_hook = hooks_dir / "pre-push"
-    pre_push_content = """#!/bin/bash
-# Pre-push hook to ensure post-push monitoring is set up
+        print(f"✅ Created Unix hook: {hook_script}")
 
-echo "🔍 Pre-push check: Ensuring pipeline monitoring is configured..."
-
-# Check if post-push hook exists
-if [ ! -f ".git/hooks/post-push" ] && [ ! -f ".git/hooks/post-push.ps1" ] && [ ! -f ".git/hooks/post-push.bat" ]; then
-    echo "⚠️  Warning: No post-push hook found for pipeline monitoring"
-    echo "   Run 'python setup_pipeline_monitoring.py' to set up monitoring"
-fi
-
-echo "✅ Pre-push check completed"
-"""
-
-    with open(pre_push_hook, "w", encoding="utf-8") as f:
-        f.write(pre_push_content)
-
-    if not is_windows:
-        os.chmod(pre_push_hook, 0o755)
-
-    print(f"✅ Created pre-push hook: {pre_push_hook}")
-
-    # Create a configuration file for the monitoring
-    config_file = repo_root / ".pipeline-monitor-config"
-    config_content = """# Pipeline Monitor Configuration
-# This file contains configuration for automated pipeline monitoring
-
-[monitoring]
-enabled = true
-max_wait_time = 300
-check_interval = 15
-
-[notifications]
-show_progress = true
-show_job_details = true
-open_browser_on_failure = false
-
-[github]
-token_source = auto
-repo_owner = R0bes
-repo_name = Mouscribe
-"""
-
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write(config_content)
-
-    print(f"✅ Created configuration file: {config_file}")
-
-    # Test the setup
-    print("\n🧪 Testing the setup...")
-
-    try:
-        # Test if we can import the required modules
-        import requests
-
-        print("✅ Required dependencies available")
-    except ImportError:
-        print("⚠️  Warning: 'requests' module not available")
-        print("   Install with: pip install requests")
-
-    # Test git hook detection
-    hook_files = list(hooks_dir.glob("post-push*"))
-    if hook_files:
-        print(f"✅ Git hooks created: {', '.join(f.name for f in hook_files)}")
-    else:
-        print("❌ No git hooks found")
-
-    print("\n🎉 Setup completed successfully!")
-    print("\n📋 What happens now:")
-    print("1. After every 'git push', the pipeline monitor will automatically run")
-    print("2. It will check the status of your CI/CD pipelines")
-    print("3. You'll get real-time feedback on pipeline execution")
-    print("4. Failed pipelines will show detailed error information")
-
-    print("\n🔧 Manual commands:")
-    print("  python pipeline_monitor.py          # Monitor pipelines manually")
-    print("  python pipeline_monitor.py --open   # Open pipeline status in browser")
-
-    print("\n💡 Next steps:")
-    print("1. Make a test commit and push to trigger the monitoring")
-    print("2. Check that the post-push hook runs automatically")
-    print("3. Verify that pipeline status is being monitored")
-
+    # Create pre-commit hook for local validation
+    print("\n🔧 Setting up pre-commit hook for local validation...")
+    
     if is_windows:
-        print("\n⚠️  Note: On Windows, you may need to enable PowerShell execution:")
-        print("   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser")
+        pre_commit_script = hooks_dir / "pre-commit.ps1"
+        pre_commit_content = """# Pre-commit hook for local validation
+# This hook runs before every commit
+
+Write-Host "🔍 Pre-commit hook - Running local validation..." -ForegroundColor Yellow
+
+# Get the current directory (repository root)
+$REPO_ROOT = git rev-parse --show-toplevel
+Set-Location $REPO_ROOT
+
+# Run local CI checks
+try {
+    Write-Host "Running linting..." -ForegroundColor Cyan
+    python -m flake8 src/ tests/ --count --select=E9,F63,F7,F82 --max-line-length=127 --show-source --statistics
+    
+    Write-Host "Running code formatting check..." -ForegroundColor Cyan
+    python -m black --check --line-length=127 src/ tests/
+    
+    Write-Host "Running import sorting check..." -ForegroundColor Cyan
+    python -m isort --check-only src/ tests/
+    
+    Write-Host "Running tests..." -ForegroundColor Cyan
+    python -m pytest tests/ -v --tb=short
+    
+    Write-Host "✅ All pre-commit checks passed!" -ForegroundColor Green
+    exit 0
+    
+} catch {
+    Write-Host "❌ Pre-commit checks failed: $_" -ForegroundColor Red
+    Write-Host "💡 Please fix the issues above before committing" -ForegroundColor Yellow
+    exit 1
+}
+"""
+
+        # Write pre-commit hook
+        with open(pre_commit_script, "w", encoding="utf-8") as f:
+            f.write(pre_commit_content)
+
+        print(f"✅ Created pre-commit hook: {pre_commit_script}")
+
+    else:
+        pre_commit_script = hooks_dir / "pre-commit"
+        pre_commit_content = """#!/bin/bash
+# Pre-commit hook for local validation
+# This hook runs before every commit
+
+echo "🔍 Pre-commit hook - Running local validation..."
+
+# Get the current directory (repository root)
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
+
+# Run local CI checks
+echo "Running linting..."
+python3 -m flake8 src/ tests/ --count --select=E9,F63,F7,F82 --max-line-length=127 --show-source --statistics
+
+echo "Running code formatting check..."
+python3 -m black --check --line-length=127 src/ tests/
+
+echo "Running import sorting check..."
+python3 -m isort --check-only src/ tests/
+
+echo "Running tests..."
+python3 -m pytest tests/ -v --tb=short
+
+echo "✅ All pre-commit checks passed!"
+"""
+
+        # Write pre-commit hook
+        with open(pre_commit_script, "w", encoding="utf-8") as f:
+            f.write(pre_commit_content)
+
+        # Make it executable
+        os.chmod(pre_commit_script, 0o755)
+
+        print(f"✅ Created pre-commit hook: {pre_commit_script}")
+
+    print("\n🎯 Pipeline Monitoring Setup Complete!")
+    print("=" * 50)
+    print("✅ Post-push hook created - Will monitor CI/CD pipelines after push")
+    print("✅ Pre-commit hook created - Will validate code before commit")
+    print("\n💡 Next steps:")
+    print("   1. Make a commit to test the pre-commit hook")
+    print("   2. Push to test the post-push hook")
+    print("   3. Check GitHub Actions for pipeline status")
+    print("\n🔧 Manual monitoring: python pipeline_monitor.py")
 
 
 if __name__ == "__main__":

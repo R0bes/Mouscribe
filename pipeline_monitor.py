@@ -20,6 +20,8 @@ class PipelineMonitor:
         self.base_url = (
             f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}"
         )
+        # Updated workflow name for the unified pipeline
+        self.workflow_name = "CI/CD Pipeline"
 
     def _get_github_token(self) -> Optional[str]:
         """Get GitHub token from environment or git config."""
@@ -98,21 +100,25 @@ class PipelineMonitor:
             url = f"{self.base_url}/actions/runs"
             params = {"branch": branch, "per_page": 10}
 
-            response = requests.get(url, headers=headers, params=params)  # type: ignore
+            response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()
 
-            runs = response.json()["workflow_runs"]
-
-            # Filter runs for the specific commit
-            commit_runs = [run for run in runs if run["head_sha"] == commit_sha]
-            return commit_runs
+            runs = response.json().get("workflow_runs", [])
+            
+            # Filter for our unified CI/CD pipeline
+            filtered_runs = [
+                run for run in runs 
+                if run.get("name") == self.workflow_name
+            ]
+            
+            return filtered_runs
 
         except requests.RequestException as e:
-            print(f"ERROR: Error fetching workflow runs: {e}")
+            print(f"Error fetching workflow runs: {e}")
             return []
 
     def get_workflow_details(self, workflow_id: int) -> Optional[dict]:
-        """Get detailed workflow information including jobs."""
+        """Get detailed information about a specific workflow run."""
         if not self.github_token:
             return None
 
@@ -122,29 +128,18 @@ class PipelineMonitor:
         }
 
         try:
-            # First get the workflow run
             url = f"{self.base_url}/actions/runs/{workflow_id}"
             response = requests.get(url, headers=headers)
             response.raise_for_status()
-            workflow_run = response.json()
-
-            # Then get the jobs using the jobs_url
-            if "jobs_url" in workflow_run:
-                jobs_response = requests.get(workflow_run["jobs_url"], headers=headers)
-                jobs_response.raise_for_status()
-                jobs = jobs_response.json()["jobs"]
-
-                # Add jobs to the workflow run data
-                workflow_run["jobs"] = jobs
-
-            return workflow_run
-        except requests.RequestException:
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Error fetching workflow details: {e}")
             return None
 
-    def get_job_logs(self, workflow_id: int, job_id: int) -> Optional[str]:
-        """Get logs for a specific job."""
+    def get_job_logs(self, workflow_id: int, job_name: str) -> List[str]:
+        """Get logs for a specific job in a workflow run."""
         if not self.github_token:
-            return None
+            return []
 
         headers = {
             "Authorization": f"token {self.github_token}",
@@ -152,283 +147,208 @@ class PipelineMonitor:
         }
 
         try:
-            # Try the jobs logs endpoint first
-            url = f"{self.base_url}/actions/runs/{workflow_id}/jobs/{job_id}/logs"
+            # Get jobs for the workflow
+            url = f"{self.base_url}/actions/runs/{workflow_id}/jobs"
             response = requests.get(url, headers=headers)
+            response.raise_for_status()
 
-            if response.status_code == 200:
-                return response.text
-            elif response.status_code == 404:
-                # Try alternative endpoint
-                url = f"{self.base_url}/actions/jobs/{job_id}/logs"
-                response = requests.get(url, headers=headers)
-                if response.status_code == 200:
-                    return response.text
+            jobs = response.json().get("jobs", [])
+            target_job = None
 
-            # If still not working, return error info
-            print(f"   DEBUG: Logs API returned status {response.status_code}")
-            print(f"   DEBUG: Response headers: {dict(response.headers)}")
+            for job in jobs:
+                if job.get("name") == job_name:
+                    target_job = job
+                    break
 
-            return None
+            if not target_job:
+                return []
+
+            # Get logs for the job
+            logs_url = target_job.get("logs_url")
+            if not logs_url:
+                return []
+
+            response = requests.get(logs_url, headers=headers)
+            response.raise_for_status()
+
+            # Parse logs (GitHub returns logs as plain text)
+            log_lines = response.text.split("\n")
+            return log_lines[-20:]  # Return last 20 lines
+
         except requests.RequestException as e:
-            print(f"   DEBUG: Request error: {e}")
-            return None
+            print(f"Error fetching job logs: {e}")
+            return []
 
-    def _print_pipeline_header(
-        self, current_branch: str, commit_sha: str, max_wait_time: int
-    ) -> None:
-        """Print pipeline monitoring header."""
+    def monitor_pipeline(self, max_wait_time: int = 300) -> bool:
+        """Monitor the CI/CD pipeline for the current branch."""
         print("Mauscribe Pipeline Monitor")
         print("=" * 50)
-        print(f"Branch: {current_branch}")
-        print(f"Commit: {commit_sha[:8]}")
-        print(f"Max wait time: {max_wait_time} seconds")
-        print()
 
-    def monitor_pipelines(self, max_wait_time: int = 300) -> bool:  # noqa: C901
-        """Monitor pipeline execution and provide feedback."""
         current_branch = self.get_current_branch()
-        commit_sha = self.get_last_commit_sha()
+        last_commit = self.get_last_commit_sha()[:8]
 
-        if not commit_sha:
-            print("ERROR: Could not determine commit SHA")
-            return False
-
-        self._print_pipeline_header(current_branch, commit_sha, max_wait_time)
+        print(f"Branch: {current_branch}")
+        print(f"Commit: {last_commit}")
+        print(f"Max wait time: {max_wait_time} seconds")
 
         start_time = time.time()
         last_status = None
 
         while time.time() - start_time < max_wait_time:
-            runs = self.get_workflow_runs(current_branch, commit_sha)
+            workflow_runs = self.get_workflow_runs(current_branch, last_commit)
 
-            if not runs:
-                print("WAITING: Waiting for pipeline to start...")
-                time.sleep(10)
-                continue
+            if not workflow_runs:
+                print("No workflow runs found for current branch/commit")
+                return False
 
-            # Get the most recent run
-            latest_run = runs[0]
-            status = latest_run["status"]
+            latest_run = workflow_runs[0]
+            status = latest_run.get("status", "unknown")
             conclusion = latest_run.get("conclusion")
 
-            # Only print if status changed
+            # Only print status if it changed
             if status != last_status:
-                print(f"STATUS: {status}")
+                print(f"\nSTATUS: {status}")
                 if conclusion:
                     print(f"CONCLUSION: {conclusion}")
-                print()
+
+                if status == "completed":
+                    if conclusion == "success":
+                        print("\n✅ Pipeline succeeded!")
+                        return True
+                    elif conclusion == "failure":
+                        print("\n❌ Pipeline failed!")
+                        self._show_failure_details(latest_run)
+                        return False
+                    elif conclusion == "cancelled":
+                        print("\n⚠️  Pipeline was cancelled")
+                        return False
+                elif status == "in_progress":
+                    print("\nRUNNING: Pipeline is running...")
+                    self._show_running_jobs(latest_run)
+                elif status == "queued":
+                    print("\n⏳ Pipeline is queued...")
+                elif status == "waiting":
+                    print("\n⏳ Pipeline is waiting...")
+
                 last_status = status
-
-            if status == "completed":
-                if conclusion == "success":
-                    print("SUCCESS: Pipeline completed successfully!")
-                    self._show_success_summary(latest_run)
-                    return True
-                elif conclusion == "failure":
-                    print("FAILED: Pipeline failed!")
-                    self._show_failure_details(latest_run)
-                    return False
-                elif conclusion == "cancelled":
-                    print("CANCELLED: Pipeline was cancelled")
-                    return False
-                else:
-                    print(f"WARNING: Pipeline completed with conclusion: {conclusion}")
-                    return False
-
-            elif status == "in_progress":
-                print("RUNNING: Pipeline is running...")
-                self._show_progress(latest_run)
-
-            elif status == "queued":
-                print("QUEUED: Pipeline is queued...")
-
-            elif status == "waiting":
-                print("WAITING: Pipeline is waiting...")
 
             time.sleep(15)  # Check every 15 seconds
 
-        print(f"TIMEOUT: Timeout reached after {max_wait_time} seconds")
-        print("Pipeline may still be running. Check GitHub Actions manually.")
+        print(f"\n⏰ Timeout after {max_wait_time} seconds")
         return False
 
-    def _show_success_summary(self, run: dict):
-        """Show summary of successful pipeline run."""
-        print("\nSUCCESS: Pipeline Success Summary:")
-        print("-" * 30)
-        print(f"SUCCESS: Workflow: {run['name']}")
-        print(
-            f"DURATION: {self._format_duration(run['created_at'], run['updated_at'])}"
-        )
-        print(f"URL: {run['html_url']}")
-
-        # Show job summary
-        if "jobs_url" in run:
-            try:
-                headers = (
-                    {"Authorization": f"token {self.github_token}"}
-                    if self.github_token
-                    else {}
-                )
-                response = requests.get(run["jobs_url"], headers=headers)
-                if response.status_code == 200:
-                    jobs = response.json()["jobs"]
-                    print(f"\nJOBS: Jobs ({len(jobs)}):")
-                    for job in jobs:
-                        status_text = (
-                            "SUCCESS" if job["conclusion"] == "success" else "FAILED"
-                        )
-                        print(f"  {status_text} {job['name']}: {job['conclusion']}")
-            except Exception:
-                pass
-
-    def _show_failure_details(self, run: dict):
-        """Show detailed failure information including job logs."""
-        print("\n❌ Pipeline Failure Details:")
-        print("-" * 30)
-        print(f"🔗 Workflow: {run['name']}")
-        print(f"🔗 URL: {run['html_url']}")
-        print(
-            f"⏱️  Duration: {self._format_duration(run['created_at'], run['updated_at'])}"
-        )
-        print()
-
-        # Get workflow details to see all jobs
-        workflow_details = self.get_workflow_details(run["id"])
-        if not workflow_details:
-            print("WARNING: Could not fetch workflow details")
+    def _show_running_jobs(self, workflow_run: dict) -> None:
+        """Show currently running jobs."""
+        workflow_id = workflow_run.get("id")
+        if not workflow_id:
             return
 
-        print(f"DEBUG: Workflow details keys: {list(workflow_details.keys())}")
+        workflow_details = self.get_workflow_details(workflow_id)
+        if not workflow_details:
+            return
 
         jobs = workflow_details.get("jobs", [])
-        print(f"DEBUG: Found {len(jobs)} jobs")
+        running_jobs = [job for job in jobs if job.get("status") == "in_progress"]
 
-        failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
-        print(f"DEBUG: Found {len(failed_jobs)} failed jobs")
+        for job in running_jobs:
+            print(f"  RUNNING: {job.get('name', 'Unknown Job')}")
 
-        if failed_jobs:
-            print(f"❌ Failed Jobs ({len(failed_jobs)}):")
-            for job in failed_jobs:
-                print(f"  FAILED: {job['name']}")
-                print(f"     Started: {job['started_at']}")
-                print(f"     Completed: {job['completed_at']}")
+    def _show_failure_details(self, workflow_run: dict) -> None:
+        """Show detailed information about pipeline failure."""
+        workflow_id = workflow_run.get("id")
+        if not workflow_id:
+            return
 
-                # Fetch and display job logs
-                print(f"\nLOGS: Job Logs for '{job['name']}':")
-                print("-" * 40)
-                logs = self.get_job_logs(run["id"], job["id"])
-                if logs:
-                    # Show last 20 lines of logs (most relevant for errors)
-                    log_lines = logs.split("\n")
-                    if len(log_lines) > 20:
-                        print("... (showing last 20 lines)")
-                        log_lines = log_lines[-20:]
+        workflow_details = self.get_workflow_details(workflow_id)
+        if not workflow_details:
+            return
 
-                    for line in log_lines:
-                        if line.strip():
-                            print(f"   {line}")
-                else:
-                    print("   WARNING: Could not fetch job logs")
-                print("-" * 40)
-                print()
-        else:
-            print("WARNING: No failed jobs found in workflow details")
-            # Show all jobs for debugging
-            print("\nDEBUG: All jobs in workflow:")
-            for i, job in enumerate(jobs):
-                job_name = job.get("name", "Unknown")
-                job_status = job.get("status", "Unknown")
-                job_conclusion = job.get("conclusion", "Unknown")
-                print(
-                    f"  {i + 1}. {job_name} - Status: {job_status} - Conclusion: {job_conclusion}"
-                )
-
-        print("FAILED: Some pipelines failed. Check the details above.")
-
-    def _show_progress(self, run: dict):
-        """Show progress of running pipeline."""
-        if "jobs_url" in run:
+        print("\n❌ Pipeline Failure Details:")
+        print("-" * 30)
+        print(f"🔗 Workflow: {workflow_details.get('name', 'Unknown')}")
+        print(f"🔗 URL: {workflow_details.get('html_url', 'N/A')}")
+        
+        # Calculate duration
+        created_at = workflow_details.get("created_at")
+        updated_at = workflow_details.get("updated_at")
+        if created_at and updated_at:
             try:
-                headers = (
-                    {"Authorization": f"token {self.github_token}"}
-                    if self.github_token
-                    else {}
-                )
-                response = requests.get(run["jobs_url"], headers=headers)
-                if response.status_code == 200:
-                    jobs = response.json()["jobs"]
-                    running_jobs = [
-                        job for job in jobs if job["status"] == "in_progress"
-                    ]
-                    completed_jobs = [
-                        job for job in jobs if job["status"] == "completed"
-                    ]
-
-                    if running_jobs:
-                        print(
-                            f"  RUNNING: {', '.join(job['name'] for job in running_jobs)}"
-                        )
-                    if completed_jobs:
-                        print(f"  COMPLETED: {len(completed_jobs)}/{len(jobs)} jobs")
-            except Exception:
+                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                updated = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+                duration = updated - created
+                print(f"⏱️  Duration: {duration}")
+            except ValueError:
                 pass
 
-    def _format_duration(self, created_at: str, updated_at: str) -> str:
-        """Format duration between two timestamps."""
-        try:
-            created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-            updated = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
-            duration = updated - created
+        # Show job status
+        jobs = workflow_details.get("jobs", [])
+        failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
 
-            if duration.total_seconds() < 60:
-                return f"{int(duration.total_seconds())}s"
-            elif duration.total_seconds() < 3600:
-                minutes = int(duration.total_seconds() // 60)
-                seconds = int(duration.total_seconds() % 60)
-                return f"{minutes}m {seconds}s"
-            else:
-                hours = int(duration.total_seconds() // 3600)
-                minutes = int((duration.total_seconds() % 3600) // 60)
-                return f"{hours}h {minutes}m"
-        except Exception:
-            return "unknown"
+        if failed_jobs:
+            print(f"\n❌ Failed Jobs ({len(failed_jobs)}):")
+            for job in failed_jobs:
+                job_name = job.get("name", "Unknown")
+                started_at = job.get("started_at", "")
+                completed_at = job.get("completed_at", "")
+                
+                print(f"  FAILED: {job_name}")
+                if started_at:
+                    print(f"     Started: {started_at}")
+                if completed_at:
+                    print(f"     Completed: {completed_at}")
 
-    def open_pipeline_in_browser(self):
+                # Show job logs
+                logs = self.get_job_logs(workflow_id, job_name)
+                if logs:
+                    print(f"\nLOGS: Job Logs for '{job_name}':")
+                    print("-" * 40)
+                    for line in logs:
+                        if line.strip():
+                            print(f"   {line}")
+
+        print("\n💡 Check the GitHub Actions tab for more details")
+
+    def open_pipeline_in_browser(self) -> None:
         """Open the pipeline status in the default browser."""
-        commit_sha = self.get_last_commit_sha()
+        current_branch = self.get_current_branch()
+        workflow_runs = self.get_workflow_runs(current_branch, "")
 
-        if commit_sha:
-            url = f"https://github.com/{self.repo_owner}/{self.repo_name}/actions"
-            print(f"BROWSER: Opening pipeline status in browser: {url}")
+        if not workflow_runs:
+            print("No workflow runs found")
+            return
 
-            try:
-                import webbrowser
+        latest_run = workflow_runs[0]
+        html_url = latest_run.get("html_url")
 
-                webbrowser.open(url)
-            except ImportError:
-                print("Could not open browser automatically")
-                print(f"Please visit: {url}")
+        if html_url:
+            import webbrowser
+            webbrowser.open(html_url)
+            print(f"Opened pipeline status in browser: {html_url}")
+        else:
+            print("Could not determine pipeline URL")
 
 
 def main():
-    """Main function for pipeline monitoring."""
+    """Main entry point."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Monitor Mauscribe CI/CD pipelines")
+    parser.add_argument(
+        "--open", action="store_true", help="Open pipeline status in browser"
+    )
+    parser.add_argument(
+        "--timeout", type=int, default=300, help="Maximum wait time in seconds"
+    )
+
+    args = parser.parse_args()
+
     monitor = PipelineMonitor()
 
-    # Check if we should open in browser
-    if len(sys.argv) > 1 and sys.argv[1] == "--open":
+    if args.open:
         monitor.open_pipeline_in_browser()
-        return
-
-    # Monitor pipelines
-    success = monitor.monitor_pipelines()
-
-    if success:
-        print("\nSUCCESS: All pipelines passed successfully!")
-        sys.exit(0)
     else:
-        print("\nFAILED: Some pipelines failed. Check the details above.")
-        sys.exit(1)
+        success = monitor.monitor_pipeline(args.timeout)
+        sys.exit(0 if success else 1)
 
 
 if __name__ == "__main__":

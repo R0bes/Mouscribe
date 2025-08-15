@@ -378,7 +378,7 @@ class EditItemDialog:
         # Form fields
         # Quality score
         ttk.Label(main_frame, text="Qualitätsbewertung (0-1):").pack(anchor=tk.W, pady=(0, 5))
-        self.quality_var = tk.DoubleVar(value=item_data.get("quality_score", 0.5))
+        self.quality_var = tk.DoubleVar(value=self.item_data.get("quality_score", 0.5))
         quality_scale = ttk.Scale(main_frame, from_=0.0, to=1.0, variable=self.quality_var, orient=tk.HORIZONTAL)
         quality_scale.pack(fill=tk.X, pady=(0, 15))
 
@@ -386,16 +386,16 @@ class EditItemDialog:
         ttk.Label(main_frame, text="Notizen:").pack(anchor=tk.W, pady=(0, 5))
         self.notes_text = tk.Text(main_frame, height=4, wrap=tk.WORD)
         self.notes_text.pack(fill=tk.X, pady=(0, 15))
-        self.notes_text.insert(1.0, item_data.get("notes", ""))
+        self.notes_text.insert(1.0, self.item_data.get("notes", ""))
 
         # Tags
         ttk.Label(main_frame, text="Tags (kommagetrennt):").pack(anchor=tk.W, pady=(0, 5))
-        self.tags_var = tk.StringVar(value=", ".join(item_data.get("tags", [])))
+        self.tags_var = tk.StringVar(value=", ".join(self.item_data.get("tags", [])))
         tags_entry = ttk.Entry(main_frame, textvariable=self.tags_var)
         tags_entry.pack(fill=tk.X, pady=(0, 15))
 
         # Training validity
-        self.valid_var = tk.BooleanVar(value=item_data.get("is_valid_for_training", True))
+        self.valid_var = tk.BooleanVar(value=self.item_data.get("is_valid_for_training", True))
         valid_check = ttk.Checkbutton(main_frame, text="Für Training geeignet", variable=self.valid_var)
         valid_check.pack(anchor=tk.W, pady=(0, 20))
 

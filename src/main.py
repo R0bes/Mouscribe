@@ -68,14 +68,14 @@ class MauscribeApp:
             if not self._is_recording:
                 self.start_recording()
             else:
-                self.stop_recording()
+                self._stop_recording_legacy()
 
-    def start_recording(self) -> None:
+    def _start_recording_legacy(self) -> None:
         print("start_recording")
         self._volume_controller.reduce_volume()
         self.recorder.start_recording()
 
-    def stop_recording(self) -> None:
+    def _stop_recording_legacy(self) -> None:
         print("stop recording")
         self._volume_controller.restore_volume()
         self.recorder.stop_recording()
