@@ -320,6 +320,13 @@ class PipelineMonitor:
         pipeline_url = f"https://github.com/{self.repo_owner}/{self.repo_name}/actions"
         print(f"🔗 Pipeline: {pipeline_url}\n")
 
+        # Show initial detailed status
+        print("🔍 Lade initialen Pipeline-Status...")
+        workflow_runs = self.get_workflow_runs(current_branch, last_commit_full)
+        if workflow_runs:
+            self._show_detailed_pipeline_status(workflow_runs[0])
+        print()
+
         start_time = time.time()
         pipeline_started = False
         last_status = None
@@ -359,16 +366,54 @@ class PipelineMonitor:
             # Only print status if it changed
             if status != last_status:
                 if status == "completed":
-                    if conclusion == "success":
-                        print("✅ Pipeline succeeded!")
-                        return True
-                    elif conclusion == "failure":
-                        print("❌ Pipeline failed!")
-                        self._show_failure_details(latest_run)
-                        return False
-                    elif conclusion == "cancelled":
-                        print("⚠️  Pipeline was cancelled")
-                        return False
+                    # Check if all jobs are actually completed
+                    workflow_id = latest_run.get("id")
+                    if workflow_id:
+                        jobs = self.get_workflow_jobs(workflow_id)
+                        if jobs:
+                            # Check if any jobs are still running
+                            running_jobs = [job for job in jobs if job.get("status") == "in_progress"]
+                            if running_jobs:
+                                print("⚠️  Workflow marked as completed but jobs still running:")
+                                for job in running_jobs:
+                                    print(f"    🔄 {job.get('name', 'Unknown Job')}")
+                                # Don't return yet, continue monitoring
+                            else:
+                                # All jobs completed, check conclusion
+                                if conclusion == "success":
+                                    print("✅ Pipeline succeeded!")
+                                    return True
+                                elif conclusion == "failure":
+                                    print("❌ Pipeline failed!")
+                                    self._show_failure_details(latest_run)
+                                    return False
+                                elif conclusion == "cancelled":
+                                    print("⚠️  Pipeline was cancelled")
+                                    return False
+                        else:
+                            # No jobs found, use workflow conclusion
+                            if conclusion == "success":
+                                print("✅ Pipeline succeeded!")
+                                return True
+                            elif conclusion == "failure":
+                                print("❌ Pipeline failed!")
+                                self._show_failure_details(latest_run)
+                                return False
+                            elif conclusion == "cancelled":
+                                print("⚠️  Pipeline was cancelled")
+                                return False
+                    else:
+                        # No workflow ID, use workflow conclusion
+                        if conclusion == "success":
+                            print("✅ Pipeline succeeded!")
+                            return True
+                        elif conclusion == "failure":
+                            print("❌ Pipeline failed!")
+                            self._show_failure_details(latest_run)
+                            return False
+                        elif conclusion == "cancelled":
+                            print("⚠️  Pipeline was cancelled")
+                            return False
                 elif status == "in_progress":
                     print("🔄 Pipeline is running...")
                     self._show_running_jobs(latest_run)
@@ -385,6 +430,8 @@ class PipelineMonitor:
             elapsed = time.time() - start_time
             if int(elapsed) % 30 == 0 and elapsed > 0:
                 print(f"⏰ Wartezeit: {int(elapsed)}s")
+                # Show detailed status every 30 seconds
+                self._show_detailed_pipeline_status(latest_run)
             time.sleep(15)  # Check every 15 seconds
 
     def _show_running_jobs(self, workflow_run: dict) -> None:
@@ -400,6 +447,124 @@ class PipelineMonitor:
             print("  Running jobs:")
             for job in running_jobs:
                 print(f"    🔄 {job.get('name', 'Unknown Job')}")
+
+    def _show_detailed_pipeline_status(self, workflow_run: dict) -> None:
+        """Show detailed pipeline status with all jobs and their progress."""
+        workflow_id = workflow_run.get("id")
+        if not workflow_id:
+            return
+
+        jobs = self.get_workflow_jobs(workflow_id)
+        if not jobs:
+            return
+
+        print("\n" + "=" * 60)
+        print("📊 DETAILLIERTER PIPELINE-STATUS")
+        print("=" * 60)
+        
+        # Workflow info
+        workflow_name = workflow_run.get('name', 'Unknown')
+        created_at = workflow_run.get('created_at')
+        updated_at = workflow_run.get('updated_at')
+        
+        print(f"🏗️  Workflow: {workflow_name}")
+        if created_at:
+            try:
+                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                print(f"🕐 Gestartet: {created.strftime('%H:%M:%S')}")
+            except ValueError:
+                pass
+        
+        # Job status summary
+        total_jobs = len(jobs)
+        completed_jobs = [job for job in jobs if job.get("status") == "completed"]
+        running_jobs = [job for job in jobs if job.get("status") == "in_progress"]
+        queued_jobs = [job for job in jobs if job.get("status") == "queued"]
+        waiting_jobs = [job for job in jobs if job.get("status") == "waiting"]
+        failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
+        
+        print(f"\n📈 Job-Übersicht:")
+        print(f"   Total: {total_jobs} | ✅ Abgeschlossen: {len(completed_jobs)} | 🔄 Läuft: {len(running_jobs)} | ⏳ Wartet: {len(queued_jobs + waiting_jobs)}")
+        
+        if failed_jobs:
+            print(f"   ❌ Fehlgeschlagen: {len(failed_jobs)}")
+        
+        # Show detailed job status
+        print(f"\n🔍 Job-Details:")
+        for i, job in enumerate(jobs, 1):
+            name = job.get('name', 'Unknown Job')
+            status = job.get('status', 'unknown')
+            conclusion = job.get('conclusion', 'none')
+            
+            # Status emoji
+            if status == "completed":
+                if conclusion == "success":
+                    status_emoji = "✅"
+                elif conclusion == "failure":
+                    status_emoji = "❌"
+                elif conclusion == "skipped":
+                    status_emoji = "⏭️"
+                elif conclusion == "cancelled":
+                    status_emoji = "⚠️"
+                else:
+                    status_emoji = "❓"
+            elif status == "in_progress":
+                status_emoji = "🔄"
+            elif status == "queued":
+                status_emoji = "⏳"
+            elif status == "waiting":
+                status_emoji = "⏳"
+            else:
+                status_emoji = "❓"
+            
+            # Duration info
+            started_at = job.get('started_at')
+            completed_at = job.get('completed_at')
+            duration_str = ""
+            if started_at and completed_at:
+                try:
+                    started = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+                    completed = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
+                    duration = completed - started
+                    duration_str = f" ({duration})"
+                except ValueError:
+                    pass
+            elif started_at:
+                try:
+                    started = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+                    now = datetime.now(started.tzinfo) if started.tzinfo else datetime.now()
+                    duration = now - started
+                    duration_str = f" (läuft seit {duration})"
+                except ValueError:
+                    pass
+            
+            print(f"   {i:2d}. {status_emoji} {name}{duration_str}")
+            
+            # Show steps for running jobs
+            if status == "in_progress":
+                steps = job.get('steps', [])
+                if steps:
+                    print("      Schritte:")
+                    for step in steps:
+                        step_name = step.get('name', 'Unknown Step')
+                        step_status = step.get('status', 'unknown')
+                        step_conclusion = step.get('conclusion', 'none')
+                        
+                        if step_status == "completed":
+                            if step_conclusion == "success":
+                                step_emoji = "✅"
+                            elif step_conclusion == "failure":
+                                step_emoji = "❌"
+                            else:
+                                step_emoji = "✅"
+                        elif step_status == "in_progress":
+                            step_emoji = "🔄"
+                        else:
+                            step_emoji = "⏳"
+                        
+                        print(f"        {step_emoji} {step_name}")
+        
+        print("=" * 60)
 
     def _show_failure_details(self, workflow_run: dict) -> None:
         """Show detailed information about pipeline failure."""
