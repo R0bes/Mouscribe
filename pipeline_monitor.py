@@ -87,6 +87,28 @@ class PipelineMonitor:
             return branch or "main"
         except subprocess.CalledProcessError:
             return "main"
+    
+    def get_branch_type(self) -> str:
+        """Get the type of the current branch (feature, bugfix, hotfix, main, develop)."""
+        branch = self.get_current_branch()
+        
+        if branch.startswith("feature/"):
+            return "feature"
+        elif branch.startswith("bugfix/"):
+            return "bugfix"
+        elif branch.startswith("hotfix/"):
+            return "hotfix"
+        elif branch in ["main", "master"]:
+            return "main"
+        elif branch == "develop":
+            return "develop"
+        else:
+            return "other"
+    
+    def is_pr_branch(self) -> bool:
+        """Check if current branch is a PR branch (feature, bugfix, hotfix)."""
+        branch_type = self.get_branch_type()
+        return branch_type in ["feature", "bugfix", "hotfix"]
 
     def get_last_commit_sha(self) -> str:
         """Get the SHA of the last commit (full)."""
@@ -289,8 +311,11 @@ class PipelineMonitor:
         last_commit_full = self.get_last_commit_sha()
         last_commit_short = last_commit_full[:8] if last_commit_full else ""
 
-        print(f"Branch: {current_branch}")
+        branch_type = self.get_branch_type()
+        print(f"Branch: {current_branch} ({branch_type})")
         print(f"Commit: {last_commit_short}")
+        if self.is_pr_branch():
+            print(f"Type: PR Branch - {branch_type.upper()}")
         print(f"Initial timeout: 60 seconds, extended timeout: {max_wait_time} seconds\n")
 
         start_time = time.time()
