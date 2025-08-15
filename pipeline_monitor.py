@@ -456,13 +456,14 @@ class PipelineMonitor:
         jobs = self.get_workflow_jobs(workflow_id)
         if not jobs:
             return
+            
+        workflow_name = workflow_run.get('name', 'Unknown')
 
         print("\n" + "=" * 60)
         print(f"📊 DETAILLIERTER PIPELINE-STATUS {workflow_name}")
         print("=" * 60)
         
         # Workflow info
-        workflow_name = workflow_run.get('name', 'Unknown')
         created_at = workflow_run.get('created_at')
         updated_at = workflow_run.get('updated_at')
         
