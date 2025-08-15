@@ -1,135 +1,234 @@
-# Mauscribe Makefile
+# 🚀 Makefile für Chat Backend Agent
 # Einheitliche Workflows für Entwicklung und Deployment
+
+# Windows-spezifische Shell-Einstellungen
+ifeq ($(OS),Windows_NT)
 SHELL := powershell.exe
 .SHELLFLAGS := -NoProfile -ExecutionPolicy Bypass -Command
 .ONESHELL:
+endif
 
-.PHONY: help init install test lint format clean commit stage push workflow build build-windows ci
-
-# Standardziel
-all: lint test
-
-# Repository nach dem Clonen einrichten
-init: install setup-hooks
-	@echo 🎉 Repository erfolgreich eingerichtet!
-	@echo 💡 Nächste Schritte:
-	@echo    1. Konfiguriere deine GitHub-Token (optional)
-	@echo    2. Teste die Einrichtung: make ci
-	@echo    3. Starte mit der Entwicklung!
-
-# Abhängigkeiten installieren
-install:
-	@echo 📦 Installiere Abhängigkeiten...
-	pip install -r requirements.txt
-	pip install -r requirements-dev.txt
-	@echo ✅ Abhängigkeiten installiert!
-
-# Git-Hooks für Pipeline-Monitoring einrichten
-setup-hooks:
-	@echo 🔧 Richte Git-Hooks ein...
-	python setup_pipeline_monitoring.py
-	@echo ✅ Git-Hooks eingerichtet!
-
-# CI/CD Pipeline lokal testen (entspricht der GitHub Actions Pipeline)
-ci: lint test
-	@echo ✅ CI/CD Pipeline lokal erfolgreich durchlaufen!
-	@echo 🔍 Dies entspricht dem validate Job in der GitHub Actions Pipeline
-
-# Vollständige CI/CD Pipeline lokal testen (inkl. Build)
-ci-full: ci build-windows
-	@echo ✅ Vollständige CI/CD Pipeline lokal erfolgreich durchlaufen!
-	@echo 🔍 Dies entspricht allen Jobs in der GitHub Actions Pipeline
-
-# Hilfe anzeigen
+# 🎯 Standardziel
+.PHONY: help, server_up, ui_up, ui_down, up, down, clean, commit, push
 help:
-	@echo Verfuegbare Ziele:
-	@echo   init          - Repository nach dem Clonen einrichten
-	@echo   install       - Abhaengigkeiten installieren
-	@echo   test          - Tests ausfuehren (mit Coverage)
-	@echo   coverage      - Coverage-Bericht generieren
-	@echo   lint          - Code-Qualitaet pruefen
-	@echo   format        - Code formatieren
-	@echo   clean         - Build-Dateien bereinigen
-	@echo   commit        - Aenderungen committen (mit Checks)
-	@echo   push          - Aenderungen pushen
-	@echo   pr            - Pull Request erstellen
-	@echo   pr-interactive- Pull Request interaktiv erstellen
-	@echo   workflow      - Kompletter Workflow
-	@echo   all           - Lint und Tests ausfuehren
-	@echo   pre-commit    - Code-Qualitaets-Checks ausfuehren
-	@echo   build         - Executable erstellen (alle Plattformen)
-	@echo   build-windows - Windows .exe erstellen
-	@echo   ci            - Lokale CI/CD-Pipeline ausführen (validate Job)
-	@echo   ci-full       - Vollständige CI/CD-Pipeline lokal (inkl. Build)
+	@echo 🌟 Verfügbare Kommandos:
+	@echo 
+	@echo 🖥️  Server Management:
+	@echo     server_up    - 🚀 Startet den Python-Server
+	@echo     server_down  - 🛑 Stoppt den Python-Server
+	@echo 
+	@echo 🎨 UI Management:
+	@echo     ui_up        - 🚀 Startet die Vite-UI im Entwicklungsmodus
+	@echo     ui_down      - 🛑 Stoppt die Vite-UI
+	@echo 
+	@echo 🔄 Kombinierte Kommandos:
+	@echo     up           - 🚀 Startet sowohl Server als auch UI
+	@echo     down         - 🛑 Stoppt sowohl Server als auch UI
+	@echo 
+	@echo 🧹 Wartung:
+	@echo     clean        - 🧹 Räumt temporäre Dateien auf
+	@echo 
+	@echo 📝 Git Commands:
+	@echo     commit       - 💾 Git commit mit Pre-Commit Checks
+	@echo     commit MSG   - 💾 Git commit mit Nachricht + Pre-Commit
+	@echo     commit-quick - 🚀 Schneller Commit ohne Checks
+	@echo     push         - 📤 Git push zum Remote-Repository
+	@echo     commit-push  - 🚀 Commit und Push in einem Schritt
+	@echo 
+	@echo 🔒 Pre-Commit Checks:
+	@echo     pre-commit   - 🔒 Führt Tests und Linting aus
+	@echo     lint-check   - 🔍 Prüft Code-Format und Qualität
+	@echo 
+	@echo 💡 Beispiele:
+	@echo     make commit           - Commit mit Pre-Commit Checks
+	@echo     make commit 'Fix bug' - Commit mit Nachricht + Checks
+	@echo     make commit-quick     - Schneller Commit ohne Checks
+	@echo 
+	@echo 🧪 Testing:
+	@echo     test-all     - 🧪 Alle Tests ausführen
+	@echo     test-unit    - 🔬 Nur Unit Tests
+	@echo     test-e2e     - 🌐 End-to-End Tests
+	@echo     test-help    - 📚 Hilfe für Test-Kommandos
 
+# 🖥️ Server Management
+.PHONY: server_up
+server_up:
+	@echo 🚀 Starte Python-Server...
+	@cd server && python3 main.py
 
+.PHONY: server_down
+server_down:
+	@echo 🛑 Stoppe Python-Server...
+	@echo ⚠️  Verwende Ctrl+C um den Server zu stoppen
 
-# Tests ausführen
-test:
-	@echo Running tests...
-ifeq ($(OS),Windows_NT)
-	@echo Windows detected - using alternative coverage method...
-	python -m pytest tests/ -v
-	@echo Generating coverage report with coverage.py...
-	python -m coverage run -m pytest tests/
-	python -m coverage report
-	@echo Coverage report generated!
-else
-	python -m pytest tests/ -v --cov=src --cov-report=html
-endif
-	@echo Tests completed!
+# 🎨 UI Management
+.PHONY: ui_up
+ui_up:
+	@echo 🎨 Starte Vite-UI im Entwicklungsmodus...
+	@cd ui && npm run dev &
 
+.PHONY: ui_down
+ui_down:
+	@echo 🛑 Stoppe Vite-UI...
+	@bash -c 'pgrep -f "vite" | xargs kill 2>/dev/null || true'
+	@bash -c 'pgrep -f "node.*vite" | xargs kill 2>/dev/null || true'
+	@echo ✅ Vite-UI gestoppt
 
-# Code-Qualität prüfen
-lint:
-	@echo Running code quality checks...
-	flake8 src/ tests/ || echo "flake8 completed with warnings"
-	black --check --line-length=127 src/ tests/ || echo "black completed with warnings"
-	isort --check-only src/ tests/ || echo "isort completed with warnings"
-	mypy src/ --ignore-missing-imports || echo "mypy completed with warnings"
-	@echo Code quality checks completed!
+# 🔄 Kombinierte Kommandos
+.PHONY: up
+up: ui_up server_up 
+	@echo 🎉 Alle Services erfolgreich gestartet! 🚀
 
-# Code formatieren
-format:
-	@echo Formatting code...
-	black src/ tests/ --line-length=127 src/ tests/
-	isort src/ tests/
-	@echo Code formatting completed!
+.PHONY: down
+down: server_down ui_down
+	@echo 🛑 Alle Services gestoppt
 
-
-# Build-Dateien bereinigen (plattformunabhängig)
+# 🧹 Cleanup
+.PHONY: clean
 clean:
-ifeq ($(OS),Windows_NT)
-	if exist build rmdir /s /q build
-	if exist dist rmdir /s /q dist
-	if exist *.egg-info rmdir /s /q *.egg-info
-	if exist .pytest_cache rmdir /s /q .pytest_cache
-	if exist .mypy_cache rmdir /s /q .mypy_cache
-	if exist coverage_html rmdir /s /q coverage_html
-	if exist .coverage del .coverage
-	if exist coverage.xml del coverage.xml
-	if exist bandit-report.json del bandit-report.json
-	if exist __pycache__ rmdir /s /q __pycache__
-	if exist *.spec del *.spec
-	if exist *.pyc del *.pyc
-else
-	rm -rf build/
-	rm -rf dist/
-	rm -rf *.egg-info/
-	rm -rf .pytest_cache/
-	rm -rf .mypy_cache/
-	rm -rf coverage_html/
-	rm -f .coverage
-	rm -f coverage.xml
-	rm -f bandit-report.json
-	rm -rf __pycache__/
-	rm -f *.spec
-	rm -f *.pyc
-endif
+	@echo 🧹 Räume temporäre Dateien auf...
+	@rm -rf server/__pycache__
+	@rm -rf ui/dist
+	@rm -rf ui/node_modules
+	@echo ✅ Aufräumen abgeschlossen!
 
-# Änderungen committen (mit Code-Qualitäts-Checks)
-commit:
-	@echo Committing changes...
+# 🧪 Test Commands
+.PHONY: test test-unit test-integration test-e2e test-all test-coverage test-mutation test-clean
+
+# 📦 Install test dependencies
+test-install:
+	@echo 📦 Installiere Test-Dependencies...
+	pip install -r requirements-test.txt
+	@echo ✅ Test-Dependencies installiert
+
+# 🧪 Run all tests
+test-all: test-install
+	@echo 🧪 Führe alle Tests aus...
+	pytest tests/ -v --cov=server --cov-report=html --cov-report=xml
+	@echo 🎉 Alle Tests abgeschlossen!
+
+# 🔬 Run unit tests only
+test-unit: test-install
+	@echo 🔬 Führe Unit Tests aus...
+	pytest tests/unit/ -v --cov=server --cov-report=html
+	@echo ✅ Unit Tests abgeschlossen!
+
+# 🔗 Run integration tests only
+test-integration: test-install
+	@echo 🔗 Führe Integration Tests aus...
+	pytest tests/integration/ -v
+	@echo ✅ Integration Tests abgeschlossen!
+
+# 🌐 Run E2E tests only
+test-e2e: test-install
+	@echo 🌐 Führe End-to-End Tests aus...
+	pytest tests/e2e/ -v
+	@echo ✅ E2E Tests abgeschlossen!
+
+# 📊 Run tests with coverage report
+test-coverage: test-install
+	@echo 📊 Führe Tests mit Coverage-Report aus...
+	pytest tests/ -v --cov=server --cov-report=html --cov-report=xml --cov-fail-under=70
+	@echo 📈 Coverage-Report erstellt!
+
+# 🧬 Run mutation testing
+test-mutation: test-install
+	@echo 🧬 Führe Mutation Testing aus...
+	mutmut run --paths-to-mutate=server/
+	@echo 🧬 Mutation Testing abgeschlossen!
+
+# ⚡ Run performance tests
+test-performance: test-install
+	@echo ⚡ Führe Performance Tests aus...
+	pytest tests/ -v --benchmark-only
+	@echo ⚡ Performance Tests abgeschlossen!
+
+# 🔒 Run security tests
+test-security: test-install
+	@echo 🔒 Führe Security Tests aus...
+	pytest tests/ -v -m security
+	@echo 🔒 Security Tests abgeschlossen!
+
+# 🚀 Run tests in parallel
+test-parallel: test-install
+	@echo 🚀 Führe Tests parallel aus...
+	pytest tests/ -v -n auto
+	@echo 🚀 Parallele Tests abgeschlossen!
+
+# 🧹 Clean test artifacts
+test-clean:
+	@echo 🧹 Räume Test-Artefakte auf...
+	rm -rf htmlcov/
+	rm -rf .coverage
+	rm -rf .pytest_cache/
+	rm -rf .mutmut-cache/
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
+	@echo ✅ Test-Aufräumen abgeschlossen!
+
+# ⚡ Quick test run (unit tests only, no coverage)
+test-quick: test-install
+	@echo ⚡ Schneller Test-Lauf (nur Unit Tests)...
+	pytest tests/unit/ -v --tb=short
+	@echo ⚡ Schneller Test abgeschlossen!
+
+# 🎯 Test specific module
+test-module: test-install
+	@if [ -z "$(MODULE)" ]; then \
+		echo ❌ Fehler: MODULE Parameter fehlt; \
+		echo 💡 Verwendung: make test-module MODULE=server.api; \
+		exit 1; \
+	fi
+	@echo 🎯 Teste spezifisches Modul: $(MODULE)
+	pytest tests/ -v -k "$(MODULE)" --cov=$(MODULE) --cov-report=html
+	@echo ✅ Modul-Test abgeschlossen!
+
+# 📊 Show test coverage
+coverage-show: test-coverage
+	@echo 📊 Öffne Coverage-Report...
+	@if command -v open >/dev/null 2>&1; then \
+		open htmlcov/index.html; \
+	elif command -v xdg-open >/dev/null 2>&1; then \
+		xdg-open htmlcov/index.html; \
+	else \
+		echo 📊 Coverage-Report verfügbar unter: htmlcov/index.html; \
+	fi
+
+# 📚 Test help
+test-help:
+	@echo 📚 Verfügbare Test-Kommandos:
+	@echo 
+	@echo 🧪 Vollständige Tests:
+	@echo   test-all        - 🧪 Alle Tests mit Coverage
+	@echo   test-coverage   - 📊 Tests mit Coverage-Report
+	@echo   test-mutation   - 🧬 Mutation Testing
+	@echo   test-performance- ⚡ Performance Tests
+	@echo   test-security   - 🔒 Security Tests
+	@echo   test-parallel   - 🚀 Tests parallel ausführen
+	@echo 
+	@echo 🔬 Spezifische Tests:
+	@echo   test-unit       - 🔬 Nur Unit Tests
+	@echo   test-integration- 🔗 Nur Integration Tests
+	@echo   test-e2e        - 🌐 Nur E2E Tests
+	@echo   test-module     - 🎯 Spezifisches Modul testen
+	@echo 
+	@echo ⚡ Schnelle Tests:
+	@echo   test-quick      - ⚡ Schneller Test-Lauf (Unit only)
+	@echo 
+	@echo 🧹 Wartung:
+	@echo   test-clean      - 🧹 Test-Artefakte aufräumen
+	@echo   coverage-show   - 📊 Coverage-Report im Browser öffnen
+	@echo 
+	@echo 💡 Beispiel: make test-module MODULE=server.api
+
+# 📝 Git Commands
+.PHONY: commit
+commit: pre-commit
+	@echo 📝 Git Status:
+	@git status --short
+	@echo 
+	@echo 💾 Committing changes...
+	@git add .
 ifeq ($(OS),Windows_NT)
 	@if "$(filter-out $@,$(MAKECMDGOALS))"=="" ( \
 		set /p message="Commit message: " && git commit -m "!message!" --no-verify \
@@ -143,56 +242,70 @@ else
 		git commit -m "$(filter-out $@,$(MAKECMDGOALS))" --no-verify; \
 	fi
 endif
+	@echo ✅ Commit erfolgreich!
 
-stage:
-	@echo "Staging changes..."
-	git add .
-	@$(MAKE) commit $(filter-out $@,$(MAKECMDGOALS))
-	@echo Staging completed!
+# 🔒 Pre-Commit Hook
+.PHONY: pre-commit
+pre-commit:
+	@echo 🔒 Pre-Commit Checks werden ausgeführt...
+	@echo 🧪 Führe Tests aus...
+	@$(MAKE) test-quick
+	@echo 🔍 Prüfe Code-Format...
+	@$(MAKE) lint-check
+	@echo ✅ Pre-Commit Checks erfolgreich!
+	@echo 
 
-# Änderungen pushen
-push:
-	@echo Pushing changes...
-	git push
+# 🔍 Linting und Code-Qualität
+.PHONY: lint-check
+lint-check:
+	@echo 🔍 Prüfe Python-Code mit flake8...
+	@if command -v flake8 >/dev/null 2>&1; then \
+		flake8 server/ --max-line-length=100 --ignore=E501,W503; \
+	else \
+		echo ⚠️  flake8 nicht installiert, überspringe Linting; \
+	fi
+	@echo 🔍 Prüfe Python-Code mit black...
+	@if command -v black >/dev/null 2>&1; then \
+		black --check server/; \
+	else \
+		echo ⚠️  black nicht installiert, überspringe Format-Check; \
+	fi
+	@echo ✅ Linting-Checks abgeschlossen!
 
-# Pull Request erstellen
-pr:
-	@echo Creating pull request...
+# 🚀 Quick Commit (ohne Pre-Commit Checks)
+.PHONY: commit-quick
+commit-quick:
+	@echo 🚀 Schneller Commit ohne Pre-Commit Checks...
+	@echo 📝 Git Status:
+	@git status --short
+	@echo 
+	@echo 💾 Committing changes...
+	@git add .
 ifeq ($(OS),Windows_NT)
 	@if "$(filter-out $@,$(MAKECMDGOALS))"=="" ( \
-		set /p title="PR title: " && set /p body="PR description: " && gh pr create --title "!title!" --body "!body!" \
+		set /p message="Commit message: " && git commit -m "!message!" --no-verify \
 	) else ( \
-		gh pr create --title "$(filter-out $@,$(MAKECMDGOALS))" \
+		git commit -m "$(filter-out $@,$(MAKECMDGOALS))" --no-verify \
 	)
 else
 	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
-		read -p "PR title: " title; read -p "PR description: " body; gh pr create --title "$$title" --body "$$body"; \
+		read -p "Commit message: " message; git commit -m "$$message" --no-verify; \
 	else \
-		gh pr create --title "$(filter-out $@,$(MAKECMDGOALS))"; \
+		git commit -m "$(filter-out $@,$(MAKECMDGOALS))" --no-verify; \
 	fi
 endif
+	@echo ✅ Schneller Commit erfolgreich!
 
-# Pull Request mit interaktiver Eingabe erstellen
-pr-interactive:
-	@echo Creating pull request interactively...
-	gh pr create --interactive
+.PHONY: push
+push:
+	@echo 📤 Pushe Änderungen zum Remote-Repository...
+	@git push
+	@echo ✅ Push erfolgreich abgeschlossen!
 
-# Workflow: Alles committen und pushen
-workflow: stage push
-	@echo Workflow abgeschlossen!
+.PHONY: commit-push
+commit-push: commit push
+	@echo 🎉 Commit und Push erfolgreich abgeschlossen! 🚀
 
-
-# Executable erstellen (alle Plattformen)
-build: clean
-	@echo Building executable...
-	python build.py
-
-# Windows .exe erstellen
-build-windows: clean
-ifeq ($(OS),Windows_NT)
-	@echo Building Windows executable...
-	python build.py
-else
-	@echo This target is only available on Windows
-	@exit 1
-endif
+# 🎯 Alias für einfache Ausführung
+test: test-all
+tests: test-all

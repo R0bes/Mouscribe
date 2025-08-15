@@ -281,7 +281,7 @@ class PipelineMonitor:
 
         print(f"Branch: {current_branch}")
         print(f"Commit: {last_commit_short}")
-        print(f"Max wait time: {max_wait_time} seconds")
+        print(f"Max wait time: {max_wait_time} seconds\n")
 
         start_time = time.time()
         last_status = None
@@ -292,4 +292,228 @@ class PipelineMonitor:
 
             # If no runs found for commit, fall back to recent runs for the branch
             if not workflow_runs:
-                workflow_runs = self.get_workflow_runs(current_
+                workflow_runs = self.get_workflow_runs(current_branch, "")
+                if workflow_runs:
+                    print(f"⚠️  No workflow run found for commit {last_commit_short}")
+                    print(f"   Using most recent run for branch {current_branch}\n")
+
+            if not workflow_runs:
+                print("❌ No workflow runs found for current branch/commit")
+                return False
+
+            latest_run = workflow_runs[0]
+            status = latest_run.get("status", "unknown")
+            conclusion = latest_run.get("conclusion")
+
+            # Only print status if it changed
+            if status != last_status:
+                if status == "completed":
+                    if conclusion == "success":
+                        print("✅ Pipeline succeeded!")
+                        return True
+                    elif conclusion == "failure":
+                        print("❌ Pipeline failed!")
+                        self._show_failure_details(latest_run)
+                        return False
+                    elif conclusion == "cancelled":
+                        print("⚠️  Pipeline was cancelled")
+                        return False
+                elif status == "in_progress":
+                    print("🔄 Pipeline is running...")
+                    self._show_running_jobs(latest_run)
+                elif status == "queued":
+                    print("⏳ Pipeline is queued...")
+                elif status == "waiting":
+                    print("⏳ Pipeline is waiting...")
+
+                last_status = status
+
+            time.sleep(15)  # Check every 15 seconds
+
+        print(f"\n⏰ Timeout after {max_wait_time} seconds")
+        return False
+
+    def _show_running_jobs(self, workflow_run: dict) -> None:
+        """Show currently running jobs."""
+        workflow_id = workflow_run.get("id")
+        if not workflow_id:
+            return
+
+        jobs = self.get_workflow_jobs(workflow_id)
+        running_jobs = [job for job in jobs if job.get("status") == "in_progress"]
+
+        if running_jobs:
+            print("  Running jobs:")
+            for job in running_jobs:
+                print(f"    🔄 {job.get('name', 'Unknown Job')}")
+
+    def _show_failure_details(self, workflow_run: dict) -> None:
+        """Show detailed information about pipeline failure."""
+        workflow_id = workflow_run.get("id")
+        if not workflow_id:
+            return
+
+        workflow_details = self.get_workflow_details(workflow_id)
+        if not workflow_details:
+            return
+
+        print("\n" + "=" * 50)
+        print("PIPELINE FAILURE DETAILS")
+        print("=" * 50)
+        
+        # Basic workflow info
+        workflow_name = workflow_details.get('name', 'Unknown')
+        html_url = workflow_details.get('html_url', 'N/A')
+        print(f"Workflow: {workflow_name}")
+        print(f"URL: {html_url}")
+        
+        # Calculate duration
+        created_at = workflow_details.get("created_at")
+        updated_at = workflow_details.get("updated_at")
+        if created_at and updated_at:
+            try:
+                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                updated = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+                duration = updated - created
+                print(f"Duration: {duration}")
+            except ValueError:
+                pass
+
+        # Get jobs and analyze failures
+        print(f"\nFetching job details...")
+        jobs = self.get_workflow_jobs(workflow_id)
+        
+        if jobs:
+            print(f"Found {len(jobs)} jobs")
+            
+            # Categorize jobs
+            failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
+            successful_jobs = [job for job in jobs if job.get("conclusion") == "success"]
+            skipped_jobs = [job for job in jobs if job.get("conclusion") == "skipped"]
+            cancelled_jobs = [job for job in jobs if job.get("conclusion") == "cancelled"]
+            
+            # Show failed jobs with detailed error analysis
+            if failed_jobs:
+                print(f"\n❌ FAILED JOBS ({len(failed_jobs)}):")
+                print("-" * 30)
+                
+                for job in failed_jobs:
+                    job_name = job.get("name", "Unknown")
+                    job_id = job.get("id")
+                    
+                    print(f"\n🔴 {job_name}")
+                    
+                    # Show timing info
+                    started_at = job.get("started_at", "")
+                    completed_at = job.get("completed_at", "")
+                    if started_at and completed_at:
+                        try:
+                            started = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+                            completed = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
+                            job_duration = completed - started
+                            print(f"   Duration: {job_duration}")
+                        except ValueError:
+                            pass
+                    
+                    # Create direct link to job logs
+                    if job_id:
+                        job_logs_url = f"{html_url}/job/{job_id}"
+                        print(f"   Logs: {job_logs_url}")
+                    
+                    # Try to get logs via API and show error summary
+                    if job_id:
+                        logs = self.get_job_logs_by_id(job_id, max_lines=100)
+                        if logs:
+                            # Extract and show error summary
+                            error_summary = self.extract_error_summary(logs)
+                            print(f"   Error: {error_summary}")
+                            
+                            # Show key error lines (last 10 relevant lines)
+                            error_lines = []
+                            for line in logs[-20:]:  # Check last 20 lines
+                                line_lower = line.lower()
+                                if any(keyword in line_lower for keyword in [
+                                    "error:", "failed:", "exception:", "traceback:",
+                                    "syntax error", "import error", "type error",
+                                    "flake8", "mypy", "black", "isort"
+                                ]):
+                                    error_lines.append(line.strip())
+                            
+                            if error_lines:
+                                print(f"   Key errors:")
+                                for line in error_lines[-5:]:  # Show last 5 error lines
+                                    if len(line) > 80:
+                                        line = line[:77] + "..."
+                                    print(f"     {line}")
+                        else:
+                            print(f"   ⚠️  Logs not available via API")
+            
+            # Show all jobs in order with their status
+            print(f"\n📊 JOBS")
+            print("-" * 30)
+            
+            for i, job in enumerate(jobs, 1):
+                job_name = job.get("name", "Unknown")
+                job_status = job.get("status", "unknown")
+                job_conclusion = job.get("conclusion", "")
+                
+                # Determine status icon and text
+                if job_status == "in_progress":
+                    icon = "🔄"
+                    status_text = "RUNNING"
+                elif job_conclusion == "success":
+                    icon = "✅"
+                    status_text = "SUCCESS"
+                elif job_conclusion == "failure":
+                    icon = "❌"
+                    status_text = "FAILED"
+                elif job_conclusion == "cancelled":
+                    icon = "⏹️"
+                    status_text = "CANCELLED"
+                elif job_conclusion == "skipped":
+                    icon = "⏭️"
+                    status_text = "SKIPPED"
+                else:
+                    icon = "❓"
+                    status_text = "UNKNOWN"
+                
+                print(f"{i:2d}. {icon}  {job_name:<30} [{status_text}]")
+            
+            # Show summary
+            total_jobs = len(jobs)
+            print(f"\n📊 SUMMARY:")
+            print(f"   Failed: {len(failed_jobs)}")
+            print(f"   Successful: {len(successful_jobs)}")
+            print(f"   Cancelled: {len(cancelled_jobs)}")
+            print(f"   Skipped: {len(skipped_jobs)}")
+            print(f"   Total: {total_jobs}")
+            
+                    
+        else:
+            print(f"⚠️  No jobs found")
+
+
+
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(description="Monitor Mauscribe CI/CD pipelines")
+    parser.add_argument(
+        "--open", action="store_true", help="Open pipeline status in browser"
+    )
+    parser.add_argument(
+        "--timeout", type=int, default=300, help="Maximum wait time in seconds"
+    )
+
+    args = parser.parse_args()
+
+    monitor = PipelineMonitor()
+
+    if args.open:
+        monitor.open_pipeline_in_browser()
+    else:
+        success = monitor.monitor_pipeline(args.timeout)
+        sys.exit(0 if success else 1)
+
+
+if __name__ == "__main__":
+    main()
