@@ -324,7 +324,7 @@ class PipelineMonitor:
         print("[INFO] Suche nach Pipeline-Run für aktuellen Commit...")
         workflow_runs = self.get_workflow_runs(current_branch, last_commit_full)
         if workflow_runs:
-            print(f"✅ Pipeline-Run für Commit {last_commit_short} gefunden!")
+            print(f"[OK] Pipeline-Run für Commit {last_commit_short} gefunden!")
             self._show_detailed_pipeline_status(workflow_runs[0])
         else:
             print(f"⏳ Noch kein Pipeline-Run für Commit {last_commit_short} gefunden.")
@@ -395,7 +395,7 @@ class PipelineMonitor:
                             else:
                                 # All jobs completed, check conclusion
                                 if conclusion == "success":
-                                    print("✅ Pipeline succeeded!")
+                                    print("[OK] Pipeline succeeded!")
                                     return True
                                 elif conclusion == "failure":
                                     print("❌ Pipeline failed!")
@@ -407,7 +407,7 @@ class PipelineMonitor:
                         else:
                             # No jobs found, use workflow conclusion
                             if conclusion == "success":
-                                print("✅ Pipeline succeeded!")
+                                print("[OK] Pipeline succeeded!")
                                 return True
                             elif conclusion == "failure":
                                 print("❌ Pipeline failed!")
