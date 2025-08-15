@@ -100,9 +100,15 @@ class AudioDatabase:
                 )
 
                 # Create indexes for better performance
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_audio_timestamp ON audio_recordings(timestamp)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_transcription_audio_id ON transcriptions(audio_recording_id)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_training_transcription_id ON training_data(transcription_id)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_audio_timestamp ON audio_recordings(timestamp)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_transcription_audio_id ON transcriptions(audio_recording_id)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_training_transcription_id ON training_data(transcription_id)"
+                )
 
                 conn.commit()
                 self.logger.info("Database tables initialized successfully")
@@ -112,7 +118,12 @@ class AudioDatabase:
             raise
 
     def save_audio_recording(
-        self, audio_data: np.ndarray, sample_rate: int, channels: int, duration: float, audio_format: str = "wav"
+        self,
+        audio_data: np.ndarray,
+        sample_rate: int,
+        channels: int,
+        duration: float,
+        audio_format: str = "wav",
     ) -> int:
         """Save audio recording to file and database."""
         try:
@@ -132,7 +143,9 @@ class AudioDatabase:
             audio_file_path = audio_dir / filename
 
             # Save audio file
-            self._save_audio_file(audio_data, audio_file_path, sample_rate, channels, audio_format)
+            self._save_audio_file(
+                audio_data, audio_file_path, sample_rate, channels, audio_format
+            )
 
             # Get file size
             file_size = audio_file_path.stat().st_size
@@ -146,7 +159,14 @@ class AudioDatabase:
                     (audio_file_path, duration_seconds, sample_rate, channels, audio_format, file_size_bytes)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                    (str(audio_file_path), duration, sample_rate, channels, audio_format, file_size),
+                    (
+                        str(audio_file_path),
+                        duration,
+                        sample_rate,
+                        channels,
+                        audio_format,
+                        file_size,
+                    ),
                 )
 
                 recording_id = cursor.lastrowid
@@ -162,7 +182,14 @@ class AudioDatabase:
             self.logger.error(f"Failed to save audio recording: {e}")
             raise
 
-    def _save_audio_file(self, audio_data: np.ndarray, file_path: Path, sample_rate: int, channels: int, format: str) -> None:
+    def _save_audio_file(
+        self,
+        audio_data: np.ndarray,
+        file_path: Path,
+        sample_rate: int,
+        channels: int,
+        format: str,
+    ) -> None:
         """Save audio data to file."""
         try:
             import soundfile as sf
@@ -206,7 +233,14 @@ class AudioDatabase:
                     (audio_recording_id, raw_text, corrected_text, confidence_score, language, processing_time_ms)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                    (audio_recording_id, raw_text, corrected_text, confidence_score, language, processing_time_ms),
+                    (
+                        audio_recording_id,
+                        raw_text,
+                        corrected_text,
+                        confidence_score,
+                        language,
+                        processing_time_ms,
+                    ),
                 )
 
                 transcription_id = cursor.lastrowid
@@ -242,7 +276,13 @@ class AudioDatabase:
                     (transcription_id, is_valid_for_training, quality_score, notes, tags)
                     VALUES (?, ?, ?, ?, ?)
                 """,
-                    (transcription_id, is_valid_for_training, quality_score, notes, tags_json),
+                    (
+                        transcription_id,
+                        is_valid_for_training,
+                        quality_score,
+                        notes,
+                        tags_json,
+                    ),
                 )
 
                 training_data_id = cursor.lastrowid
@@ -258,7 +298,9 @@ class AudioDatabase:
             self.logger.error(f"Failed to save training data: {e}")
             raise
 
-    def get_recordings_for_training(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
+    def get_recordings_for_training(
+        self, limit: Optional[int] = None
+    ) -> list[dict[str, Any]]:
         """Get recordings marked as valid for training."""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -322,7 +364,9 @@ class AudioDatabase:
                 total_transcriptions = cursor.fetchone()[0]
 
                 # Training data count
-                cursor.execute("SELECT COUNT(*) FROM training_data WHERE is_valid_for_training = TRUE")
+                cursor.execute(
+                    "SELECT COUNT(*) FROM training_data WHERE is_valid_for_training = TRUE"
+                )
                 training_count = cursor.fetchone()[0]
 
                 # Total duration

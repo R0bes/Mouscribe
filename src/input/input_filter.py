@@ -58,7 +58,11 @@ class InputFilter:
         # Get current modes
         self._update_modes()
 
-    def set_callbacks(self, primary_callback: Callable[[bool], None], secondary_callback: Callable[[bool], None]) -> None:
+    def set_callbacks(
+        self,
+        primary_callback: Callable[[bool], None],
+        secondary_callback: Callable[[bool], None],
+    ) -> None:
         """Set the callback functions for filtered input events.
 
         Args:
@@ -73,17 +77,25 @@ class InputFilter:
         try:
             primary_mode_str = self.config.input_filter_primary_mode
             self.primary_mode = InputMode(primary_mode_str)
-            self.logger.info(f"Primary button filter mode set to: {self.primary_mode.value}")
+            self.logger.info(
+                f"Primary button filter mode set to: {self.primary_mode.value}"
+            )
         except ValueError:
-            self.logger.warning(f"Invalid primary button filter mode: {primary_mode_str}, using single_click")
+            self.logger.warning(
+                f"Invalid primary button filter mode: {primary_mode_str}, using single_click"
+            )
             self.primary_mode = InputMode.SINGLE_CLICK
 
         try:
             secondary_mode_str = self.config.input_filter_secondary_mode
             self.secondary_mode = InputMode(secondary_mode_str)
-            self.logger.info(f"Secondary button filter mode set to: {self.secondary_mode.value}")
+            self.logger.info(
+                f"Secondary button filter mode set to: {self.secondary_mode.value}"
+            )
         except ValueError:
-            self.logger.warning(f"Invalid secondary button filter mode: {secondary_mode_str}, using hold")
+            self.logger.warning(
+                f"Invalid secondary button filter mode: {secondary_mode_str}, using hold"
+            )
             self.secondary_mode = InputMode.HOLD
 
     def process_primary_input(self, pressed: bool) -> None:
@@ -195,7 +207,9 @@ class InputFilter:
     def _start_secondary_hold_timer(self) -> None:
         """Start hold timer for secondary button."""
         hold_duration = self.config.input_filter_hold_duration
-        self.secondary_hold_timer = threading.Timer(hold_duration, self._on_secondary_hold)
+        self.secondary_hold_timer = threading.Timer(
+            hold_duration, self._on_secondary_hold
+        )
         self.secondary_hold_timer.start()
 
     def _cancel_primary_hold_timer(self) -> None:
@@ -219,7 +233,9 @@ class InputFilter:
     def _start_secondary_smart_timer(self) -> None:
         """Start smart timer for secondary button."""
         smart_delay = self.config.input_filter_smart_delay
-        self.secondary_smart_timer = threading.Timer(smart_delay, self._on_secondary_smart)
+        self.secondary_smart_timer = threading.Timer(
+            smart_delay, self._on_secondary_smart
+        )
         self.secondary_smart_timer.start()
 
     def _cancel_primary_smart_timer(self) -> None:

@@ -43,7 +43,9 @@ class WindowsNotificationManager:
         self.is_available = WINDOWS_AVAILABLE and self._check_windows_version()
 
         if not self.is_available:
-            self.logger.warning("Windows notifications are not available on this system")
+            self.logger.warning(
+                "Windows notifications are not available on this system"
+            )
             return
 
         self.logger.info("Windows notification manager initialized")
@@ -75,10 +77,14 @@ class WindowsNotificationManager:
 
             # Windows 10 is version 10.0, Windows 11 is version 10.0 with higher build
             if major_version >= 10:
-                self.logger.info(f"Windows {major_version}.{minor_version} detected - notifications supported")
+                self.logger.info(
+                    f"Windows {major_version}.{minor_version} detected - notifications supported"
+                )
                 return True
             else:
-                self.logger.warning(f"Windows {major_version}.{minor_version} detected - notifications not supported")
+                self.logger.warning(
+                    f"Windows {major_version}.{minor_version} detected - notifications not supported"
+                )
                 return False
 
         except Exception as e:
@@ -220,7 +226,9 @@ class WindowsNotificationManager:
         self._show_toast_notification(title, message, "info")
         self.logger.debug("Info notification shown")
 
-    def show_spell_check_complete(self, original_text: str, corrected_text: str) -> None:
+    def show_spell_check_complete(
+        self, original_text: str, corrected_text: str
+    ) -> None:
         """Show notification when spell checking is complete."""
         if not self.is_available:
             return
@@ -250,19 +258,25 @@ class WindowsNotificationManager:
         self._show_toast_notification(title, message, "info")
         self.logger.debug("Spell check complete notification shown")
 
-    def _show_toast_notification(self, title: str, message: str, notification_type: str = "info") -> None:
+    def _show_toast_notification(
+        self, title: str, message: str, notification_type: str = "info"
+    ) -> None:
         """Show a modern Windows toast notification."""
         try:
             # Create and show a modern toast notification
             self._create_toast_notification(title, message, notification_type)
         except Exception as e:
-            self.logger.warning(f"Modern toast failed, falling back to simple notification: {e}")
+            self.logger.warning(
+                f"Modern toast failed, falling back to simple notification: {e}"
+            )
             try:
                 self._show_simple_notification(title, message, notification_type)
             except Exception as e2:
                 self.logger.error(f"Both notification methods failed: {e2}")
 
-    def _create_toast_notification(self, title: str, message: str, notification_type: str) -> None:
+    def _create_toast_notification(
+        self, title: str, message: str, notification_type: str
+    ) -> None:
         """Create a modern toast notification widget."""
         try:
             # Use a simple, guaranteed working approach
@@ -271,7 +285,8 @@ class WindowsNotificationManager:
 
             # Start notification in a separate thread to avoid blocking
             notification_thread = threading.Thread(
-                target=self._show_working_toast, args=(notification_id, title, message, notification_type)
+                target=self._show_working_toast,
+                args=(notification_id, title, message, notification_type),
             )
             notification_thread.daemon = True
             notification_thread.start()
@@ -283,19 +298,26 @@ class WindowsNotificationManager:
             self.logger.error(f"Error creating toast notification: {e}")
             raise
 
-    def _show_working_toast(self, notification_id: int, title: str, message: str, notification_type: str) -> None:
+    def _show_working_toast(
+        self, notification_id: int, title: str, message: str, notification_type: str
+    ) -> None:
         """Show a working toast notification."""
         try:
             # Use Windows taskbar notification - guaranteed to work
             self._show_taskbar_notification(title, message, notification_type)
 
             # Remove from active notifications after duration
-            threading.Timer(self.notification_duration / 1000.0, lambda: self._remove_notification(notification_id)).start()
+            threading.Timer(
+                self.notification_duration / 1000.0,
+                lambda: self._remove_notification(notification_id),
+            ).start()
 
         except Exception as e:
             self.logger.error(f"Error showing working toast: {e}")
 
-    def _show_taskbar_notification(self, title: str, message: str, notification_type: str):
+    def _show_taskbar_notification(
+        self, title: str, message: str, notification_type: str
+    ):
         """Show a Windows taskbar notification."""
         try:
             # Try winotify first for real Windows 10/11 toast notifications
@@ -310,11 +332,15 @@ class WindowsNotificationManager:
             # Final fallback to MessageBox
             self._show_messagebox_notification(title, message, notification_type)
 
-    def _show_winotify_notification(self, title: str, message: str, notification_type: str):
+    def _show_winotify_notification(
+        self, title: str, message: str, notification_type: str
+    ):
         """Show a notification using winotify for real Windows 10/11 toasts."""
         try:
             # Create notification with app_id for Mauscribe
-            toast = Notification(app_id="Mauscribe", title=title, msg=message, icon=None)  # Use default icon
+            toast = Notification(
+                app_id="Mauscribe", title=title, msg=message, icon=None
+            )  # Use default icon
 
             # Set audio based on notification type
             if self.enable_sound:
@@ -336,7 +362,9 @@ class WindowsNotificationManager:
             self.logger.error(f"Error showing winotify notification: {e}")
             raise
 
-    def _show_modern_messagebox_notification(self, title: str, message: str, notification_type: str):
+    def _show_modern_messagebox_notification(
+        self, title: str, message: str, notification_type: str
+    ):
         """Show a modern-looking MessageBox notification."""
         try:
             # Use Windows MessageBox with modern styling and positioning
@@ -347,10 +375,15 @@ class WindowsNotificationManager:
             elif notification_type == "warning":
                 flags = win32con.MB_OK | win32con.MB_ICONWARNING | win32con.MB_TOPMOST
             elif notification_type == "success":
-                flags = win32con.MB_OK | win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST
+                flags = (
+                    win32con.MB_OK | win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST
+                )
 
             # Show notification in background thread to avoid blocking
-            threading.Thread(target=lambda: win32api.MessageBox(0, message, title, flags), daemon=True).start()
+            threading.Thread(
+                target=lambda: win32api.MessageBox(0, message, title, flags),
+                daemon=True,
+            ).start()
 
             self.logger.debug(f"Modern MessageBox notification shown: {title}")
 
@@ -358,7 +391,9 @@ class WindowsNotificationManager:
             self.logger.error(f"Error showing modern MessageBox notification: {e}")
             raise
 
-    def _show_messagebox_notification(self, title: str, message: str, notification_type: str):
+    def _show_messagebox_notification(
+        self, title: str, message: str, notification_type: str
+    ):
         """Show a notification using Windows MessageBox."""
         try:
             # Use Windows MessageBox with modern styling
@@ -369,10 +404,15 @@ class WindowsNotificationManager:
             elif notification_type == "warning":
                 flags = win32con.MB_OK | win32con.MB_ICONWARNING | win32con.MB_TOPMOST
             elif notification_type == "success":
-                flags = win32con.MB_OK | win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST
+                flags = (
+                    win32con.MB_OK | win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST
+                )
 
             # Show notification in background thread
-            threading.Thread(target=lambda: win32api.MessageBox(0, message, title, flags), daemon=True).start()
+            threading.Thread(
+                target=lambda: win32api.MessageBox(0, message, title, flags),
+                daemon=True,
+            ).start()
 
             self.logger.debug(f"MessageBox notification shown: {title}")
 
@@ -380,31 +420,65 @@ class WindowsNotificationManager:
             self.logger.error(f"Error showing MessageBox notification: {e}")
             raise
 
-    def _show_simple_toast(self, notification_id: int, title: str, message: str, notification_type: str) -> None:
+    def _show_simple_toast(
+        self, notification_id: int, title: str, message: str, notification_type: str
+    ) -> None:
         """Legacy method - now redirects to working toast."""
         self._show_working_toast(notification_id, title, message, notification_type)
 
     def _create_minimal_notification(
-        self, title: str, message: str, notification_type: str, x: int, y: int, width: int, height: int
+        self,
+        title: str,
+        message: str,
+        notification_type: str,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
     ):
         """Legacy method - now redirects to taskbar notification."""
         self._show_taskbar_notification(title, message, notification_type)
 
-    def _show_fallback_notification(self, title: str, message: str, notification_type: str):
+    def _show_fallback_notification(
+        self, title: str, message: str, notification_type: str
+    ):
         """Show a fallback notification using Windows taskbar."""
         try:
             # Use Windows taskbar notification as fallback
-            flags = win32con.MB_OK | win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST | win32con.MB_SYSTEMMODAL
+            flags = (
+                win32con.MB_OK
+                | win32con.MB_ICONINFORMATION
+                | win32con.MB_TOPMOST
+                | win32con.MB_SYSTEMMODAL
+            )
 
             if notification_type == "error":
-                flags = win32con.MB_OK | win32con.MB_ICONERROR | win32con.MB_TOPMOST | win32con.MB_SYSTEMMODAL
+                flags = (
+                    win32con.MB_OK
+                    | win32con.MB_ICONERROR
+                    | win32con.MB_TOPMOST
+                    | win32con.MB_SYSTEMMODAL
+                )
             elif notification_type == "warning":
-                flags = win32con.MB_OK | win32con.MB_ICONWARNING | win32con.MB_TOPMOST | win32con.MB_SYSTEMMODAL
+                flags = (
+                    win32con.MB_OK
+                    | win32con.MB_ICONWARNING
+                    | win32con.MB_TOPMOST
+                    | win32con.MB_SYSTEMMODAL
+                )
             elif notification_type == "success":
-                flags = win32con.MB_OK | win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST | win32con.MB_SYSTEMMODAL
+                flags = (
+                    win32con.MB_OK
+                    | win32con.MB_ICONINFORMATION
+                    | win32con.MB_TOPMOST
+                    | win32con.MB_SYSTEMMODAL
+                )
 
             # Show in background thread to avoid blocking
-            threading.Thread(target=lambda: win32api.MessageBox(0, message, title, flags), daemon=True).start()
+            threading.Thread(
+                target=lambda: win32api.MessageBox(0, message, title, flags),
+                daemon=True,
+            ).start()
 
         except Exception as e:
             self.logger.error(f"Error showing fallback notification: {e}")
@@ -435,15 +509,27 @@ class WindowsNotificationManager:
         except Exception as e:
             self.logger.error(f"Error removing notification: {e}")
 
-    def _show_toast_widget(self, notification_id: int, title: str, message: str, notification_type: str) -> None:
+    def _show_toast_widget(
+        self, notification_id: int, title: str, message: str, notification_type: str
+    ) -> None:
         """Legacy method - now redirects to simple toast."""
         self._show_simple_toast(notification_id, title, message, notification_type)
 
     def _create_simple_notification_window(
-        self, notification_id: int, title: str, message: str, notification_type: str, x: int, y: int, width: int, height: int
+        self,
+        notification_id: int,
+        title: str,
+        message: str,
+        notification_type: str,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
     ):
         """Legacy method - now redirects to minimal notification."""
-        self._create_minimal_notification(title, message, notification_type, x, y, width, height)
+        self._create_minimal_notification(
+            title, message, notification_type, x, y, width, height
+        )
         return None  # Return None since we don't need the handle
 
     def _simple_notification_proc(self, hwnd, msg, wparam, lparam):
@@ -470,7 +556,9 @@ class WindowsNotificationManager:
         except Exception as e:
             self.logger.error(f"Error hiding notification by hwnd: {e}")
 
-    def _show_simple_notification(self, title: str, message: str, notification_type: str) -> None:
+    def _show_simple_notification(
+        self, title: str, message: str, notification_type: str
+    ) -> None:
         """Fallback to simple notification method."""
         try:
             # Use a simple taskbar notification as fallback
@@ -481,15 +569,22 @@ class WindowsNotificationManager:
             elif notification_type == "warning":
                 flags = win32con.MB_OK | win32con.MB_ICONWARNING | win32con.MB_TOPMOST
             elif notification_type == "success":
-                flags = win32con.MB_OK | win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST
+                flags = (
+                    win32con.MB_OK | win32con.MB_ICONINFORMATION | win32con.MB_TOPMOST
+                )
 
             # Show in background thread to avoid blocking
-            threading.Thread(target=lambda: win32api.MessageBox(0, message, title, flags), daemon=True).start()
+            threading.Thread(
+                target=lambda: win32api.MessageBox(0, message, title, flags),
+                daemon=True,
+            ).start()
 
         except Exception as e:
             self.logger.error(f"Error showing simple notification: {e}")
 
-    def show_balloon_tip(self, title: str, message: str, icon_type: str = "info", duration: int = 5000) -> None:
+    def show_balloon_tip(
+        self, title: str, message: str, icon_type: str = "info", duration: int = 5000
+    ) -> None:
         """Show a balloon tip notification in the system tray."""
         if not self.is_available:
             return

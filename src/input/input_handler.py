@@ -51,7 +51,9 @@ class InputHandler:
 
         # Initialize handlers with debouncing
         self.mouse_handler = MouseHandler(debounce_time_ms=mouse_debounce_ms or 300)
-        self.keyboard_handler = KeyboardHandler(debounce_time_ms=keyboard_debounce_ms or 200)
+        self.keyboard_handler = KeyboardHandler(
+            debounce_time_ms=keyboard_debounce_ms or 200
+        )
 
         # Initialize button mapper for configuration-based button handling
         self.button_mapper = get_button_mapper(self.config)
@@ -63,7 +65,9 @@ class InputHandler:
         if pk_callback and sk_callback:
             self.input_filter.set_callbacks(pk_callback, sk_callback)
         else:
-            self.logger.warning("One or both callbacks are None, input filtering disabled")
+            self.logger.warning(
+                "One or both callbacks are None, input filtering disabled"
+            )
 
         # Callback functions (kept for backward compatibility)
         self.primary_callback: Optional[Callable[[bool], None]] = pk_callback
@@ -72,7 +76,9 @@ class InputHandler:
         # Start listening
         self._start_listening()
 
-    def set_debounce_times(self, mouse_ms: Optional[int] = None, keyboard_ms: Optional[int] = None) -> None:
+    def set_debounce_times(
+        self, mouse_ms: Optional[int] = None, keyboard_ms: Optional[int] = None
+    ) -> None:
         """Set debounce times for input handlers.
 
         Args:
@@ -95,7 +101,9 @@ class InputHandler:
         """
         self.mouse_handler.enable_debouncing(enabled)
         self.keyboard_handler.enable_debouncing(enabled)
-        self.logger.info(f"Debouncing {'enabled' if enabled else 'disabled'} for all input handlers")
+        self.logger.info(
+            f"Debouncing {'enabled' if enabled else 'disabled'} for all input handlers"
+        )
 
     def reset_debounce_timers(self) -> None:
         """Reset all debounce timers."""
@@ -128,12 +136,16 @@ class InputHandler:
 
             # Check if button matches primary button
             if button == primary_button:
-                self.logger.debug(f"Primary mouse button {'pressed' if pressed else 'released'}")
+                self.logger.debug(
+                    f"Primary mouse button {'pressed' if pressed else 'released'}"
+                )
                 self.input_filter.process_primary_input(pressed)
 
             # Check if button matches secondary button
             elif button == secondary_button:
-                self.logger.debug(f"Secondary mouse button {'pressed' if pressed else 'released'}")
+                self.logger.debug(
+                    f"Secondary mouse button {'pressed' if pressed else 'released'}"
+                )
                 self.input_filter.process_secondary_input(pressed)
 
         except Exception as e:
@@ -146,16 +158,22 @@ class InputHandler:
 
             # Get configured keyboard keys using button mapper
             primary_key = self.button_mapper.get_primary_keyboard_key()
-            secondary_key = self.button_mapper.get_keyboard_key(self.config.keyboard_secondary)
+            secondary_key = self.button_mapper.get_keyboard_key(
+                self.config.keyboard_secondary
+            )
 
             # Check if key matches primary key
             if key == primary_key:
-                self.logger.debug(f"Primary keyboard key {'pressed' if pressed else 'released'}")
+                self.logger.debug(
+                    f"Primary keyboard key {'pressed' if pressed else 'released'}"
+                )
                 self.input_filter.process_primary_input(pressed)
 
             # Check if key matches secondary key (for single key)
             elif key == secondary_key:
-                self.logger.debug(f"Secondary keyboard key {'pressed' if pressed else 'released'}")
+                self.logger.debug(
+                    f"Secondary keyboard key {'pressed' if pressed else 'released'}"
+                )
                 self.input_filter.process_secondary_input(pressed)
 
             # TODO: Implement key combination handling for secondary keyboard input
@@ -188,9 +206,17 @@ class InputHandler:
                 "secondary_callback": self.secondary_callback is not None,
             },
             "button_mapper": {
-                "primary_mouse_button": str(self.button_mapper.get_primary_mouse_button()),
-                "secondary_mouse_button": str(self.button_mapper.get_secondary_mouse_button()),
-                "primary_keyboard_key": str(self.button_mapper.get_primary_keyboard_key()),
-                "secondary_keyboard_key": str(self.button_mapper.get_keyboard_key(self.config.keyboard_secondary)),
+                "primary_mouse_button": str(
+                    self.button_mapper.get_primary_mouse_button()
+                ),
+                "secondary_mouse_button": str(
+                    self.button_mapper.get_secondary_mouse_button()
+                ),
+                "primary_keyboard_key": str(
+                    self.button_mapper.get_primary_keyboard_key()
+                ),
+                "secondary_keyboard_key": str(
+                    self.button_mapper.get_keyboard_key(self.config.keyboard_secondary)
+                ),
             },
         }

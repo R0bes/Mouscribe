@@ -66,7 +66,9 @@ class AudioRecorder:
                                 "index": i,
                                 "name": input_device.get("name", f"Device {i}"),
                                 "max_inputs": input_device.get("max_inputs", 1),
-                                "default_samplerate": input_device.get("default_samplerate", 44100),
+                                "default_samplerate": input_device.get(
+                                    "default_samplerate", 44100
+                                ),
                                 "is_default": i == default_input["index"],
                             }
                         )
@@ -154,7 +156,9 @@ class AudioRecorder:
         except Exception:
             raise RuntimeError("Kein funktionierendes Audio-Gerät verfügbar")
 
-    def _audio_callback(self, indata: np.ndarray, frames: int, _: Any, status: Any) -> None:
+    def _audio_callback(
+        self, indata: np.ndarray, frames: int, _: Any, status: Any
+    ) -> None:
         """Callback für eingehende Audio-Daten."""
         if not self._active or indata is None:
             return
@@ -198,7 +202,9 @@ class AudioRecorder:
         # Prüfe Mindestaufnahmezeit
         recording_duration = time.time() - self._start_time
         if recording_duration < self._min_recording_duration:
-            self.logger.warning(f"Aufnahme zu kurz ({recording_duration:.2f}s < {self._min_recording_duration}s) - ignoriere")
+            self.logger.warning(
+                f"Aufnahme zu kurz ({recording_duration:.2f}s < {self._min_recording_duration}s) - ignoriere"
+            )
             self._active = False
             if self._stream:
                 self._stream.stop()
@@ -229,7 +235,9 @@ class AudioRecorder:
         if audio.ndim == 2 and audio.shape[1] > 1:
             audio = np.mean(audio, axis=1)
 
-        self.logger.info(f"Aufnahme gestoppt: {len(audio)} Samples, {recording_duration:.2f}s")
+        self.logger.info(
+            f"Aufnahme gestoppt: {len(audio)} Samples, {recording_duration:.2f}s"
+        )
         return audio.astype(np.float32)
 
     def is_recording(self) -> bool:

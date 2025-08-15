@@ -71,7 +71,9 @@ class KeyboardHandler:
         if event_key in self.last_event_time:
             time_since_last = (current_time - self.last_event_time[event_key]) * 1000
             if time_since_last < self.debounce_time_ms:
-                self.logger.debug(f"Debounced {event_type} for {key} (time: {time_since_last:.1f}ms)")
+                self.logger.debug(
+                    f"Debounced {event_type} for {key} (time: {time_since_last:.1f}ms)"
+                )
                 return True
 
         self.last_event_time[event_key] = current_time
@@ -85,7 +87,9 @@ class KeyboardHandler:
         """
         try:
             self.keyboard_callback = callback
-            self.keyboard_listener = keyboard.Listener(on_press=self._on_key_press, on_release=self._on_key_release)
+            self.keyboard_listener = keyboard.Listener(
+                on_press=self._on_key_press, on_release=self._on_key_release
+            )
             try:
                 self.keyboard_listener.start()
                 self.logger.debug("Keyboard listener started with debouncing")

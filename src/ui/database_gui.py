@@ -49,12 +49,16 @@ class DatabaseManagerGUI:
         main_frame.rowconfigure(1, weight=1)
 
         # Title
-        title_label = ttk.Label(main_frame, text="Audio-Datenbank Manager", font=("Arial", 16, "bold"))
+        title_label = ttk.Label(
+            main_frame, text="Audio-Datenbank Manager", font=("Arial", 16, "bold")
+        )
         title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
 
         # Statistics frame
         stats_frame = ttk.LabelFrame(main_frame, text="Statistiken", padding="10")
-        stats_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
+        stats_frame.grid(
+            row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10)
+        )
 
         # Statistics labels
         self.stats_labels = {}
@@ -67,43 +71,67 @@ class DatabaseManagerGUI:
         ]
 
         for i, (key, label) in enumerate(stats_data):
-            ttk.Label(stats_frame, text=label).grid(row=i // 3, column=(i % 3) * 2, sticky=tk.W, padx=(0, 5))
-            self.stats_labels[key] = ttk.Label(stats_frame, text="0", font=("Arial", 10, "bold"))
-            self.stats_labels[key].grid(row=i // 3, column=(i % 3) * 2 + 1, sticky=tk.W, padx=(0, 20))
+            ttk.Label(stats_frame, text=label).grid(
+                row=i // 3, column=(i % 3) * 2, sticky=tk.W, padx=(0, 5)
+            )
+            self.stats_labels[key] = ttk.Label(
+                stats_frame, text="0", font=("Arial", 10, "bold")
+            )
+            self.stats_labels[key].grid(
+                row=i // 3, column=(i % 3) * 2 + 1, sticky=tk.W, padx=(0, 20)
+            )
 
         # Control buttons
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=2, column=0, columnspan=3, pady=(0, 10))
 
-        ttk.Button(button_frame, text="🔄 Aktualisieren", command=self._refresh_data).pack(side=tk.LEFT, padx=(0, 10))
-        ttk.Button(button_frame, text="📤 Exportieren", command=self._export_data).pack(side=tk.LEFT, padx=(0, 10))
-        ttk.Button(button_frame, text="🗑️  Aufräumen", command=self._cleanup_old_data).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Button(
+            button_frame, text="🔄 Aktualisieren", command=self._refresh_data
+        ).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Button(button_frame, text="📤 Exportieren", command=self._export_data).pack(
+            side=tk.LEFT, padx=(0, 10)
+        )
+        ttk.Button(
+            button_frame, text="🗑️  Aufräumen", command=self._cleanup_old_data
+        ).pack(side=tk.LEFT, padx=(0, 10))
 
         # Search frame
         search_frame = ttk.LabelFrame(main_frame, text="Suche & Filter", padding="10")
-        search_frame.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
+        search_frame.grid(
+            row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10)
+        )
 
-        ttk.Label(search_frame, text="Suche:").grid(row=0, column=0, sticky=tk.W, padx=(0, 5))
+        ttk.Label(search_frame, text="Suche:").grid(
+            row=0, column=0, sticky=tk.W, padx=(0, 5)
+        )
         self.search_var = tk.StringVar()
         self.search_var.trace("w", self._filter_data)
         search_entry = ttk.Entry(search_frame, textvariable=self.search_var, width=30)
         search_entry.grid(row=0, column=1, sticky=tk.W, padx=(0, 20))
 
-        ttk.Label(search_frame, text="Tags:").grid(row=0, column=2, sticky=tk.W, padx=(0, 5))
+        ttk.Label(search_frame, text="Tags:").grid(
+            row=0, column=2, sticky=tk.W, padx=(0, 5)
+        )
         self.tags_var = tk.StringVar()
         self.tags_var.trace("w", self._filter_data)
         tags_entry = ttk.Entry(search_frame, textvariable=self.tags_var, width=20)
         tags_entry.grid(row=0, column=3, sticky=tk.W)
 
         # Treeview for data
-        tree_frame = ttk.LabelFrame(main_frame, text="Aufnahmen & Transkriptionen", padding="10")
-        tree_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 10))
+        tree_frame = ttk.LabelFrame(
+            main_frame, text="Aufnahmen & Transkriptionen", padding="10"
+        )
+        tree_frame.grid(
+            row=4, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 10)
+        )
         tree_frame.columnconfigure(0, weight=1)
         tree_frame.rowconfigure(0, weight=1)
 
         # Create treeview
         columns = ("Datum", "Dauer", "Text", "Sprache", "Qualität", "Tags")
-        self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=15)
+        self.tree = ttk.Treeview(
+            tree_frame, columns=columns, show="headings", height=15
+        )
 
         # Configure columns
         self.tree.heading("Datum", text="Datum")
@@ -121,9 +149,15 @@ class DatabaseManagerGUI:
         self.tree.column("Tags", width=150)
 
         # Scrollbars
-        tree_scroll_y = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
-        tree_scroll_x = ttk.Scrollbar(tree_frame, orient=tk.HORIZONTAL, command=self.tree.xview)
-        self.tree.configure(yscrollcommand=tree_scroll_y.set, xscrollcommand=tree_scroll_x.set)
+        tree_scroll_y = ttk.Scrollbar(
+            tree_frame, orient=tk.VERTICAL, command=self.tree.yview
+        )
+        tree_scroll_x = ttk.Scrollbar(
+            tree_frame, orient=tk.HORIZONTAL, command=self.tree.xview
+        )
+        self.tree.configure(
+            yscrollcommand=tree_scroll_y.set, xscrollcommand=tree_scroll_x.set
+        )
 
         # Grid treeview and scrollbars
         self.tree.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -135,11 +169,15 @@ class DatabaseManagerGUI:
 
         # Details frame
         details_frame = ttk.LabelFrame(main_frame, text="Details", padding="10")
-        details_frame.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
+        details_frame.grid(
+            row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10)
+        )
 
         # Details text
         self.details_text = tk.Text(details_frame, height=6, wrap=tk.WORD)
-        details_scroll = ttk.Scrollbar(details_frame, orient=tk.VERTICAL, command=self.details_text.yview)
+        details_scroll = ttk.Scrollbar(
+            details_frame, orient=tk.VERTICAL, command=self.details_text.yview
+        )
         self.details_text.configure(yscrollcommand=details_scroll.set)
 
         self.details_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -153,8 +191,12 @@ class DatabaseManagerGUI:
         # Status bar
         self.status_var = tk.StringVar()
         self.status_var.set("Bereit")
-        status_bar = ttk.Label(main_frame, textvariable=self.status_var, relief=tk.SUNKEN)
-        status_bar.grid(row=6, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(10, 0))
+        status_bar = ttk.Label(
+            main_frame, textvariable=self.status_var, relief=tk.SUNKEN
+        )
+        status_bar.grid(
+            row=6, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(10, 0)
+        )
 
     def _refresh_data(self):
         """Refresh the data display."""
@@ -172,7 +214,11 @@ class DatabaseManagerGUI:
             # Add data to treeview
             for item in training_data:
                 # Format date
-                date_str = item.get("timestamp", "")[:19].replace("T", " ") if item.get("timestamp") else ""
+                date_str = (
+                    item.get("timestamp", "")[:19].replace("T", " ")
+                    if item.get("timestamp")
+                    else ""
+                )
 
                 # Format duration
                 duration = item.get("duration_seconds", 0)
@@ -180,7 +226,9 @@ class DatabaseManagerGUI:
 
                 # Format text (truncate if too long)
                 text = (
-                    item.get("raw_text", "")[:50] + "..." if len(item.get("raw_text", "")) > 50 else item.get("raw_text", "")
+                    item.get("raw_text", "")[:50] + "..."
+                    if len(item.get("raw_text", "")) > 50
+                    else item.get("raw_text", "")
                 )
 
                 # Format tags
@@ -196,7 +244,11 @@ class DatabaseManagerGUI:
                         duration_str,
                         text,
                         item.get("language", ""),
-                        f"{item.get('quality_score', 0):.2f}" if item.get("quality_score") else "",
+                        (
+                            f"{item.get('quality_score', 0):.2f}"
+                            if item.get("quality_score")
+                            else ""
+                        ),
                         tags_str,
                     ),
                     tags=(item,),
@@ -319,7 +371,9 @@ Audio-Datei:
 
             if filename:
                 if self.database.export_training_data(filename):
-                    messagebox.showinfo("Erfolg", f"Daten erfolgreich exportiert nach:\n{filename}")
+                    messagebox.showinfo(
+                        "Erfolg", f"Daten erfolgreich exportiert nach:\n{filename}"
+                    )
                     self.status_var.set(f"Daten exportiert: {filename}")
                 else:
                     messagebox.showerror("Fehler", "Fehler beim Exportieren der Daten")
@@ -333,12 +387,16 @@ Audio-Datei:
         try:
             result = messagebox.askyesno(
                 "Aufräumen",
-                "Möchten Sie Aufnahmen älter als 30 Tage löschen?\n\n" "Dies kann nicht rückgängig gemacht werden!",
+                "Möchten Sie Aufnahmen älter als 30 Tage löschen?\n\n"
+                "Dies kann nicht rückgängig gemacht werden!",
             )
 
             if result:
                 deleted_count = self.database.cleanup_old_recordings(days_to_keep=30)
-                messagebox.showinfo("Aufräumen abgeschlossen", f"{deleted_count} alte Aufnahmen wurden gelöscht")
+                messagebox.showinfo(
+                    "Aufräumen abgeschlossen",
+                    f"{deleted_count} alte Aufnahmen wurden gelöscht",
+                )
                 self._refresh_data()
 
         except Exception as e:
@@ -353,7 +411,12 @@ Audio-Datei:
 class EditItemDialog:
     """Dialog for editing training data items."""
 
-    def __init__(self, parent: tk.Tk | tk.Toplevel, item_data: dict[str, Any], database: AudioDatabase):
+    def __init__(
+        self,
+        parent: tk.Tk | tk.Toplevel,
+        item_data: dict[str, Any],
+        database: AudioDatabase,
+    ):
         """Initialize the edit dialog."""
         self.database = database
         self.item_data = item_data
@@ -373,14 +436,24 @@ class EditItemDialog:
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Title
-        title_label = ttk.Label(main_frame, text="Trainingsdaten bearbeiten", font=("Arial", 14, "bold"))
+        title_label = ttk.Label(
+            main_frame, text="Trainingsdaten bearbeiten", font=("Arial", 14, "bold")
+        )
         title_label.pack(pady=(0, 20))
 
         # Form fields
         # Quality score
-        ttk.Label(main_frame, text="Qualitätsbewertung (0-1):").pack(anchor=tk.W, pady=(0, 5))
+        ttk.Label(main_frame, text="Qualitätsbewertung (0-1):").pack(
+            anchor=tk.W, pady=(0, 5)
+        )
         self.quality_var = tk.DoubleVar(value=self.item_data.get("quality_score", 0.5))
-        quality_scale = ttk.Scale(main_frame, from_=0.0, to=1.0, variable=self.quality_var, orient=tk.HORIZONTAL)
+        quality_scale = ttk.Scale(
+            main_frame,
+            from_=0.0,
+            to=1.0,
+            variable=self.quality_var,
+            orient=tk.HORIZONTAL,
+        )
         quality_scale.pack(fill=tk.X, pady=(0, 15))
 
         # Notes
@@ -390,29 +463,43 @@ class EditItemDialog:
         self.notes_text.insert(1.0, self.item_data.get("notes", ""))
 
         # Tags
-        ttk.Label(main_frame, text="Tags (kommagetrennt):").pack(anchor=tk.W, pady=(0, 5))
+        ttk.Label(main_frame, text="Tags (kommagetrennt):").pack(
+            anchor=tk.W, pady=(0, 5)
+        )
         self.tags_var = tk.StringVar(value=", ".join(self.item_data.get("tags", [])))
         tags_entry = ttk.Entry(main_frame, textvariable=self.tags_var)
         tags_entry.pack(fill=tk.X, pady=(0, 15))
 
         # Training validity
-        self.valid_var = tk.BooleanVar(value=self.item_data.get("is_valid_for_training", True))
-        valid_check = ttk.Checkbutton(main_frame, text="Für Training geeignet", variable=self.valid_var)
+        self.valid_var = tk.BooleanVar(
+            value=self.item_data.get("is_valid_for_training", True)
+        )
+        valid_check = ttk.Checkbutton(
+            main_frame, text="Für Training geeignet", variable=self.valid_var
+        )
         valid_check.pack(anchor=tk.W, pady=(0, 20))
 
         # Buttons
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill=tk.X, pady=(20, 0))
 
-        ttk.Button(button_frame, text="Speichern", command=self._save_changes).pack(side=tk.RIGHT, padx=(10, 0))
-        ttk.Button(button_frame, text="Abbrechen", command=self.root.destroy).pack(side=tk.RIGHT)
+        ttk.Button(button_frame, text="Speichern", command=self._save_changes).pack(
+            side=tk.RIGHT, padx=(10, 0)
+        )
+        ttk.Button(button_frame, text="Abbrechen", command=self.root.destroy).pack(
+            side=tk.RIGHT
+        )
 
     def _save_changes(self):
         """Save changes to database."""
         try:
             # Parse tags
             tags_text = self.tags_var.get().strip()
-            tags = [tag.strip() for tag in tags_text.split(",") if tag.strip()] if tags_text else []
+            tags = (
+                [tag.strip() for tag in tags_text.split(",") if tag.strip()]
+                if tags_text
+                else []
+            )
 
             # Update training data
             self.database.save_training_data(

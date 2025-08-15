@@ -167,7 +167,9 @@ def get_logger(name: str) -> MauscribeLogger:
 
 
 # Convenience function for quick emoji logging
-def log_with_emoji(level: str, message: str, emoji: str = "", logger_name: Optional[str] = None) -> None:
+def log_with_emoji(
+    level: str, message: str, emoji: str = "", logger_name: Optional[str] = None
+) -> None:
     """Quick logging function with emoji support.
 
     Args:

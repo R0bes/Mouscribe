@@ -108,7 +108,9 @@ class ButtonMapper:
 
         return None
 
-    def parse_key_combination(self, combination_str: str) -> list[Union[keyboard.Key, str]]:
+    def parse_key_combination(
+        self, combination_str: str
+    ) -> list[Union[keyboard.Key, str]]:
         """Parse key combination string (e.g., "ctrl+shift+f9").
 
         Args:
@@ -211,7 +213,9 @@ def get_button_mapper(config: Optional[Config] = None) -> ButtonMapper:
     return ButtonMapper(config)
 
 
-def get_mouse_button(button_name: str, config: Optional[Config] = None) -> Optional[mouse.Button]:
+def get_mouse_button(
+    button_name: str, config: Optional[Config] = None
+) -> Optional[mouse.Button]:
     """Get mouse button from name.
 
     Args:
@@ -225,7 +229,9 @@ def get_mouse_button(button_name: str, config: Optional[Config] = None) -> Optio
     return mapper.get_mouse_button(button_name)
 
 
-def get_keyboard_key(key_name: str, config: Optional[Config] = None) -> Union[keyboard.Key, str, None]:
+def get_keyboard_key(
+    key_name: str, config: Optional[Config] = None
+) -> Union[keyboard.Key, str, None]:
     """Get keyboard key from name.
 
     Args:

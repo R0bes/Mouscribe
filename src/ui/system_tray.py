@@ -43,17 +43,25 @@ class SystemTrayManager:
 
         # Draw microphone icon
         # Microphone body (rectangle)
-        draw.rectangle((20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
+        draw.rectangle(
+            (20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2
+        )
 
         # Microphone head (circle)
-        draw.ellipse((18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
+        draw.ellipse(
+            (18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2
+        )
 
         # Microphone stand
-        draw.rectangle((30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
+        draw.rectangle(
+            (30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2
+        )
 
         # Recording indicator (red dot when recording)
         if self.is_recording:
-            draw.ellipse([50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1)
+            draw.ellipse(
+                [50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1
+            )
 
         return img
 
@@ -81,11 +89,15 @@ class SystemTrayManager:
                 pystray.MenuItem("Exit", on_clicked),
             )
 
-            self.system_tray = pystray.Icon("mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu)
+            self.system_tray = pystray.Icon(
+                "mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu
+            )
             logger.info("🖥️  System Tray erfolgreich initialisiert")
         except Exception as e:
             logger.error(f"❌ System Tray konnte nicht initialisiert werden: {e}")
-            logger.warning("⚠️  System Tray nicht verfügbar - Anwendung läuft im Konsolenmodus")
+            logger.warning(
+                "⚠️  System Tray nicht verfügbar - Anwendung läuft im Konsolenmodus"
+            )
             self.system_tray = None
 
     def _log_status(self) -> None:
@@ -122,7 +134,9 @@ class SystemTrayManager:
             try:
                 subprocess.run(["notepad", str(config_path)], shell=True)
             except Exception as e:
-                logger.error(f"❌ Konfigurationsdatei konnte nicht geöffnet werden: {e}")
+                logger.error(
+                    f"❌ Konfigurationsdatei konnte nicht geöffnet werden: {e}"
+                )
         else:
             logger.warning("⚠️  Konfigurationsdatei nicht gefunden")
 

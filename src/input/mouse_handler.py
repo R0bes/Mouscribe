@@ -71,7 +71,9 @@ class MouseHandler:
         if event_key in self.last_event_time:
             time_since_last = (current_time - self.last_event_time[event_key]) * 1000
             if time_since_last < self.debounce_time_ms:
-                self.logger.debug(f"Debounced {event_type} for {button} (time: {time_since_last:.1f}ms)")
+                self.logger.debug(
+                    f"Debounced {event_type} for {button} (time: {time_since_last:.1f}ms)"
+                )
                 return True
 
         self.last_event_time[event_key] = current_time

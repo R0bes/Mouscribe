@@ -42,7 +42,9 @@ class UpdateInfo:
         self.download_path: Path | None = None
 
     def __str__(self) -> str:
-        return f"Update {self.version} ({'Pre-release' if self.prerelease else 'Stable'})"
+        return (
+            f"Update {self.version} ({'Pre-release' if self.prerelease else 'Stable'})"
+        )
 
 
 class AutoUpdater:
@@ -60,7 +62,9 @@ class AutoUpdater:
         self.logger = get_logger(self.__class__.__name__)
 
         self._enabled = getattr(config, "auto_update_enabled", False)
-        self._check_interval = getattr(config, "auto_update_check_interval", None) or UPDATE_CHECK_INTERVAL
+        self._check_interval = (
+            getattr(config, "auto_update_check_interval", None) or UPDATE_CHECK_INTERVAL
+        )
         self._last_check: float = 0.0
         self._update_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
@@ -75,7 +79,9 @@ class AutoUpdater:
         if self._update_thread and self._update_thread.is_alive():
             return
 
-        self._update_thread = threading.Thread(target=self._update_check_loop, daemon=True, name="Mauscribe-Updater")
+        self._update_thread = threading.Thread(
+            target=self._update_check_loop, daemon=True, name="Mauscribe-Updater"
+        )
         self._update_thread.start()
         self.logger.info("Auto-Updater Thread gestartet")
 
@@ -123,7 +129,9 @@ class AutoUpdater:
 
         if not force and time.time() - self._last_check < self._check_interval:
             remaining = self._check_interval - (time.time() - self._last_check)
-            self.logger.info(f"Update-Check erst in {int(remaining / 60)} Minuten verfügbar")
+            self.logger.info(
+                f"Update-Check erst in {int(remaining / 60)} Minuten verfügbar"
+            )
             return None
 
         try:
@@ -135,7 +143,9 @@ class AutoUpdater:
 
             if update_info and self._is_newer_version(update_info.version):
                 self.logger.info(f"✅ Update verfügbar: {update_info.version}")
-                self.logger.info(f"📝 Release Notes: {update_info.release_notes[:100]}...")
+                self.logger.info(
+                    f"📝 Release Notes: {update_info.release_notes[:100]}..."
+                )
                 return update_info
             else:
                 self.logger.info("✅ Keine Updates verfügbar")
