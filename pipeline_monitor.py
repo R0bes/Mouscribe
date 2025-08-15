@@ -458,7 +458,7 @@ class PipelineMonitor:
                                         line = line[:97] + "..."
                                     print(f"     {line}")
                             else:
-                                                                 # If no specific error lines found, show last 50 lines for context
+                                # If no specific error lines found, show last 50 lines for context
                                  print(f"   Last 50 log lines for context:")
                                  for line in logs[-50:]:
                                      if len(line) > 150:
