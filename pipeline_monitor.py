@@ -313,10 +313,7 @@ class PipelineMonitor:
 
         branch_type = self.get_branch_type()
         print(f"Branch: {current_branch} ({branch_type})")
-        print(f"Commit: {last_commit_short}")
-        if self.is_pr_branch():
-            print(f"Type: PR Branch - {branch_type.upper()}")
-        print(f"Initial timeout: 60 seconds, extended timeout: {max_wait_time} seconds\n")
+        print(f"Commit: {last_commit_short}\n")
 
         start_time = time.time()
         pipeline_started = False
@@ -372,7 +369,6 @@ class PipelineMonitor:
                     self._show_running_jobs(latest_run)
                     if not pipeline_started:
                         pipeline_started = True
-                        print(f"🚀 Pipeline started! Extended timeout to {max_wait_time} seconds")
                 elif status == "queued":
                     print("⏳ Pipeline is queued...")
                 elif status == "waiting":
@@ -380,6 +376,10 @@ class PipelineMonitor:
 
                 last_status = status
 
+            # Show waiting time every 30 seconds
+            elapsed = time.time() - start_time
+            if int(elapsed) % 30 == 0 and elapsed > 0:
+                print(f"⏰ Wartezeit: {int(elapsed)}s")
             time.sleep(15)  # Check every 15 seconds
 
     def _show_running_jobs(self, workflow_run: dict) -> None:

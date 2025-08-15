@@ -81,7 +81,7 @@ if (Test-Path "pipeline_monitor.py") {
         $exitCode = $LASTEXITCODE
 
         if ($exitCode -eq 0) {
-            Write-Host "✅ Pipeline monitoring completed successfully" -ForegroundColor Green
+            Write-Host "✅ Pipeline monitoring completed" -ForegroundColor Green
         } else {
             Write-Host "❌ Pipeline monitoring failed or pipelines failed" -ForegroundColor Red
             Write-Host "💡 Check the output above for details" -ForegroundColor Yellow
@@ -117,7 +117,7 @@ if exist "pipeline_monitor.py" (
     set exitCode=%ERRORLEVEL%
     
     if %exitCode% equ 0 (
-        echo ✅ Pipeline monitoring completed successfully
+        echo ✅ Pipeline monitoring completed
     ) else (
         echo ❌ Pipeline monitoring failed or pipelines failed
         echo 💡 Check the output above for details
@@ -162,7 +162,7 @@ if [ -f "pipeline_monitor.py" ]; then
     exit_code=$?
     
     if [ $exit_code -eq 0 ]; then
-        echo "✅ Pipeline monitoring completed successfully"
+        echo "✅ Pipeline monitoring completed"
     else
         echo "❌ Pipeline monitoring failed or pipelines failed"
         echo "💡 Check the output above for details"
