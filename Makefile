@@ -289,8 +289,7 @@ endif
 .PHONY: push
 push:
 	@echo 📤 Pushe Änderungen zum Remote-Repository...
-	@git push
-	@echo ✅ Push erfolgreich abgeschlossen!
+	@git push && echo ✅ Push erfolgreich abgeschlossen!
 
 .PHONY: git
 git: commit push
