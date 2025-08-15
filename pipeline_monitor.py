@@ -302,8 +302,9 @@ class PipelineMonitor:
     # High-level monitor flow
     # ---------------------------
 
-    def monitor_pipeline(self, project_name: str = "Mauscribe", max_wait_time: int = 300) -> bool:
+    def monitor_pipeline(self, max_wait_time: int = 300) -> bool:
         """Monitor the CI/CD pipeline for the current branch."""
+        project_name: str = "Mauscribe"
         print(f"\033[1m\033[32{project_name.title()} Pipeline Monitor\033[0m")
         print("=" * 50)
 
