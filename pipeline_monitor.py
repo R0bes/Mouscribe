@@ -305,7 +305,7 @@ class PipelineMonitor:
     def monitor_pipeline(self, max_wait_time: int = 300) -> bool:
         """Monitor the CI/CD pipeline for the current branch."""
         project_name: str = "Mauscribe"
-        print(f"\033[1m\033[32{project_name.title()} Pipeline Monitor\033[0m")
+        print(f"\033[1m\033[32m \t{project_name.title()} Pipeline Monitor\033[0m")
         print("=" * 50)
 
         current_branch = self.get_current_branch()
@@ -314,7 +314,11 @@ class PipelineMonitor:
 
         branch_type = self.get_branch_type()
         print(f"Branch: {current_branch} ({branch_type})")
-        print(f"Commit: {last_commit_short}\n")
+        print(f"Commit: {last_commit_short}")
+        
+        # Show direct pipeline link before starting monitoring
+        pipeline_url = f"https://github.com/{self.repo_owner}/{self.repo_name}/actions"
+        print(f"🔗 Pipeline: {pipeline_url}\n")
 
         start_time = time.time()
         pipeline_started = False
