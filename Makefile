@@ -309,27 +309,12 @@ pr: git
 	@echo 🔄 Erstelle Pull Request...
 	@echo 📋 Branch-Typ wird erkannt...
 ifeq ($(OS),Windows_NT)
-	@for /f "tokens=*" %%i in ('git branch --show-current') do set current_branch=%%i
-	@if "!current_branch!"=="main" ( \
-		echo ❌ Kann keinen PR von main Branch erstellen && exit 1 \
-	) else if "!current_branch!"=="develop" ( \
-		echo ❌ Kann keinen PR von develop Branch erstellen && exit 1 \
-	) else ( \
-		echo ✅ Branch !current_branch! ist PR-fähig \
-	)
-	@if "!current_branch!"=="feature"* ( \
-		set pr_type=feat && set base_branch=develop \
-	) else if "!current_branch!"=="bugfix"* ( \
-		set pr_type=fix && set base_branch=main \
-	) else if "!current_branch!"=="hotfix"* ( \
-		set pr_type=hotfix && set base_branch=main \
-	) else ( \
-		set pr_type=update && set base_branch=develop \
-	)
-	@echo 📝 PR-Typ: !pr_type! für !base_branch!
-	@echo 🔄 Erstelle PR über GitHub CLI...
-	@gh pr create --base !base_branch! --title "!pr_type!: !current_branch!" --body "Automated PR from !current_branch! branch" || echo ⚠️  GitHub CLI nicht verfügbar - PR manuell erstellen
-	@echo ✅ Pull Request erstellt!
+	@echo 🔄 Erstelle Pull Request für Windows...
+	@echo ⚠️  Windows PR-Erstellung wird noch nicht unterstützt
+	@echo 💡 Verwende 'make pr-draft' oder erstelle PR manuell
+	@echo 📋 Branch: $(shell git branch --show-current)
+	@echo 📝 PR-Typ: feature (für develop)
+	@echo ✅ Commit und Push erfolgreich - PR manuell erstellen
 
 else
 	@current_branch=$$(git branch --show-current) && \
@@ -356,27 +341,12 @@ endif
 pr-draft: git
 	@echo 🔄 Erstelle Draft Pull Request...
 ifeq ($(OS),Windows_NT)
-	@for /f "tokens=*" %%i in ('git branch --show-current') do set current_branch=%%i
-	@if "!current_branch!"=="main" ( \
-		echo ❌ Kann keinen PR von main Branch erstellen && exit 1 \
-	) else if "!current_branch!"=="develop" ( \
-		echo ❌ Kann keinen PR von develop Branch erstellen && exit 1 \
-	) else ( \
-		echo ✅ Branch !current_branch! ist PR-fähig \
-	)
-	@if "!current_branch!"=="feature"* ( \
-		set pr_type=feat && set base_branch=develop \
-	) else if "!current_branch!"=="bugfix"* ( \
-		set pr_type=fix && set base_branch=main \
-	) else if "!current_branch!"=="hotfix"* ( \
-		set pr_type=hotfix && set base_branch=main \
-	) else ( \
-		set pr_type=update && set base_branch=develop \
-	)
-	@echo 📝 Draft PR-Typ: !pr_type! für !base_branch!
-	@echo 🔄 Erstelle Draft PR über GitHub CLI...
-	@gh pr create --base !base_branch! --title "!pr_type!: !current_branch! (Draft)" --body "Draft PR from !current_branch! branch" --draft || echo ⚠️  GitHub CLI nicht verfügbar - Draft PR manuell erstellen
-	@echo ✅ Draft Pull Request erstellt!
+	@echo 🔄 Erstelle Draft Pull Request für Windows...
+	@echo ⚠️  Windows PR-Erstellung wird noch nicht unterstützt
+	@echo 💡 Verwende 'make pr-draft' oder erstelle Draft PR manuell
+	@echo 📋 Branch: $(shell git branch --show-current)
+	@echo 📝 PR-Typ: feature (für develop)
+	@echo ✅ Commit und Push erfolgreich - Draft PR manuell erstellen
 
 else
 	@current_branch=$$(git branch --show-current) && \
