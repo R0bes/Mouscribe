@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional, Set
 
-from .logger import get_logger
+from ..utils.logger import get_logger
 
 try:
     from spellchecker import SpellChecker as SC
@@ -13,8 +13,8 @@ except ImportError:
     SPELL_CHECKER_AVAILABLE = False
     get_logger(__name__).warning("Warnung: pyspellchecker nicht verfügbar. Rechtschreibprüfung deaktiviert.")
 
-from . import config
-from .custom_dictionary import CustomDict, get_custom_dictionary
+from ..utils.config import Config
+from ..utils.dictionary import CustomDict, get_custom_dictionary
 
 
 class SpellChecker:
@@ -30,17 +30,18 @@ class SpellChecker:
 
         self._spell_checker: SC | None = None
         # Verwende getattr mit Standardwerten für mypy-Kompatibilität
-        self._language = getattr(config, "spell_check_language", "de")
-        self._enabled = getattr(config, "spell_check_enabled", True) and SPELL_CHECKER_AVAILABLE
-        self._grammar_check = getattr(config, "spell_check_grammar", True)
-        self._auto_correct = getattr(config, "spell_check_auto_correct", False)
-        self._suggest_only = getattr(config, "spell_check_suggest_only", False)
+        config_instance = Config()
+        self._language = getattr(config_instance, "spell_check_language", "de")
+        self._enabled = getattr(config_instance, "spell_check_enabled", True) and SPELL_CHECKER_AVAILABLE
+        self._grammar_check = getattr(config_instance, "spell_check_grammar", True)
+        self._auto_correct = getattr(config_instance, "spell_check_auto_correct", False)
+        self._suggest_only = getattr(config_instance, "spell_check_suggest_only", False)
 
         # Benutzerdefiniertes Wörterbuch
         self._custom_dictionary: CustomDict | None = None
-        self._custom_dict_enabled = getattr(config, "custom_dictionary_enabled", True)
-        self._auto_add_unknown = getattr(config, "custom_dictionary_auto_add_unknown", False)
-        self._max_words = getattr(config, "custom_dictionary_max_words", 1000)
+        self._custom_dict_enabled = getattr(config_instance, "custom_dictionary_enabled", True)
+        self._auto_add_unknown = getattr(config_instance, "custom_dictionary_auto_add_unknown", False)
+        self._max_words = getattr(config_instance, "custom_dictionary_max_words", 1000)
 
         # Einfache deutsche Grammatikregeln
         self._grammar_patterns = self._setup_grammar_patterns()

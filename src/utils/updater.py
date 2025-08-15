@@ -13,8 +13,8 @@ from typing import Any, Dict, Optional
 
 import requests
 
-from . import config
-from .logger import get_logger
+from .utils import config
+from .utils.logger import get_logger
 
 # Konfiguration
 GITHUB_REPO = "R0bes/Mauscribe"  # GitHub-Repository für Mauscribe

@@ -5,11 +5,24 @@
 # Input-Methode: "mouse_button", "keyboard", "custom"
 method = "mouse_button"
 
+# Input-Filter Konfiguration
+[input_filter]
+# Filter-Modus für primären Button: "single_click", "double_click", "hold", "smart"
+primary_mode = "single_click"
+# Filter-Modus für sekundären Button: "single_click", "double_click", "hold", "smart"
+secondary_mode = "hold"
+# Mindestdauer für Hold-Modus in Sekunden
+hold_duration = 2
+# Doppelklick-Fenster in Sekunden (für double_click und smart Modus)
+double_click_window = 0.5
+# Verzögerung für Smart-Modus in Sekunden
+smart_delay = 0.2
+
 # Maus-Button Konfiguration
 [mouse_button]
-primary = "x2"      # Primärer Button (5. Maustaste - meist rechte Maustaste)
-secondary = "x1"    # Sekundärer Button (4. Maustaste - meist mittlere Maustaste)
-left_with_ctrl = true  # Strg + Linke Maus aktivieren
+primary = "x2"      # Primärer Button (default 5. Maustaste)
+secondary = "left"    # Sekundärer Button (default 4. Maustaste)
+left_with_ctrl = false  # Strg + Linke Maus aktivieren
 
 # Tastatur-Konfiguration
 [keyboard]
@@ -42,14 +55,14 @@ fallback_to_default = true
 
 # STT-Einstellungen
 [stt]
-model = "base"      # "base", "small", "medium", "large"
+model = "medium"      # "base", "small", "medium", "large"
 language = "de"     # Sprache für Transkription
 compute_type = "float32"  # "float16" = schnell, "float32" = genau
 
 # Verhalten
 [behavior]
 # Automatisches Einfügen nach Transkription
-auto_paste_after_transcription = false
+auto_paste_after_transcription = true
 
 # Leerzeichen nach Text hinzufügen
 add_space_after_text = true
@@ -98,10 +111,10 @@ path = ""
 # Maximale Anzahl von Wörtern im Wörterbuch (0 = unbegrenzt)
 max_words = 1000
 
-# Debug-Modus
+
 [debug]
-# enabled = true  # Standardwert: false
-level = "INFO"
+enabled = true  # Standardwert: false
+level = "DEBUG"
 verbose = true
 log_errors = true
 
@@ -121,3 +134,53 @@ check_on_startup = true
 auto_install = false
 # Pre-Releases einschließen
 include_prereleases = false
+
+# Windows-Benachrichtigungen
+[notifications]
+# Windows-Benachrichtigungen aktivieren
+enabled = true
+# Anzeigedauer in Millisekunden
+duration = 5000
+# Benachrichtigungstöne aktivieren
+sound = true
+# Toast-Benachrichtigungen aktivieren
+toast = true
+# Start-Benachrichtigung anzeigen
+show_startup = true
+# Beendigungs-Benachrichtigung anzeigen
+show_shutdown = true
+# Aufnahme-Ereignisse anzeigen (Start/Stopp)
+show_recording_events = true
+# Transkriptions-Ereignisse anzeigen
+show_transcription_events = true
+# Text-Ereignisse anzeigen (Einfügen)
+show_text_events = true
+# Rechtschreibprüfungs-Ereignisse anzeigen
+show_spell_check_events = true
+# Fehler-Benachrichtigungen anzeigen
+show_errors = true
+# Warnungs-Benachrichtigungen anzeigen
+show_warnings = true
+
+# Audio-Datenbank
+[database]
+# Datenbank aktivieren
+enabled = true
+# Datenverzeichnis (leer = Standard im Programmverzeichnis)
+data_directory = ""
+# Audio-Format für Speicherung ("wav", "flac", "mp3")
+audio_format = "wav"
+# Automatisch alle Aufnahmen speichern
+auto_save_recordings = true
+# Automatisch alle Transkriptionen speichern
+auto_save_transcriptions = true
+# Aufnahmen als Trainingsdaten markieren
+mark_as_training_data = true
+# Aufbewahrungszeitraum in Tagen (0 = unbegrenzt)
+retention_days = 30
+# Maximale Datenbankgröße in MB (0 = unbegrenzt)
+max_database_size_mb = 1000
+# Komprimierung für Audio-Dateien
+compress_audio = false
+# Backup vor Aufräumen erstellen
+backup_before_cleanup = true

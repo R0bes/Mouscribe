@@ -13,5 +13,6 @@ python-dotenv
 pywin32
 requests
 sounddevice
+soundfile
 tomli-w
 webrtcvad

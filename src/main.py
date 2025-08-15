@@ -1,27 +1,28 @@
 # src/main.py - Main application entry point for Mauscribe
 """
 Mauscribe - Voice-to-Text Tool
-Main application logic and system tray integration
+Main application logic and core functionality
 """
 import signal
 import sys
 import threading
 import time
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pyautogui
 import pyperclip
-import pystray
-from PIL import Image, ImageDraw
 
-from .config import Config
-from .input_handler import InputHandler
-from .logger import get_logger
-from .recorder import AudioRecorder
-from .spell_checker import SpellChecker
-from .stt import SpeechToText
+from .audio.recorder import AudioRecorder
+from .audio.volume_controller import VolumeController
+from .input import InputHandler
+from .lang.spell_checker import SpellChecker
+from .lang.stt import SpeechToText
+from .ui.system_tray import SystemTrayManager
+from .ui.windows_notifications import WindowsNotificationManager
+from .utils.config import Config
+from .utils.database import AudioDatabase
+from .utils.logger import get_logger
 
 logger = get_logger("Mauscribe")
 
@@ -29,236 +30,182 @@ logger = get_logger("Mauscribe")
 class MauscribeApp:
     """Main application class for Mauscribe voice-to-text tool."""
 
-    def __init__(self):
-        """Initialize the Mauscribe application."""
+    def __init__(self) -> None:
+        """Initialize Mauscribe application."""
+        self.config = Config()
+        self.logger = get_logger(self.__class__.__name__)
+        self.recorder = AudioRecorder(self.config)
+        self.stt = SpeechToText()  # SpeechToText nimmt keinen Config-Parameter
+        self.spell_checker = SpellChecker()  # SpellChecker nimmt keinen Config-Parameter
+        self.system_tray_manager = SystemTrayManager(self.config, self)
+        self._volume_controller = VolumeController(target=0.1)
+        self.notification_manager = WindowsNotificationManager(self.config)
+        self.input_handler = InputHandler(
+            pk_callback=self._on_primary_key_pressed,
+            sk_callback=self._on_secondary_key_pressed,
+        )
 
-        try:
-            self.config = Config()
-            logger.info("✅ Konfiguration erfolgreich geladen")
-        except Exception as e:
-            logger.error(f"❌ Konfiguration konnte nicht geladen werden: {e}")
-            sys.exit(1)
+        # Initialize database
+        self.audio_database = AudioDatabase()
 
-        try:
-            self.input_handler = InputHandler()
-            logger.info("🖱️  Input Handler erfolgreich initialisiert")
-        except Exception as e:
-            logger.error(f"❌ Input Handler konnte nicht initialisiert werden: {e}")
-            sys.exit(1)
-
-        try:
-            self.stt = SpeechToText()
-            logger.info("🎤 Speech-to-Text erfolgreich initialisiert")
-        except Exception as e:
-            logger.error(f"❌ Speech-to-Text konnte nicht initialisiert werden: {e}")
-            sys.exit(1)
-
-        try:
-            self.recorder = AudioRecorder()
-            logger.info("🎙️  Audio-Recorder erfolgreich initialisiert")
-        except Exception as e:
-            logger.error(f"❌ Audio-Recorder konnte nicht initialisiert werden: {e}")
-            sys.exit(1)
-
-        try:
-            self.spell_checker = SpellChecker()
-            logger.info("✏️  Rechtschreibprüfung erfolgreich initialisiert")
-        except Exception as e:
-            logger.error(f"❌ Rechtschreibprüfung konnte nicht initialisiert werden: {e}")
-            sys.exit(1)
-
-        self.is_recording = False
-        self.system_tray: Optional[pystray.Icon] = None
-        self.shutdown_event = threading.Event()
-
+        # Initialize recording state variables
+        self._is_recording = False
+        self._last_recording_timestamp = 0
+        self._last_recording_stop_timestamp = 0
         self._last_click_time = 0
-        self._click_debounce_ms = 500
+        self._click_debounce_ms = 500  # 500ms for double-click detection
+        self._secondary_button_start_time = 0
+        self._secondary_button_is_pressed = False
+        self._secondary_button_long_press_threshold = 1.5  # 1.5 seconds
+
+        self.shutdown_event = threading.Event()
 
         # Setup signal handlers for graceful shutdown
         self._setup_signal_handlers()
 
-    def _create_system_tray_icon(self) -> Image.Image:
-        """Create a custom microphone icon for the system tray."""
-        # Create a 64x64 image with transparent background
-        img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(img)
-
-        # Draw microphone icon
-        # Microphone body (rectangle)
-        draw.rectangle((20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
-
-        # Microphone head (circle)
-        draw.ellipse((18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
-
-        # Microphone stand
-        draw.rectangle((30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
-
-        # Recording indicator (red dot when recording)
-        if self.is_recording:
-            draw.ellipse([50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1)
-
-        return img
-
-    def _setup_system_tray(self) -> None:
-        """Initialize the system tray icon and menu."""
-        try:
-            icon_image = self._create_system_tray_icon()
-
-            def on_clicked(icon: Any, item: Any) -> None:
-                """Handle system tray menu item clicks."""
-                if str(item) == "Status":
-                    self._log_status()
-                elif str(item) == "Open Config":
-                    self._open_config_file()
-                elif str(item) == "Exit":
-                    self.stop()
-
-            # Create system tray menu
-            menu = (
-                pystray.MenuItem("Status", on_clicked),
-                pystray.MenuItem("Open Config", on_clicked),
-                pystray.MenuItem("Exit", on_clicked),
-            )
-
-            self.system_tray = pystray.Icon("mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu)
-            logger.info("🖥️  System Tray erfolgreich initialisiert")
-        except Exception as e:
-            logger.error(f"❌ System Tray konnte nicht initialisiert werden: {e}")
-            logger.warning("⚠️  System Tray nicht verfügbar - Anwendung läuft im Konsolenmodus")
-            self.system_tray = None
-
-    def _log_status(self) -> None:
-        """Log current application status."""
-        status = "Recording" if self.is_recording else "Idle"
-        logger.info(f"📊 Mauscribe Status: {status}")
-        logger.info(f"🖱️  Input Methode: {self.config.input_method}")
-        logger.info(f"🔘 Maus-Taste: {self.config.mouse_button_primary}")
-        logger.info(f"🎤 Audio-Gerät: {self.config.audio_device}")
-
-    def _open_config_file(self) -> None:
-        """Open the configuration file in default editor."""
-        config_path = Path("config.toml")
-        if config_path.exists():
-            try:
-                import subprocess
-
-                subprocess.run(["notepad", str(config_path)], shell=True)
-            except Exception as e:
-                logger.error(f"❌ Konfigurationsdatei konnte nicht geöffnet werden: {e}")
-        else:
-            logger.warning("⚠️  Konfigurationsdatei nicht gefunden")
-
-    def _on_mouse_click(self, x: int, y: int, button: Any, pressed: bool) -> None:
-        """Handle mouse click events for recording control."""
-        if not pressed:
-            return
-
-        # Extract button name (remove "Button." prefix)
-        button_name = str(button).replace("Button.", "")
-        logger.debug(f"Mouse click detected: button={button_name}, position=({x}, {y})")
-
-        # Only handle X2 button
-        if button_name == self.config.mouse_button_primary:
-            current_time = time.time() * 1000
-            time_diff = current_time - self._last_click_time
-
-            if time_diff < self._click_debounce_ms:
-                # This is a double-click X2 - handle based on recording state
-                logger.info(f"Double-click X2 detected ({time_diff:.1f}ms)")
-
-                if self.is_recording:
-                    # If recording: stop recording and insert text
-                    logger.info("Double-click X2 while recording - stopping and inserting text")
-                    self.stop_recording()
-                    # Wait a moment for recording to finish, then insert text
-                    time.sleep(0.5)
-                    self._paste_text()
-                else:
-                    # If not recording: just insert text
-                    logger.info("Double-click X2 while not recording - inserting text")
-                    self._paste_text()
-
-                self._last_click_time = 0  # Reset to allow new double-clicks
+    def _on_primary_key_pressed(self, pressed: bool) -> None:
+        if pressed:
+            if not self._is_recording:
+                self.start_recording()
             else:
-                # Single click X2 - toggle recording
-                logger.debug("Single click X2 - toggling recording")
-                if not self.is_recording:
-                    logger.info("Starting recording via single X2 click")
-                    self.start_recording()
-                else:
-                    logger.info("Stopping recording via single X2 click")
-                    self.stop_recording()
+                self.stop_recording()
 
-                self._last_click_time = current_time
-        else:
-            # Other buttons - just log for debugging
-            logger.debug(f"Ignoring non-X2 button: {button_name}")
+    def start_recording(self) -> None:
+        print("start_recording")
+        self._volume_controller.reduce_volume()
+        self.recorder.start_recording()
 
-    def _paste_text(self) -> None:
+    def stop_recording(self) -> None:
+        print("stop recording")
+        self._volume_controller.restore_volume()
+        self.recorder.stop_recording()
+        self._last_recording_stop_timestamp = time.time()
+
+    def _on_secondary_key_pressed(self, pressed: bool) -> None:
+        if pressed:
+            self._paste_text()
+
+    def _paste_text(self, _: bool = False) -> None:
         """Paste transcribed text to current cursor position."""
         try:
             text = pyperclip.paste()
             if text and text.strip():
                 pyautogui.write(text)
                 logger.info(f"📋 Text eingefügt: {text[:50]}...")
+                self.notification_manager.show_text_pasted(text)
             else:
                 logger.warning("⚠️  Kein Text in der Zwischenablage zum Einfügen")
+                self.notification_manager.show_warning("Kein Text in der Zwischenablage zum Einfügen", "Text einfügen")
         except Exception as e:
             logger.error(f"❌ Text konnte nicht eingefügt werden: {e}")
+            self.notification_manager.show_error(f"Text konnte nicht eingefügt werden: {e}", "Text einfügen")
+
+    def _setup_system_tray(self) -> None:
+        """Initialize the system tray icon and menu."""
+        self.system_tray_manager.setup()
 
     def start_recording(self) -> None:
         """Start voice recording and transcription."""
-        if self.is_recording:
+        if self._is_recording:
             logger.warning("⚠️  Aufnahme läuft bereits")
+            self.notification_manager.show_warning("Aufnahme läuft bereits", "Aufnahme")
             return
 
         logger.info("🎙️  Starte Aufnahme...")
-        self.is_recording = True
+        self._is_recording = True
 
         # Start the recorder
         try:
             logger.debug("Starting audio recorder")
             self.recorder.start_recording()
             logger.info("✅ Audio recorder started successfully")
+
+            # Show notification
+            self.notification_manager.show_recording_started()
+
+            # Update system tray icon
+            self.system_tray_manager.update_recording_state(True)
+
         except Exception as e:
             logger.error(f"❌ Failed to start audio recorder: {e}")
-            self.is_recording = False
+            self._is_recording = False
+            self.notification_manager.show_error(f"Fehler beim Starten der Aufnahme: {e}", "Aufnahme")
             return
-
-        # Update system tray icon
-        if self.system_tray:
-            logger.debug("Updating system tray icon")
-            self.system_tray.icon = self._create_system_tray_icon()
 
     def stop_recording(self) -> None:
         """Stop voice recording and process audio."""
-        if not self.is_recording:
+        if not self._is_recording:
             logger.warning("⚠️  Keine Aufnahme aktiv")
+            self.notification_manager.show_warning("Keine Aufnahme aktiv", "Aufnahme")
             return
 
         logger.info("🛑 Stoppe Aufnahme...")
-        self.is_recording = False
+        self._is_recording = False
+        self._last_recording_stop_timestamp = time.time()
 
         # Stop the recorder
         try:
-            # Get audio data before stopping
+            # Get audio data & stopping
             audio_data = self.recorder.stop_recording()
             logger.info("Audio recorder stopped")
 
             # Process audio data immediately if available
-            if audio_data is not None and len(audio_data) > 0:
-                logger.info(
-                    f"🔊 Audio-Daten: {len(audio_data)} Samples, {len(audio_data) / self.recorder.sample_rate_hz:.2f}s"
-                )
+            if audio_data is not None and len(audio_data) <= 0:
+                logger.warning("❌ Keine Audioaufnahme")
+                self.notification_manager.show_warning("Keine Audioaufnahme", "Aufnahme")
 
-                # Transcribe audio (ohne Spellchecking für schnelle Rückgabe)
-                logger.info("🎯 Starting speech-to-text transcription...")
+            # Transcribe audio (ohne Spellchecking für schnelle Rückgabe)
+            duration = len(audio_data) / self.recorder.sample_rate_hz
+            logger.info(f"🔊 Audio-Daten: {len(audio_data)} Samples, {duration:.2f}s")
 
-                raw_text = self.stt.transcribe_raw(audio_data)
+            logger.info("🎯 Starting speech-to-text transcription...")
+            raw_text = self.stt.transcribe_raw(audio_data)
+
+            self.notification_manager.show_transcription_complete(raw_text, duration)
+
+            # Save audio recording to database if enabled
+            recording_id = None
+            if self.config.database_enabled and self.config.auto_save_recordings:
+                try:
+                    logger.info("💾 Speichere Audio-Aufnahme in Datenbank...")
+                    recording_id = self.audio_database.save_audio_recording(
+                        audio_data=audio_data,
+                        sample_rate=self.recorder.sample_rate_hz,
+                        channels=self.recorder.num_channels,
+                        duration=duration,
+                        audio_format=self.config.audio_format,
+                    )
+                    logger.info(f"✅ Audio-Aufnahme gespeichert (ID: {recording_id})")
+                except Exception as e:
+                    logger.warning(f"⚠️  Konnte Audio-Aufnahme nicht speichern: {e}")
 
                 if raw_text and raw_text.strip():
                     logger.info("✨ STT-Transkription abgeschlossen!")
                     logger.info(f"📝 Roher Text: '{raw_text}'")
+
+                    # Save transcription to database if enabled
+                    transcription_id = None
+                    if self.config.database_enabled and self.config.auto_save_transcriptions and recording_id:
+                        try:
+                            transcription_id = self.audio_database.save_transcription(
+                                audio_recording_id=recording_id, raw_text=raw_text, language=self.config.stt_language
+                            )
+                            logger.info(f"✅ Transkription gespeichert (ID: {transcription_id})")
+
+                            # Mark as training data if enabled
+                            if self.config.mark_as_training_data:
+                                self.audio_database.save_training_data(
+                                    transcription_id=transcription_id, is_valid_for_training=True
+                                )
+                                logger.info("✅ Als Trainingsdaten markiert")
+                        except Exception as e:
+                            logger.warning(f"⚠️  Konnte Transkription nicht speichern: {e}")
+                    else:
+                        logger.debug("💾 Transkriptions-Speicherung deaktiviert oder keine Aufnahme-ID verfügbar")
+
+                    # Show transcription complete notification
+                    duration = len(audio_data) / self.recorder.sample_rate_hz
+                    self.notification_manager.show_transcription_complete(raw_text, duration)
 
                     # Sofort rohe Transkription in Clipboard kopieren
                     logger.info("📋 Kopiere rohen Text in Clipboard...")
@@ -266,21 +213,26 @@ class MauscribeApp:
                     logger.info("✅ Roher Text in Clipboard verfügbar!")
                     logger.info(f"🎤 Transkribiert (roh): {raw_text}")
 
+                    # Automatisches Einfügen falls aktiviert
+                    if self.config.auto_paste_after_transcription:
+                        logger.info("🔄 Automatisches Einfügen aktiviert - füge Text ein...")
+                        time.sleep(0.2)  # Kurze Pause für bessere Stabilität
+                        self._paste_text()
+                        logger.info("✅ Text automatisch eingefügt!")
+
                     # Im Hintergrund Spellchecking machen
                     # logger.info(f"🔄 Starte Hintergrund-Spellchecking...")
                     # self._spellcheck_background(raw_text, audio_data)
                 else:
                     logger.warning("❌ Keine Sprache erkannt")
-            else:
-                logger.warning("❌ Keine Audioaufnahme")
+                    self.notification_manager.show_warning("Keine Sprache erkannt", "Transkription")
 
         except Exception as e:
             logger.error(f"Failed to stop recorder: {e}")
+            self.notification_manager.show_error(f"Fehler beim Stoppen der Aufnahme: {e}", "Aufnahme")
 
         # Update system tray icon
-        if self.system_tray:
-            logger.debug("Updating system tray icon")
-            self.system_tray.icon = self._create_system_tray_icon()
+        self.system_tray_manager.update_recording_state(False)
 
     def _spellcheck_background(self, raw_text: str, audio_data: np.ndarray) -> None:
         """Mache Spellchecking im Hintergrund und aktualisiere Clipboard wenn nötig."""
@@ -306,9 +258,15 @@ class MauscribeApp:
                     pyperclip.copy(corrected_text)
                     logger.info("📋 Clipboard aktualisiert mit korrigiertem Text!")
                     logger.info(f"🎯 Korrektur: '{raw_text}' → '{corrected_text}'")
+
+                    # Show notification
+                    self.notification_manager.show_spell_check_complete(raw_text, corrected_text)
                 else:
                     logger.info("✅ Keine Korrekturen nötig - Text ist bereits korrekt")
                     logger.info("📋 Clipboard bleibt unverändert")
+
+                    # Show notification
+                    self.notification_manager.show_spell_check_complete(raw_text, corrected_text)
 
                 logger.info("🏁 Hintergrund-Spellchecking abgeschlossen")
 
@@ -330,17 +288,8 @@ class MauscribeApp:
         # Setup system tray
         self._setup_system_tray()
 
-        # Setup input handling
-        try:
-            logger.info("🔄 Richte Input Handler ein...")
-            self.input_handler.setup_mouse_listener(self._on_mouse_click)
-            logger.info("✅ Input handling setup complete")
-        except Exception as e:
-            logger.error(f"❌ Input Handler konnte nicht eingerichtet werden: {e}")
-            return
-
         # Start system tray if available
-        if self.system_tray:
+        if self.system_tray_manager.is_available():
             try:
                 logger.info("🔄 Starte System Tray...")
                 # Run system tray in a separate thread so we can monitor shutdown
@@ -349,7 +298,14 @@ class MauscribeApp:
                 tray_thread.start()
 
                 logger.info("✅ System Tray läuft im Hintergrund")
-                logger.info("💡 Drücken Sie Strg+C um zu beenden")
+
+                # Show startup notification
+                if self.notification_manager.is_supported() and self.config.notifications_show_startup:
+                    self.notification_manager.show_info("Mauscribe erfolgreich gestartet", "Anwendung")
+
+                logger.info("🎯 Mauscribe Steuerung:")
+                logger.info(f"- {self.config.mouse_button_primary} (einfach): Aufnahme starten/stoppen")
+                logger.info(f"-{self.config.mouse_button_secondary} (langes Drücken >1.5s): Text automatisch einfügen")
 
                 # Monitor shutdown in main thread
                 while not self.shutdown_event.is_set():
@@ -367,13 +323,13 @@ class MauscribeApp:
 
     def _run_system_tray(self) -> None:
         """Run system tray in a separate thread."""
-        if self.system_tray is None:
+        if not self.system_tray_manager.is_available():
             logger.error("❌ System Tray ist nicht verfügbar")
             self.shutdown_event.set()
             return
 
         try:
-            self.system_tray.run()
+            self.system_tray_manager.run()
         except Exception as e:
             logger.error(f"❌ System Tray Fehler: {e}")
             self.shutdown_event.set()
@@ -385,6 +341,8 @@ class MauscribeApp:
         logger.info("- X2-Maustaste (einfach): Aufnahme starten/stoppen")
         logger.info("- X2-Maustaste (doppelklick): Text einfügen")
         logger.info("- X2-Doppelklick während Aufnahme: Stoppt Aufnahme und fügt Text ein")
+        logger.info("- X1-Maustaste (langes Drücken >1.5s): Text automatisch einfügen")
+        logger.info("- X1-Maustaste (kurzes Drücken): Keine Aktion")
         logger.info("- Drücken Sie Strg+C um zu beenden")
 
         try:
@@ -405,7 +363,7 @@ class MauscribeApp:
         self.shutdown_event.set()
 
         # Stop recording if active
-        if self.is_recording:
+        if self._is_recording:
             logger.info("🛑 Stoppe aktive Aufnahme vor dem Shutdown")
             self.stop_recording()
 
@@ -426,12 +384,11 @@ class MauscribeApp:
             logger.error(f"❌ Fehler beim Aufräumen des AudioRecorders: {e}")
 
         # Stop system tray
-        if self.system_tray:
-            try:
-                self.system_tray.stop()
-                logger.info("✅ System Tray beendet")
-            except Exception as e:
-                logger.error(f"❌ Fehler beim Beenden des System Tray: {e}")
+        try:
+            self.system_tray_manager.stop()
+            logger.info("✅ System Tray beendet")
+        except Exception as e:
+            logger.error(f"❌ Fehler beim Beenden des System Tray: {e}")
 
         # Cleanup other components
         try:
@@ -440,6 +397,14 @@ class MauscribeApp:
                 logger.info("✅ Rechtschreibprüfung beendet")
         except Exception as e:
             logger.error(f"❌ Fehler beim Beenden der Rechtschreibprüfung: {e}")
+
+        # Show shutdown notification
+        if (
+            hasattr(self, "notification_manager")
+            and self.notification_manager.is_supported()
+            and self.config.notifications_show_shutdown
+        ):
+            self.notification_manager.show_info("Mauscribe erfolgreich beendet", "Anwendung")
 
         logger.info("✅ Mauscribe erfolgreich beendet")
         logger.info("Mauscribe shutdown completed")
@@ -461,9 +426,9 @@ class MauscribeApp:
         self.shutdown_event.set()
 
         # Force stop recording if active
-        if self.is_recording:
+        if self._is_recording:
             logger.info("🛑 Stoppe aktive Aufnahme...")
-            self.is_recording = False
+            self._is_recording = False
             if hasattr(self.recorder, "stop_recording"):
                 try:
                     self.recorder.stop_recording()

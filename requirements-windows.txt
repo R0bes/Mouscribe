@@ -13,7 +13,9 @@ pyperclip
 pyspellchecker
 pystray
 python-dotenv
-pywin32
+pywin32>=223
 requests
 sounddevice
+soundfile
 webrtcvad
+winotify>=1.1.0

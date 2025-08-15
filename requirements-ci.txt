@@ -1,0 +1,35 @@
+# Requirements für CI/CD Pipeline
+# Diese Datei enthält alle Dependencies für Tests und Builds
+
+bandit
+black
+codecov
+
+# Windows-specific dependencies (for Windows builds)
+comtypes
+# Core dependencies
+faster-whisper
+flake8
+isort
+mypy
+numpy
+openai
+pillow
+pyautogui
+pycaw
+
+# Build dependencies
+pyinstaller
+pynput
+pyperclip
+pyspellchecker
+pystray
+
+# Development and testing dependencies
+pytest
+pytest-cov
+python-dotenv
+pywin32
+requests
+sounddevice
+webrtcvad

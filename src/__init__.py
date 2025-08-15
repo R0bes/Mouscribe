@@ -2,12 +2,12 @@
 Mauscribe - Voice-to-Text Tool
 """
 
-from .config import Config
-from .logger import MauscribeLogger, get_logger, setup_logging
+from .audio.recorder import AudioRecorder
+from .lang.spell_checker import SpellChecker
+from .lang.stt import SpeechToText
 from .main import MauscribeApp, main
-from .recorder import AudioRecorder
-from .spell_checker import SpellChecker
-from .stt import SpeechToText
+from .utils.config import Config
+from .utils.logger import MauscribeLogger, get_logger, setup_logging
 
 setup_logging()
 

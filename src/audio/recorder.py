@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import threading
 import time
-from ctypes import POINTER, cast
 from typing import Any, Dict, List, Optional
 
 import numpy as np
 import sounddevice as sd
-from comtypes import CLSCTX_ALL
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
-from .config import Config
-from .logger import get_logger
+from ..utils.config import Config
+from ..utils.logger import get_logger
 
 
 class AudioRecorder:
@@ -25,26 +22,24 @@ class AudioRecorder:
     - Robuste Fehlerbehandlung
     """
 
-    def __init__(
-        self,
-        sample_rate_hz: int | None = None,
-        num_channels: int | None = None,
-        device_id: int | None = None,
-    ) -> None:
+    def __init__(self, config: Config) -> None:
         """Initialisiere den Audio-Recorder."""
         self.logger = get_logger(self.__class__.__name__)
 
-        # Konfiguration laden
-        config = Config()
-        self.sample_rate_hz = sample_rate_hz or config.audio_sample_rate
-        self.num_channels = num_channels or config.audio_channels
-        self.device_id = device_id or config.audio_device
+        # Debug-Logging für Initialisierung
+        self.logger.debug("AudioRecorder-Initialisierung gestartet")
+
+        self.sample_rate_hz = config.audio_sample_rate
+        self.num_channels = config.audio_channels
+        self.device_id = config.audio_device
 
         # Interne Zustände
         self._stream: sd.InputStream | None = None
         self._active = False
         self._chunks: list[np.ndarray] = []
         self._buffer_lock = threading.Lock()
+        self._start_time = 0.0
+        self._min_recording_duration = 0.5  # Mindestaufnahmezeit in Sekunden
 
         # Geräteauswahl
         self._selected_device: dict[str, Any] | None = None
@@ -52,33 +47,6 @@ class AudioRecorder:
 
         # Geräte initialisieren
         self._initialize_audio_devices()
-
-        # Audio-Interface initialisieren
-        self._volume_interface: Any | None = None
-        self._system_volume: float | None = None
-        self._setup_audio_interface()
-
-    def _setup_audio_interface(self):
-        """Setup audio interface for volume control."""
-        try:
-            # Get default audio device
-            devices = AudioUtilities.GetSpeakers()
-            if not devices:
-                self.logger.warning("No audio devices found")
-                self._volume_interface = None
-                return
-
-            interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-            if not interface:
-                self.logger.error("Failed to activate audio interface")
-                self._volume_interface = None
-                return
-            self._volume_interface = cast(interface, POINTER(IAudioEndpointVolume))
-
-        except Exception as e:
-            self.logger.error(f"Failed to initialize audio interface: {e}")
-            self.logger.warning("Audio control will be disabled")
-            self._volume_interface = None
 
     def _initialize_audio_devices(self) -> None:
         """Initialisiere verfügbare Audio-Geräte und wähle das beste aus."""
@@ -208,21 +176,7 @@ class AudioRecorder:
         # Aufnahme vorbereiten
         self._chunks = []
         self._active = True
-
-        # Lautstärke nur ändern wenn Interface verfügbar ist
-        if self._volume_interface:
-            try:
-                # Aktuelle System-Lautstärke speichern
-                self._system_volume = self._volume_interface.GetMasterVolumeLevelScalar()
-                # Lautstärke auf 10% reduzieren (0.1 = 10%)
-                self._volume_interface.SetMasterVolumeLevelScalar(0.1, None)
-                self.logger.debug(f"Lautstärke reduziert von {self._system_volume:.2f} auf 0.10")
-            except Exception as e:
-                self.logger.warning(f"Fehler beim Ändern der Lautstärke: {e}")
-                self._system_volume = None
-        else:
-            self.logger.debug("Kein Lautstärke-Interface verfügbar - überspringe Lautstärke-Änderung")
-            self._system_volume = None
+        self._start_time = time.time()
 
         # Audio-Stream starten
         self._stream = sd.InputStream(
@@ -231,7 +185,7 @@ class AudioRecorder:
             channels=self.num_channels,
             dtype=np.float32,
             callback=self._audio_callback,
-            blocksize=1024,
+            blocksize=512,  # Kleinere Blöcke für bessere Reaktionszeit
         )
 
         self._stream.start()
@@ -241,6 +195,17 @@ class AudioRecorder:
         if not self._active:
             return np.array([], dtype=np.float32)
 
+        # Prüfe Mindestaufnahmezeit
+        recording_duration = time.time() - self._start_time
+        if recording_duration < self._min_recording_duration:
+            self.logger.warning(f"Aufnahme zu kurz ({recording_duration:.2f}s < {self._min_recording_duration}s) - ignoriere")
+            self._active = False
+            if self._stream:
+                self._stream.stop()
+                self._stream.close()
+                self._stream = None
+            return np.array([], dtype=np.float32)
+
         # Aufnahme stoppen
         self._active = False
 
@@ -248,18 +213,6 @@ class AudioRecorder:
             self._stream.stop()
             self._stream.close()
             self._stream = None
-
-        # Lautstärke nur wiederherstellen wenn Interface verfügbar ist und ursprüngliche Lautstärke gespeichert wurde
-        if self._volume_interface and self._system_volume is not None:
-            try:
-                self._volume_interface.SetMasterVolumeLevelScalar(self._system_volume, None)
-                self.logger.debug(f"Lautstärke wiederhergestellt auf {self._system_volume:.2f}")
-            except Exception as e:
-                self.logger.error(f"Fehler beim Wiederherstellen der Lautstärke: {e}")
-        elif self._volume_interface:
-            self.logger.warning("Keine ursprüngliche Lautstärke gespeichert - überspringe Wiederherstellung")
-        else:
-            self.logger.debug("Kein Lautstärke-Interface verfügbar - überspringe Lautstärke-Wiederherstellung")
 
         # Audio-Daten verarbeiten
         with self._buffer_lock:
@@ -276,6 +229,7 @@ class AudioRecorder:
         if audio.ndim == 2 and audio.shape[1] > 1:
             audio = np.mean(audio, axis=1)
 
+        self.logger.info(f"Aufnahme gestoppt: {len(audio)} Samples, {recording_duration:.2f}s")
         return audio.astype(np.float32)
 
     def is_recording(self) -> bool:
@@ -320,28 +274,12 @@ class AudioRecorder:
             "is_recording": self._active,
         }
 
-    def restore_volume(self) -> None:
-        """Stelle die ursprüngliche System-Lautstärke wieder her."""
-        if self._volume_interface and self._system_volume is not None:
-            try:
-                self._volume_interface.SetMasterVolumeLevelScalar(self._system_volume, None)
-                self.logger.info(f"✅ Lautstärke wiederhergestellt auf {self._system_volume:.2f}")
-            except Exception as e:
-                self.logger.error(f"❌ Fehler beim Wiederherstellen der Lautstärke: {e}")
-        elif self._volume_interface:
-            self.logger.warning("⚠️  Keine ursprüngliche Lautstärke gespeichert")
-        else:
-            self.logger.debug("Kein Lautstärke-Interface verfügbar")
-
     def cleanup(self) -> None:
         """Sauberes Aufräumen beim Beenden."""
         try:
             # Stoppe Aufnahme falls aktiv
             if self._active:
                 self.stop_recording()
-
-            # Stelle Lautstärke sicher wieder her
-            self.restore_volume()
 
             self.logger.info("✅ AudioRecorder erfolgreich aufgeräumt")
         except Exception as e:

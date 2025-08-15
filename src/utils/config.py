@@ -17,6 +17,7 @@ class Config:
         """Initialize configuration with optional custom path."""
         self.logger = get_logger(self.__class__.__name__)
         self.config_path = config_path or "config.toml"
+        self.logger.debug(f"self.config_path loaded from {self.config_path}")
         self._config_data: dict[str, Any] = {}
         self._load_config()
 
@@ -261,3 +262,163 @@ class Config:
     def auto_update_include_prereleases(self) -> bool:
         """Get include pre-releases setting."""
         return self._get("auto_update.include_prereleases", False)
+
+    # Windows notification settings
+    @property
+    def notifications_enabled(self) -> bool:
+        """Get whether Windows notifications are enabled."""
+        return self._get("notifications.enabled", True)
+
+    @property
+    def notifications_duration(self) -> int:
+        """Get notification display duration in milliseconds."""
+        return self._get("notifications.duration", 5000)
+
+    @property
+    def notifications_sound(self) -> bool:
+        """Get whether notification sounds are enabled."""
+        return self._get("notifications.sound", True)
+
+    @property
+    def notifications_toast(self) -> bool:
+        """Get whether toast notifications are enabled."""
+        return self._get("notifications.toast", True)
+
+    @property
+    def notifications_show_startup(self) -> bool:
+        """Get whether to show startup notification."""
+        return self._get("notifications.show_startup", True)
+
+    @property
+    def notifications_show_shutdown(self) -> bool:
+        """Get whether to show shutdown notification."""
+        return self._get("notifications.show_shutdown", True)
+
+    @property
+    def notifications_show_recording_events(self) -> bool:
+        """Get whether to show recording start/stop notifications."""
+        return self._get("notifications.show_recording_events", True)
+
+    @property
+    def notifications_show_transcription_events(self) -> bool:
+        """Get whether to show transcription complete notifications."""
+        return self._get("notifications.show_transcription_events", True)
+
+    @property
+    def notifications_show_text_events(self) -> bool:
+        """Get whether to show text paste notifications."""
+        return self._get("notifications.show_text_events", True)
+
+    @property
+    def notifications_show_spell_check_events(self) -> bool:
+        """Get whether to show spell check complete notifications."""
+        return self._get("notifications.show_spell_check_events", True)
+
+    @property
+    def notifications_show_errors(self) -> bool:
+        """Get whether to show error notifications."""
+        return self._get("notifications.show_errors", True)
+
+    @property
+    def notifications_show_warnings(self) -> bool:
+        """Get whether to show warning notifications."""
+        return self._get("notifications.show_warnings", True)
+
+    # Database properties
+    @property
+    def database_enabled(self) -> bool:
+        """Get database enabled setting."""
+        return self._get("database.enabled", True)
+
+    @property
+    def data_directory(self) -> str:
+        """Get data directory path."""
+        return self._get("database.data_directory", "")
+
+    @property
+    def audio_format(self) -> str:
+        """Get audio format for storage."""
+        return self._get("database.audio_format", "wav")
+
+    @property
+    def auto_save_recordings(self) -> bool:
+        """Get auto-save recordings setting."""
+        return self._get("database.auto_save_recordings", True)
+
+    @property
+    def auto_save_transcriptions(self) -> bool:
+        """Get auto-save transcriptions setting."""
+        return self._get("database.auto_save_transcriptions", True)
+
+    @property
+    def mark_as_training_data(self) -> bool:
+        """Get mark as training data setting."""
+        return self._get("database.mark_as_training_data", True)
+
+    @property
+    def retention_days(self) -> int:
+        """Get retention period in days."""
+        return self._get("database.retention_days", 30)
+
+    @property
+    def max_database_size_mb(self) -> int:
+        """Get maximum database size in MB."""
+        return self._get("database.max_database_size_mb", 1000)
+
+    @property
+    def compress_audio(self) -> bool:
+        """Get audio compression setting."""
+        return self._get("database.compress_audio", False)
+
+    @property
+    def backup_before_cleanup(self) -> bool:
+        """Get backup before cleanup setting."""
+        return self._get("database.backup_before_cleanup", True)
+
+    # Behavior properties
+    @property
+    def auto_paste_after_transcription(self) -> bool:
+        """Get auto-paste after transcription setting."""
+        return self._get("behavior.auto_paste_after_transcription", True)
+
+    # Input filter properties
+    @property
+    def input_filter_primary_mode(self) -> str:
+        """Get input filter mode for primary button."""
+        return self._get("input_filter.primary_mode", "single_click")
+
+    @property
+    def input_filter_secondary_mode(self) -> str:
+        """Get input filter mode for secondary button."""
+        return self._get("input_filter.secondary_mode", "hold")
+
+    @property
+    def input_filter_hold_duration(self) -> float:
+        """Get hold duration for hold mode in seconds."""
+        return self._get("input_filter.hold_duration", 0.5)
+
+    @property
+    def input_filter_double_click_window(self) -> float:
+        """Get double click window in seconds."""
+        return self._get("input_filter.double_click_window", 0.5)
+
+    @property
+    def input_filter_smart_delay(self) -> float:
+        """Get smart delay in seconds."""
+        return self._get("input_filter.smart_delay", 0.2)
+
+    # STT properties
+    @property
+    def stt_model(self) -> str:
+        """Get STT model size setting."""
+        return self._get("stt.model", "medium")
+
+    @property
+    def stt_language(self) -> str:
+        """Get STT language setting."""
+        return self._get("stt.language", "de")
+
+    @property
+    def stt_compute_type(self) -> str:
+        """Get STT compute type setting."""
+        return self._get("stt.compute_type", "float32")
