@@ -173,11 +173,71 @@ class PipelineMonitor:
 
             # Parse logs (GitHub returns logs as plain text)
             log_lines = response.text.split("\n")
-            return log_lines[-20:]  # Return last 20 lines
+            
+            # Extract error details from logs
+            error_lines = []
+            for line in log_lines:
+                line = line.strip()
+                if line:
+                    # Look for common error patterns
+                    if any(keyword in line.lower() for keyword in [
+                        "error", "failed", "failure", "exception", "traceback", 
+                        "syntax error", "import error", "module not found",
+                        "command not found", "exit code", "returned exit code"
+                    ]):
+                        error_lines.append(line)
+            
+            # If we found specific errors, return them; otherwise return last lines
+            if error_lines:
+                return error_lines[:10]  # Return up to 10 error lines
+            else:
+                return log_lines[-15:]  # Return last 15 lines if no specific errors found
 
         except requests.RequestException as e:
             print(f"Error fetching job logs: {e}")
             return []
+
+    def extract_error_summary(self, logs: List[str]) -> str:
+        """Extract a summary of the most important error from logs."""
+        if not logs:
+            return "No logs available"
+        
+        # Look for the most critical error patterns
+        for line in logs:
+            line_lower = line.lower()
+            
+            # Python-specific errors
+            if "syntaxerror:" in line_lower:
+                return f"Syntax Error: {line.strip()}"
+            elif "importerror:" in line_lower:
+                return f"Import Error: {line.strip()}"
+            elif "modulenotfounderror:" in line_lower:
+                return f"Module Not Found: {line.strip()}"
+            elif "attributeerror:" in line_lower:
+                return f"Attribute Error: {line.strip()}"
+            elif "typeerror:" in line_lower:
+                return f"Type Error: {line.strip()}"
+            elif "nameerror:" in line_lower:
+                return f"Name Error: {line.strip()}"
+            
+            # General errors
+            elif "error:" in line_lower:
+                return f"Error: {line.strip()}"
+            elif "failed:" in line_lower:
+                return f"Failed: {line.strip()}"
+            elif "exception:" in line_lower:
+                return f"Exception: {line.strip()}"
+            
+            # Exit codes
+            elif "returned exit code" in line_lower:
+                return f"Process Failed: {line.strip()}"
+        
+        # If no specific error pattern found, return the first non-empty line
+        for line in logs:
+            if line.strip():
+                return f"Log Entry: {line.strip()}"
+        
+        return "Unknown error occurred"
 
     def monitor_pipeline(self, max_wait_time: int = 300) -> bool:
         """Monitor the CI/CD pipeline for the current branch."""
@@ -291,22 +351,33 @@ class PipelineMonitor:
                 started_at = job.get("started_at", "")
                 completed_at = job.get("completed_at", "")
                 
-                print(f"  FAILED: {job_name}")
+                print(f"\n  🔴 FAILED: {job_name}")
                 if started_at:
                     print(f"     Started: {started_at}")
                 if completed_at:
                     print(f"     Completed: {completed_at}")
 
-                # Show job logs
+                # Show job logs and extract error summary
                 logs = self.get_job_logs(workflow_id, job_name)
                 if logs:
-                    print(f"\nLOGS: Job Logs for '{job_name}':")
-                    print("-" * 40)
+                    # Extract error summary
+                    error_summary = self.extract_error_summary(logs)
+                    print(f"\n     💥 Error Summary: {error_summary}")
+                    
+                    # Show detailed logs
+                    print(f"\n     📋 Detailed Logs for '{job_name}':")
+                    print("     " + "-" * 40)
                     for line in logs:
                         if line.strip():
-                            print(f"   {line}")
+                            # Truncate very long lines
+                            if len(line) > 120:
+                                line = line[:117] + "..."
+                            print(f"     {line}")
+                else:
+                    print(f"     ⚠️  No logs available for this job")
 
         print("\n💡 Check the GitHub Actions tab for more details")
+        print(f"🔗 Direct Link: {workflow_details.get('html_url', 'N/A')}")
 
     def open_pipeline_in_browser(self) -> None:
         """Open the pipeline status in the default browser."""
