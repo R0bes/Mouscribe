@@ -458,12 +458,12 @@ class PipelineMonitor:
                                         line = line[:97] + "..."
                                     print(f"     {line}")
                             else:
-                                # If no specific error lines found, show last 10 lines for context
-                                print(f"   Last 10 log lines for context:")
-                                for line in logs[-10:]:
-                                    if len(line) > 100:
-                                        line = line[:97] + "..."
-                                    print(f"     {line}")
+                                                                 # If no specific error lines found, show last 50 lines for context
+                                 print(f"   Last 50 log lines for context:")
+                                 for line in logs[-50:]:
+                                     if len(line) > 150:
+                                         line = line[:147] + "..."
+                                     print(f"     {line}")
                         else:
                             print(f"   ⚠️  Logs not available via API")
             
@@ -520,7 +520,7 @@ def main():
         "--open", action="store_true", help="Open pipeline status in browser"
     )
     parser.add_argument(
-        "--timeout", type=int, default=120, help="Maximum wait time in seconds"
+        "--timeout", type=int, default=300, help="Maximum wait time in seconds"
     )
 
     args = parser.parse_args()

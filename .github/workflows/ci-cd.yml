@@ -45,7 +45,7 @@ jobs:
         python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=html || echo "Tests completed with warnings"
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -78,7 +78,7 @@ jobs:
         python build.py
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mauscribe-production-${{ github.ref_name }}
         path: dist/*.exe
@@ -110,7 +110,7 @@ jobs:
         python build.py
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mauscribe-${{ github.ref_name }}
         path: dist/*.exe
@@ -141,7 +141,7 @@ jobs:
         bandit -r src/ -f json -o bandit-report.json || true
 
     - name: Upload security report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-report-${{ github.ref_name }}
         path: bandit-report.json
