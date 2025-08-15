@@ -93,7 +93,25 @@ class WindowsNotificationManager:
 
     def _is_winotify_available(self) -> bool:
         """Check if winotify is available."""
-        return WINOTIFY_AVAILABLE
+        if not WINOTIFY_AVAILABLE:
+            return False
+        
+        # Test if winotify actually works by creating a test notification
+        try:
+            from winotify import Notification
+            # Try to create a test notification to see if it works
+            test_toast = Notification(
+                app_id="Mauscribe", 
+                title="Test", 
+                msg="Test Message", 
+                icon=None
+            )
+            # If we get here without error, winotify is working
+            self.logger.debug("Winotify test successful - library is working")
+            return True
+        except Exception as e:
+            self.logger.warning(f"Winotify test failed: {e}")
+            return False
 
     def show_recording_started(self, duration: Optional[int] = None) -> None:
         """Show notification when recording starts."""
@@ -322,10 +340,17 @@ class WindowsNotificationManager:
         try:
             # Try winotify first for real Windows 10/11 toast notifications
             if self._is_winotify_available():
-                self._show_winotify_notification(title, message, notification_type)
+                try:
+                    self._show_winotify_notification(title, message, notification_type)
+                    return  # Success, exit early
+                except Exception as e:
+                    self.logger.warning(f"Winotify failed, trying alternative method: {e}")
+                    # Continue to fallback methods
             else:
-                # Fallback to Windows MessageBox
-                self._show_messagebox_notification(title, message, notification_type)
+                self.logger.info("Winotify not available, using fallback methods")
+            
+            # Fallback to Windows MessageBox
+            self._show_messagebox_notification(title, message, notification_type)
 
         except Exception as e:
             self.logger.error(f"Error showing taskbar notification: {e}")
@@ -337,10 +362,26 @@ class WindowsNotificationManager:
     ):
         """Show a notification using winotify for real Windows 10/11 toasts."""
         try:
+            # Validate and sanitize title and message
+            if not title or title.strip() == "":
+                title = "Mauscribe"
+            if not message or message.strip() == "":
+                message = "Benachrichtigung"
+            
+            # Ensure title and message are strings and properly encoded
+            title = str(title).strip()
+            message = str(message).strip()
+            
+            # Log the actual values being sent
+            self.logger.debug(f"Creating winotify notification - Title: '{title}', Message: '{message}'")
+            
             # Create notification with app_id for Mauscribe
             toast = Notification(
-                app_id="Mauscribe", title=title, msg=message, icon=None
-            )  # Use default icon
+                app_id="Mauscribe", 
+                title=title, 
+                msg=message, 
+                icon=None
+            )
 
             # Set audio based on notification type
             if self.enable_sound:
@@ -356,11 +397,67 @@ class WindowsNotificationManager:
             # Show the toast notification
             toast.show()
 
-            self.logger.debug(f"Winotify toast notification shown: {title}")
+            self.logger.debug(f"Winotify toast notification shown successfully: '{title}'")
 
         except Exception as e:
             self.logger.error(f"Error showing winotify notification: {e}")
-            raise
+            self.logger.warning(f"Falling back to MessageBox notification")
+            # Fallback to MessageBox if winotify fails
+            self._show_messagebox_notification(title, message, notification_type)
+
+    def _show_windows_native_notification(
+        self, title: str, message: str, notification_type: str
+    ):
+        """Show a notification using Windows native notification system."""
+        try:
+            # Use Windows 10/11 native toast notifications via PowerShell
+            import subprocess
+            
+            # Create PowerShell script for toast notification
+            ps_script = f'''
+            [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+            [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+            [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+            
+            $template = @"
+            <toast>
+                <visual>
+                    <binding template="ToastGeneric">
+                        <text>{title}</text>
+                        <text>{message}</text>
+                    </binding>
+                </visual>
+            </toast>
+"@
+            
+            $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+            $xml.LoadXml($template)
+            $toast = New-Object Windows.UI.Notifications.ToastNotification $xml
+            $toast.Tag = "Mauscribe"
+            $toast.Group = "Mauscribe"
+            
+            $toastManager = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Mauscribe")
+            $toastManager.Show($toast)
+            '''
+            
+            # Execute PowerShell script
+            result = subprocess.run(
+                ["powershell", "-Command", ps_script],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode == 0:
+                self.logger.debug(f"Windows native notification shown: '{title}'")
+            else:
+                self.logger.warning(f"PowerShell notification failed: {result.stderr}")
+                raise Exception("PowerShell notification failed")
+                
+        except Exception as e:
+            self.logger.error(f"Error showing Windows native notification: {e}")
+            # Fallback to MessageBox
+            self._show_messagebox_notification(title, message, notification_type)
 
     def _show_modern_messagebox_notification(
         self, title: str, message: str, notification_type: str

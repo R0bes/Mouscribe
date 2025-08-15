@@ -321,9 +321,14 @@ class PipelineMonitor:
         print(f"\n🔗 Pipeline: {pipeline_url}\n")
 
         # Show initial detailed status
+        print("🔍 Suche nach Pipeline-Run für aktuellen Commit...")
         workflow_runs = self.get_workflow_runs(current_branch, last_commit_full)
         if workflow_runs:
+            print(f"✅ Pipeline-Run für Commit {last_commit_short} gefunden!")
             self._show_detailed_pipeline_status(workflow_runs[0])
+        else:
+            print(f"⏳ Noch kein Pipeline-Run für Commit {last_commit_short} gefunden.")
+            print(f"   Warte auf Pipeline-Start...")
         print()
 
         start_time = time.time()
@@ -347,18 +352,28 @@ class PipelineMonitor:
             # Try to get workflow runs for the specific commit first
             workflow_runs = self.get_workflow_runs(current_branch, last_commit_full)
 
-            # If no runs found for commit, fall back to recent runs for the branch
+            # Only monitor the specific commit - no fallback to other runs
             if not workflow_runs:
-                workflow_runs = self.get_workflow_runs(current_branch, "")
-                if workflow_runs:
-                    print(f"⚠️  No workflow run found for commit {last_commit_short}")
-                    print(f"   Using most recent run for branch {current_branch}\n")
-
-            if not workflow_runs:
-                print("❌ No workflow runs found for current branch/commit")
-                return False
+                print(f"⏳ Warte auf Pipeline-Start für Commit {last_commit_short}...")
+                print(f"   (Noch kein Workflow-Run für diesen Commit gefunden)")
+                
+                # Show waiting time every 30 seconds
+                elapsed = time.time() - start_time
+                if int(elapsed) % 30 == 0 and elapsed > 0:
+                    print(f"⏰ Wartezeit: {int(elapsed)}s")
+                time.sleep(15)  # Check every 15 seconds
+                continue
 
             latest_run = workflow_runs[0]
+            
+            # Verify this is actually the run for our commit
+            run_commit = latest_run.get("head_sha", "")
+            if run_commit != last_commit_full:
+                print(f"⚠️  Commit-Mismatch: Erwartet {last_commit_short}, aber Run ist für {run_commit[:8]}")
+                print(f"   Warte auf korrekten Pipeline-Run...")
+                time.sleep(15)
+                continue
+
             status = latest_run.get("status", "unknown")
             conclusion = latest_run.get("conclusion")
 
