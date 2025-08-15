@@ -96,9 +96,9 @@ class PipelineMonitor:
         }
 
         try:
-            # Get workflow runs for the specific commit
+            # Get workflow runs for the specific branch
             url = f"{self.base_url}/actions/runs"
-            params = {"branch": branch, "per_page": 10}
+            params = {"branch": branch, "per_page": 20}  # Increased to get more runs
 
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()
@@ -111,6 +111,13 @@ class PipelineMonitor:
                 if run.get("name") == self.workflow_name
             ]
             
+            # If we have a specific commit, try to find it first
+            if commit_sha:
+                for run in filtered_runs:
+                    if run.get("head_sha", "").startswith(commit_sha):
+                        return [run]
+            
+            # Return filtered runs (most recent first)
             return filtered_runs
 
         except requests.RequestException as e:
@@ -255,7 +262,15 @@ class PipelineMonitor:
         last_status = None
 
         while time.time() - start_time < max_wait_time:
+            # First try to get workflow runs for the specific commit
             workflow_runs = self.get_workflow_runs(current_branch, last_commit)
+            
+            # If no runs found for specific commit, try to get recent runs for the branch
+            if not workflow_runs:
+                workflow_runs = self.get_workflow_runs(current_branch, "")
+                if workflow_runs:
+                    print(f"\n⚠️  No workflow run found for commit {last_commit}")
+                    print(f"   Using most recent run for branch {current_branch}")
 
             if not workflow_runs:
                 print("No workflow runs found for current branch/commit")
@@ -342,42 +357,64 @@ class PipelineMonitor:
 
         # Show job status
         jobs = workflow_details.get("jobs", [])
-        failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
+        
+        if jobs:
+            failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
 
-        if failed_jobs:
-            print(f"\n❌ Failed Jobs ({len(failed_jobs)}):")
-            for job in failed_jobs:
-                job_name = job.get("name", "Unknown")
-                started_at = job.get("started_at", "")
-                completed_at = job.get("completed_at", "")
-                
-                print(f"\n  🔴 FAILED: {job_name}")
-                if started_at:
-                    print(f"     Started: {started_at}")
-                if completed_at:
-                    print(f"     Completed: {completed_at}")
-
-                # Show job logs and extract error summary
-                logs = self.get_job_logs(workflow_id, job_name)
-                if logs:
-                    # Extract error summary
-                    error_summary = self.extract_error_summary(logs)
-                    print(f"\n     💥 Error Summary: {error_summary}")
+            if failed_jobs:
+                print(f"\n❌ Failed Jobs ({len(failed_jobs)}):")
+                for job in failed_jobs:
+                    job_name = job.get("name", "Unknown")
+                    started_at = job.get("started_at", "")
+                    completed_at = job.get("completed_at", "")
                     
-                    # Show detailed logs
-                    print(f"\n     📋 Detailed Logs for '{job_name}':")
-                    print("     " + "-" * 40)
-                    for line in logs:
-                        if line.strip():
-                            # Truncate very long lines
-                            if len(line) > 120:
-                                line = line[:117] + "..."
-                            print(f"     {line}")
-                else:
-                    print(f"     ⚠️  No logs available for this job")
+                    print(f"\n  🔴 FAILED: {job_name}")
+                    if started_at:
+                        print(f"     Started: {started_at}")
+                    if completed_at:
+                        print(f"     Completed: {completed_at}")
+
+                    # Show job logs and extract error summary
+                    logs = self.get_job_logs(workflow_id, job_name)
+                    if logs:
+                        # Extract error summary
+                        error_summary = self.extract_error_summary(logs)
+                        print(f"\n     💥 Error Summary: {error_summary}")
+                        
+                        # Show detailed logs
+                        print(f"\n     📋 Detailed Logs for '{job_name}':")
+                        print("     " + "-" * 40)
+                        for line in logs:
+                            if line.strip():
+                                # Truncate very long lines
+                                if len(line) > 120:
+                                    line = line[:117] + "..."
+                                print(f"     {line}")
+                    else:
+                        print(f"     ⚠️  No logs available for this job")
+        else:
+            print(f"\n⚠️  No job details available for this workflow run")
+            print(f"   This can happen with older workflow runs or if jobs were cleaned up")
+            print(f"   💡 Check the GitHub Actions tab for detailed job information")
 
         print("\n💡 Check the GitHub Actions tab for more details")
         print(f"🔗 Direct Link: {workflow_details.get('html_url', 'N/A')}")
+        
+        # Try to find a more recent run with job details
+        print(f"\n🔍 Looking for more recent runs with job details...")
+        current_branch = self.get_current_branch()
+        recent_runs = self.get_workflow_runs(current_branch, "")
+        
+        for run in recent_runs[:5]:  # Check first 5 recent runs
+            if run.get("id") != workflow_id:  # Skip current run
+                run_details = self.get_workflow_details(run.get("id"))
+                if run_details and run_details.get("jobs"):
+                    jobs_count = len(run_details.get("jobs", []))
+                    if jobs_count > 0:
+                        print(f"   📋 Found run {run.get('id')} with {jobs_count} jobs")
+                        print(f"      Status: {run.get('status')} - Conclusion: {run.get('conclusion')}")
+                        print(f"      Created: {run.get('created_at')}")
+                        break
 
     def open_pipeline_in_browser(self) -> None:
         """Open the pipeline status in the default browser."""
