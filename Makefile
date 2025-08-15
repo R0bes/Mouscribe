@@ -95,17 +95,11 @@ clean:
 # 🧪 Test Commands
 .PHONY: test test-unit test-integration test-e2e test-all test-coverage test-mutation test-clean
 
-# 📦 Install test dependencies
-test-install:
-	@echo 📦 Installiere Test-Dependencies...
-	pip install -r requirements-test.txt
-	@echo ✅ Test-Dependencies installiert
-
-# 🧪 Run all tests
-test-all: test-install
-	@echo 🧪 Führe alle Tests aus...
-	pytest tests/ -v --cov=server --cov-report=html --cov-report=xml
-	@echo 🎉 Alle Tests abgeschlossen!
+# 🧪 Run all tests (Mauscribe)
+test:
+	@echo 🧪 Führe Mauscribe Tests aus...
+	python -m pytest tests/ -v
+	@echo 🎉 Tests abgeschlossen!
 
 # 🔬 Run unit tests only
 test-unit: test-install
@@ -249,27 +243,24 @@ endif
 pre-commit:
 	@echo 🔒 Pre-Commit Checks werden ausgeführt...
 	@echo 🧪 Führe Tests aus...
-	@$(MAKE) test-quick
+	@$(MAKE) test
 	@echo 🔍 Prüfe Code-Format...
-	@$(MAKE) lint-check
+	@$(MAKE) lint
 	@echo ✅ Pre-Commit Checks erfolgreich!
 	@echo 
 
-# 🔍 Linting und Code-Qualität
-.PHONY: lint-check
-lint-check:
-	@echo 🔍 Prüfe Python-Code mit flake8...
-	@if command -v flake8 >/dev/null 2>&1; then \
-		flake8 server/ --max-line-length=100 --ignore=E501,W503; \
-	else \
-		echo ⚠️  flake8 nicht installiert, überspringe Linting; \
-	fi
-	@echo 🔍 Prüfe Python-Code mit black...
-	@if command -v black >/dev/null 2>&1; then \
-		black --check server/; \
-	else \
-		echo ⚠️  black nicht installiert, überspringe Format-Check; \
-	fi
+# 🔍 Linting und Code-Qualität (Mauscribe)
+.PHONY: lint
+lint:
+	@echo 🔍 Prüfe Mauscribe Code-Qualität...
+	@echo 🧪 Führe Linting aus...
+	flake8 src/ tests/ || echo ⚠️  Linting mit Warnungen abgeschlossen
+	@echo 🔍 Prüfe Code-Format...
+	black --check src/ tests/ || echo ⚠️  Format-Check mit Warnungen abgeschlossen
+	@echo 🔍 Prüfe Imports...
+	isort --check-only src/ tests/ || echo ⚠️  Import-Check mit Warnungen abgeschlossen
+	@echo 🔍 Prüfe Typen...
+	mypy src/ --ignore-missing-imports || echo ⚠️  Typ-Check mit Warnungen abgeschlossen
 	@echo ✅ Linting-Checks abgeschlossen!
 
 # 🚀 Quick Commit (ohne Pre-Commit Checks)

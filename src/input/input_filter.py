@@ -130,9 +130,9 @@ class InputFilter:
         """Handle primary button release event."""
         self.primary_button_state = False
 
-        if self.mode == InputMode.HOLD:
+        if self.primary_mode == InputMode.HOLD:
             self._cancel_primary_hold_timer()
-        elif self.mode == InputMode.SMART:
+        elif self.primary_mode == InputMode.SMART:
             self._cancel_primary_smart_timer()
 
     def _handle_secondary_press(self, current_time: float) -> None:
@@ -153,9 +153,9 @@ class InputFilter:
         """Handle secondary button release event."""
         self.secondary_button_state = False
 
-        if self.mode == InputMode.HOLD:
+        if self.secondary_mode == InputMode.HOLD:
             self._cancel_secondary_hold_timer()
-        elif self.mode == InputMode.SMART:
+        elif self.secondary_mode == InputMode.SMART:
             self._cancel_secondary_smart_timer()
 
     def _handle_double_click_primary(self, current_time: float) -> None:

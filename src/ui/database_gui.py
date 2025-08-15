@@ -16,10 +16,11 @@ from .utils.logger import get_logger
 class DatabaseManagerGUI:
     """GUI for managing audio database."""
 
-    def __init__(self, parent: tk.Tk = None):
+    def __init__(self, parent: tk.Tk | None = None):
         """Initialize the database manager GUI."""
         self.logger = get_logger(self.__class__.__name__)
         self.database = AudioDatabase()
+        self.root: tk.Tk | tk.Toplevel
 
         # Create main window
         if parent:
@@ -352,7 +353,7 @@ Audio-Datei:
 class EditItemDialog:
     """Dialog for editing training data items."""
 
-    def __init__(self, parent: tk.Tk, item_data: dict[str, Any], database: AudioDatabase):
+    def __init__(self, parent: tk.Tk | tk.Toplevel, item_data: dict[str, Any], database: AudioDatabase):
         """Initialize the edit dialog."""
         self.database = database
         self.item_data = item_data

@@ -60,7 +60,10 @@ class InputHandler:
         self.input_filter = InputFilter(self.config)
 
         # Set callbacks for the input filter
-        self.input_filter.set_callbacks(pk_callback, sk_callback)
+        if pk_callback and sk_callback:
+            self.input_filter.set_callbacks(pk_callback, sk_callback)
+        else:
+            self.logger.warning("One or both callbacks are None, input filtering disabled")
 
         # Callback functions (kept for backward compatibility)
         self.primary_callback: Optional[Callable[[bool], None]] = pk_callback

@@ -152,6 +152,9 @@ class AudioDatabase:
                 recording_id = cursor.lastrowid
                 conn.commit()
 
+                if recording_id is None:
+                    raise RuntimeError("Failed to get recording ID from database")
+
                 self.logger.info(f"Audio recording saved with ID: {recording_id}")
                 return recording_id
 
@@ -209,6 +212,9 @@ class AudioDatabase:
                 transcription_id = cursor.lastrowid
                 conn.commit()
 
+                if transcription_id is None:
+                    raise RuntimeError("Failed to get transcription ID from database")
+
                 self.logger.info(f"Transcription saved with ID: {transcription_id}")
                 return transcription_id
 
@@ -241,6 +247,9 @@ class AudioDatabase:
 
                 training_data_id = cursor.lastrowid
                 conn.commit()
+
+                if training_data_id is None:
+                    raise RuntimeError("Failed to get training data ID from database")
 
                 self.logger.info(f"Training data saved with ID: {training_data_id}")
                 return training_data_id

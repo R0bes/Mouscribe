@@ -50,11 +50,11 @@ class MauscribeApp:
 
         # Initialize recording state variables
         self._is_recording = False
-        self._last_recording_timestamp = 0
-        self._last_recording_stop_timestamp = 0
-        self._last_click_time = 0
+        self._last_recording_timestamp: float = 0.0
+        self._last_recording_stop_timestamp: float = 0.0
+        self._last_click_time: float = 0.0
         self._click_debounce_ms = 500  # 500ms for double-click detection
-        self._secondary_button_start_time = 0
+        self._secondary_button_start_time: float = 0.0
         self._secondary_button_is_pressed = False
         self._secondary_button_long_press_threshold = 1.5  # 1.5 seconds
 
