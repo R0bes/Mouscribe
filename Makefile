@@ -2,10 +2,11 @@
 # Einheitliche Workflows für Entwicklung und Deployment
 
 # Windows-spezifische Shell-Einstellungen
+ifeq ($(OS),Windows_NT)
 SHELL := powershell.exe
 .SHELLFLAGS := -NoProfile -ExecutionPolicy Bypass -Command
 .ONESHELL:
-
+endif
 
 # 🎯 Standardziel
 .PHONY: help, server_up, ui_up, ui_down, up, down, clean, commit, push
