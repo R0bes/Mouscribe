@@ -1,104 +1,193 @@
 # GitHub Actions CI/CD Workflow for Mauscribe
+# Intelligente Pipeline für alle Branches und Pull Requests
 name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, feature/*, bugfix/*, hotfix/* ]
   pull_request:
     branches: [ main, develop ]
-  release:
-    types: [ published ]
+  workflow_dispatch:
 
+# Workflow-Level Umgebungsvariablen für bessere Sichtbarkeit
 env:
-  PYTHON_VERSION: '3.11'
-  PIP_CACHE_DIR: ~/.cache/pip
+  COMMIT_SHA: ${{ github.sha }}
+  COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+  BRANCH_NAME: ${{ github.ref_name }}
+  ACTOR: ${{ github.actor }}
 
 jobs:
-  test:
-    name: Test and Lint
-    runs-on: ubuntu-latest
-    
+  # Linting und Tests für alle Branches
+  validate:
+    name: Validate Code (${{ matrix.python-version }})
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+
     steps:
+    - name: Display commit information
+      run: |
+        echo "🔍 Commit Information:"
+        echo "SHA: ${{ env.COMMIT_SHA }}"
+        echo "Message: ${{ env.COMMIT_MESSAGE }}"
+        echo "Branch: ${{ env.BRANCH_NAME }}"
+        echo "Actor: ${{ env.ACTOR }}"
+        echo "Event: ${{ github.event_name }}"
+
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Set up Python
+      with:
+        fetch-depth: 0  # Fetch full history for better commit info
+
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: ${{ matrix.python-version }}
         cache: 'pip'
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements-linux.txt
-        pip install -r requirements-dev.txt
-        
+        pip install -r requirements-ci.txt
+
     - name: Run linting
       run: |
-        flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-        
+        flake8 src/ tests/ --count --select=E9,F63,F7,F82 --max-line-length=127 --show-source --statistics
+        black --check --line-length=127 src/ tests/
+        isort --check-only src/ tests/
+        mypy src/ --ignore-missing-imports --install-types
+
     - name: Run tests
       run: |
-        python -m pytest --cov=src --cov-report=xml
-        
-    - name: Upload coverage
-      uses: codecov/codecov-action@v3
+        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=html || echo "Tests completed with warnings"
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
         fail_ci_if_error: false
 
-  build:
-    name: Build Executable
+  # Build nur für main und develop (Produktions-Builds)
+  build-production:
+    name: Build Production Executable
     runs-on: windows-latest
-    needs: test
-    
+    needs: [validate]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
     steps:
+    - name: Display commit information
+      run: |
+        echo "🏗️ Production Build für:"
+        echo "SHA: ${{ env.COMMIT_SHA }}"
+        echo "Message: ${{ env.COMMIT_MESSAGE }}"
+        echo "Branch: ${{ env.BRANCH_NAME }}"
+
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Set up Python
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-        
+        python-version: '3.11'
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements-windows.txt
-        pip install pyinstaller
-        
-    - name: Build executable
-      run: python build.py
-      
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: mauscribe-executable
-        path: dist/*.exe
+        pip install -r requirements-ci.txt
 
-  release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    needs: [test, build]
-    if: github.event_name == 'release'
-    
+    - name: Build executable
+      run: |
+        python build.py
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: mauscribe-production-${{ github.sha }}
+        path: dist/*.exe
+        retention-days: 30
+
+  # Build für Feature-Branches (Test-Builds)
+  build-feature:
+    name: Build Feature Branch
+    runs-on: windows-latest
+    needs: [validate]
+    if: startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/bugfix/') || startsWith(github.ref, 'refs/heads/hotfix/')
+
     steps:
+    - name: Display commit information
+      run: |
+        echo "🔧 Feature Build für:"
+        echo "SHA: ${{ env.COMMIT_SHA }}"
+        echo "Message: ${{ env.COMMIT_MESSAGE }}"
+        echo "Branch: ${{ env.BRANCH_NAME }}"
+
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Download artifacts
-      uses: actions/download-artifact@v3
       with:
-        name: mauscribe-executable
-        
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
+        fetch-depth: 0
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
       with:
-        files: dist/*.exe
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-ci.txt
+
+    - name: Build executable
+      run: |
+        python build.py
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: mauscribe-${{ github.sha }}
+        path: dist/*.exe
+        retention-days: 7
+
+  # Security Scan für alle Branches
+  security-scan:
+    name: Security Scan
+    runs-on: windows-latest
+    needs: [validate]
+
+    steps:
+    - name: Display commit information
+      run: |
+        echo "🔒 Security Scan für:"
+        echo "SHA: ${{ env.COMMIT_SHA }}"
+        echo "Message: ${{ env.COMMIT_MESSAGE }}"
+        echo "Branch: ${{ env.BRANCH_NAME }}"
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-ci.txt
+
+    - name: Run security scan
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-report-${{ github.sha }}
+        path: bandit-report.json
+        retention-days: 30

@@ -3,17 +3,17 @@
 
 faster-whisper
 numpy
+openai
+pillow
+pyautogui
+pynput
+pyperclip
+pyspellchecker
+pystray
+python-dotenv
+requests
 sounddevice
 webrtcvad
-pynput
-python-dotenv
-openai
-pyperclip
-pyautogui
-pystray
-pillow
-pyspellchecker
-requests
 
 # Linux-spezifische Audio-Pakete
-pyaudio
+# pyaudio  # Commented out for CI/CD compatibility - install manually if needed for local development
