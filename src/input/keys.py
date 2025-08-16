@@ -138,21 +138,61 @@ class ButtonMapper:
 
     def get_primary_mouse_button(self) -> Optional[mouse.Button]:
         """Get primary mouse button from configuration."""
+        # Versuche zuerst die neue primary Konfiguration zu verwenden
+        try:
+            if hasattr(self.config, 'primary_name') and hasattr(self.config, 'primary_type'):
+                if self.config.primary_type == "mouse_button":
+                    button_name = self.config.primary_name
+                    return self.get_mouse_button(button_name)
+        except (AttributeError, KeyError):
+            pass
+        
+        # Fallback auf die alte Konfiguration
         button_name = self.config.mouse_button_primary
         return self.get_mouse_button(button_name)
 
     def get_secondary_mouse_button(self) -> Optional[mouse.Button]:
         """Get secondary mouse button from configuration."""
+        # Versuche zuerst die neue secondary Konfiguration zu verwenden
+        try:
+            if hasattr(self.config, 'secondary_name') and hasattr(self.config, 'secondary_type'):
+                if self.config.secondary_type == "mouse_button":
+                    button_name = self.config.secondary_name
+                    return self.get_mouse_button(button_name)
+        except (AttributeError, KeyError):
+            pass
+        
+        # Fallback auf die alte Konfiguration
         button_name = self.config.mouse_button_secondary
         return self.get_mouse_button(button_name)
 
     def get_primary_keyboard_key(self) -> Union[keyboard.Key, str, None]:
         """Get primary keyboard key from configuration."""
+        # Versuche zuerst die neue primary Konfiguration zu verwenden
+        try:
+            if hasattr(self.config, 'primary_name') and hasattr(self.config, 'primary_type'):
+                if self.config.primary_type == "keyboard":
+                    key_name = self.config.primary_name
+                    return self.get_keyboard_key(key_name)
+        except (AttributeError, KeyError):
+            pass
+        
+        # Fallback auf die alte Konfiguration
         key_name = self.config.keyboard_primary
         return self.get_keyboard_key(key_name)
 
     def get_secondary_keyboard_key(self) -> Union[keyboard.Key, str, None]:
         """Get secondary keyboard key from configuration."""
+        # Versuche zuerst die neue secondary Konfiguration zu verwenden
+        try:
+            if hasattr(self.config, 'secondary_name') and hasattr(self.config, 'secondary_type'):
+                if self.config.secondary_type == "keyboard":
+                    key_name = self.config.secondary_name
+                    return self.get_keyboard_key(key_name)
+        except (AttributeError, KeyError):
+            pass
+        
+        # Fallback auf die alte Konfiguration
         key_name = self.config.keyboard_secondary
         return self.get_keyboard_key(key_name)
 

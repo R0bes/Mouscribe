@@ -323,49 +323,33 @@ class MauscribeApp:
         logger.info("🚀 Starte Mauscribe...")
 
         # Setup system tray
-        self._setup_system_tray()
+        self.system_tray_manager.setup()
 
-        # Start system tray if available
-        if self.system_tray_manager.is_available():
-            try:
-                logger.info("🔄 Starte System Tray...")
-                # Run system tray in a separate thread so we can monitor shutdown
-                tray_thread = threading.Thread(target=self._run_system_tray)
-                tray_thread.daemon = True
-                tray_thread.start()
+        logger.info("🔄 Starte System Tray...")
 
-                logger.info("✅ System Tray läuft im Hintergrund")
+        # Run system tray in a separate thread so we can monitor shutdown
+        tray_thread = threading.Thread(target=self._run_system_tray)
+        tray_thread.daemon = True
+        tray_thread.start()
+        logger.info("✅ System Tray läuft im Hintergrund")
+        
+        if self.config.notifications_show_startup:
+            self.notification_manager.show_info(
+                "Mauscribe erfolgreich gestartet", "Anwendung"
+            )
 
-                # Show startup notification
-                if (
-                    self.notification_manager.is_supported()
-                    and self.config.notifications_show_startup
-                ):
-                    self.notification_manager.show_info(
-                        "Mauscribe erfolgreich gestartet", "Anwendung"
-                    )
+        logger.info("🎯 Mauscribe Steuerung:")
+        logger.info(
+            f"🐭 {self.config.mouse_button_primary} (press): Aufnahme starten/stoppen"
+        )
+        logger.info(
+            f"🐭 {self.config.mouse_button_secondary} (hold): Text einfügen"
+        )
 
-                logger.info("🎯 Mauscribe Steuerung:")
-                logger.info(
-                    f"- {self.config.mouse_button_primary} (einfach): Aufnahme starten/stoppen"
-                )
-                logger.info(
-                    f"-{self.config.mouse_button_secondary} (langes Drücken >1.5s): Text automatisch einfügen"
-                )
-
-                # Monitor shutdown in main thread
-                while not self.shutdown_event.is_set():
-                    time.sleep(0.1)
-
-                logger.info("🔄 Shutdown signal empfangen - beende System Tray...")
-
-            except Exception as e:
-                logger.error(f"❌ System Tray fehlgeschlagen: {e}")
-                logger.warning("⚠️  Lauf im Konsolenmodus...")
-                self._run_console_mode()
-        else:
-            logger.warning("⚠️  Lauf im Konsolenmodus...")
-            self._run_console_mode()
+        while not self.shutdown_event.is_set():
+            time.sleep(0.1)
+        logger.info("🔄 Shutdown signal empfangen - beende System Tray...")
+            
 
     def _run_system_tray(self) -> None:
         """Run system tray in a separate thread."""
@@ -380,28 +364,6 @@ class MauscribeApp:
             logger.error(f"❌ System Tray Fehler: {e}")
             self.shutdown_event.set()
 
-    def _run_console_mode(self) -> None:
-        """Run the application in console mode without system tray."""
-        logger.info("🖥️  Mauscribe läuft im Konsolenmodus")
-        logger.info("📋 Verwendung:")
-        logger.info("- X2-Maustaste (einfach): Aufnahme starten/stoppen")
-        logger.info("- X2-Maustaste (doppelklick): Text einfügen")
-        logger.info(
-            "- X2-Doppelklick während Aufnahme: Stoppt Aufnahme und fügt Text ein"
-        )
-        logger.info("- X1-Maustaste (langes Drücken >1.5s): Text automatisch einfügen")
-        logger.info("- X1-Maustaste (kurzes Drücken): Keine Aktion")
-        logger.info("- Drücken Sie Strg+C um zu beenden")
-
-        try:
-            while not self.shutdown_event.is_set():
-                time.sleep(0.1)  # Check more frequently
-        except KeyboardInterrupt:
-            logger.info("🛑 Strg+C empfangen...")
-            self.shutdown_event.set()
-
-        logger.info("🛑 Beende Anwendung...")
-        self.stop()
 
     def stop(self) -> None:
         """Stop the Mauscribe application."""
@@ -472,31 +434,21 @@ class MauscribeApp:
         """Handle system signals for graceful shutdown."""
         signal_name = "SIGINT" if signum == signal.SIGINT else "SIGTERM"
         logger.info(f"🛑 Signal {signal_name} empfangen - starte graceful shutdown...")
-        logger.info(
-            f"Received signal {signum} ({signal_name}). Initiating graceful shutdown."
-        )
+        logger.info(f"Received signal {signum} ({signal_name}). Initiating graceful shutdown.")
         self.shutdown_event.set()
 
         # Force stop recording if active
         if self._is_recording:
             logger.info("🛑 Stoppe aktive Aufnahme...")
             self._is_recording = False
-            if hasattr(self.recorder, "stop_recording"):
-                try:
-                    self.recorder.stop_recording()
-                except Exception:
-                    pass
-
+            self.recorder.stop_recording()
+            
         # Stelle Lautstärke sicher wieder her
         if hasattr(self.recorder, "restore_volume"):
-            try:
-                logger.info("🔄 Stelle Lautstärke wieder her...")
-                self.recorder.restore_volume()
-            except Exception as e:
-                logger.error(f"❌ Fehler beim Wiederherstellen der Lautstärke: {e}")
+            logger.info("🔄 Stelle Lautstärke wieder her...")
+            self._volume_controller.restore_volume()
 
-
-def main() -> None:
+def start_mouscribe() -> None:
     """Main entry point for the Mauscribe application."""
     logger = get_logger(__name__)
     logger.info("🚀 Starte Mauscribe...")
@@ -519,4 +471,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    start_mouscribe()

@@ -75,26 +75,48 @@ class InputFilter:
     def _update_modes(self) -> None:
         """Update the current input filter modes from configuration."""
         try:
-            primary_mode_str = self.config.input_filter_primary_mode
-            self.primary_mode = InputMode(primary_mode_str)
+            # Versuche zuerst die neuen primary/secondary Konfigurationen zu verwenden
+            primary_method = self.config.primary_method
+            if "press" in primary_method or "klick" in primary_method:
+                self.primary_mode = InputMode.SINGLE_CLICK
+            elif "hold" in primary_method:
+                self.primary_mode = InputMode.HOLD
+            elif "double_click" in primary_method:
+                self.primary_mode = InputMode.DOUBLE_CLICK
+            else:
+                # Fallback auf die alte input_filter Konfiguration
+                primary_mode_str = self.config.input_filter_primary_mode
+                self.primary_mode = InputMode(primary_mode_str)
+            
             self.logger.info(
                 f"Primary button filter mode set to: {self.primary_mode.value}"
             )
-        except ValueError:
+        except (ValueError, AttributeError):
             self.logger.warning(
-                f"Invalid primary button filter mode: {primary_mode_str}, using single_click"
+                f"Invalid primary button filter mode, using single_click"
             )
             self.primary_mode = InputMode.SINGLE_CLICK
 
         try:
-            secondary_mode_str = self.config.input_filter_secondary_mode
-            self.secondary_mode = InputMode(secondary_mode_str)
+            # Versuche zuerst die neuen primary/secondary Konfigurationen zu verwenden
+            secondary_method = self.config.secondary_method
+            if "press" in secondary_method or "klick" in secondary_method:
+                self.secondary_mode = InputMode.SINGLE_CLICK
+            elif "hold" in secondary_method:
+                self.secondary_mode = InputMode.HOLD
+            elif "double_click" in secondary_method:
+                self.secondary_mode = InputMode.DOUBLE_CLICK
+            else:
+                # Fallback auf die alte input_filter Konfiguration
+                secondary_mode_str = self.config.input_filter_secondary_mode
+                self.secondary_mode = InputMode(secondary_mode_str)
+            
             self.logger.info(
                 f"Secondary button filter mode set to: {self.secondary_mode.value}"
             )
-        except ValueError:
+        except (ValueError, AttributeError):
             self.logger.warning(
-                f"Invalid secondary button filter mode: {secondary_mode_str}, using hold"
+                f"Invalid secondary button filter mode, using hold"
             )
             self.secondary_mode = InputMode.HOLD
 
@@ -129,6 +151,17 @@ class InputFilter:
         self.primary_button_state = True
         self.primary_press_time = current_time
 
+        # Versuche zuerst die neue primary Konfiguration zu verwenden
+        try:
+            primary_method = self.config.primary_method
+            if "press" in primary_method or "klick" in primary_method:
+                # Direkte Auslösung bei Press/Klick
+                self._trigger_primary_callback(True)
+                return
+        except (AttributeError, KeyError, TypeError):
+            pass
+
+        # Fallback auf die alten Modi
         if self.primary_mode == InputMode.SINGLE_CLICK:
             self._trigger_primary_callback(True)
         elif self.primary_mode == InputMode.DOUBLE_CLICK:
@@ -152,6 +185,17 @@ class InputFilter:
         self.secondary_button_state = True
         self.secondary_press_time = current_time
 
+        # Versuche zuerst die neue secondary Konfiguration zu verwenden
+        try:
+            secondary_method = self.config.secondary_method
+            if "press" in secondary_method or "klick" in secondary_method:
+                # Direkte Auslösung bei Press/Klick
+                self._trigger_secondary_callback(True)
+                return
+        except (AttributeError, KeyError, TypeError):
+            pass
+
+        # Fallback auf die alten Modi
         if self.secondary_mode == InputMode.SINGLE_CLICK:
             self._trigger_secondary_callback(True)
         elif self.secondary_mode == InputMode.DOUBLE_CLICK:
@@ -172,7 +216,15 @@ class InputFilter:
 
     def _handle_double_click_primary(self, current_time: float) -> None:
         """Handle double click detection for primary button."""
-        double_click_window = self.config.input_filter_double_click_window
+        # Versuche zuerst die neue primary Konfiguration zu verwenden
+        try:
+            primary_method = self.config.primary_method
+            if "double_click" in primary_method:
+                double_click_window = primary_method["double_click"]
+            else:
+                double_click_window = self.config.input_filter_double_click_window
+        except (AttributeError, KeyError, TypeError):
+            double_click_window = self.config.input_filter_double_click_window
 
         if current_time - self.last_primary_click_time < double_click_window:
             # Double click detected
@@ -186,7 +238,15 @@ class InputFilter:
 
     def _handle_double_click_secondary(self, current_time: float) -> None:
         """Handle double click detection for secondary button."""
-        double_click_window = self.config.input_filter_double_click_window
+        # Versuche zuerst die neue secondary Konfiguration zu verwenden
+        try:
+            secondary_method = self.config.secondary_method
+            if "double_click" in secondary_method:
+                double_click_window = secondary_method["double_click"]
+            else:
+                double_click_window = self.config.input_filter_double_click_window
+        except (AttributeError, KeyError, TypeError):
+            double_click_window = self.config.input_filter_double_click_window
 
         if current_time - self.last_secondary_click_time < double_click_window:
             # Double click detected
@@ -200,13 +260,31 @@ class InputFilter:
 
     def _start_primary_hold_timer(self) -> None:
         """Start hold timer for primary button."""
-        hold_duration = self.config.input_filter_hold_duration
+        # Versuche zuerst die neue primary Konfiguration zu verwenden
+        try:
+            primary_method = self.config.primary_method
+            if "hold" in primary_method:
+                hold_duration = primary_method["hold"]
+            else:
+                hold_duration = self.config.input_filter_hold_duration
+        except (AttributeError, KeyError, TypeError):
+            hold_duration = self.config.input_filter_hold_duration
+        
         self.primary_hold_timer = threading.Timer(hold_duration, self._on_primary_hold)
         self.primary_hold_timer.start()
 
     def _start_secondary_hold_timer(self) -> None:
         """Start hold timer for secondary button."""
-        hold_duration = self.config.input_filter_hold_duration
+        # Versuche zuerst die neue secondary Konfiguration zu verwenden
+        try:
+            secondary_method = self.config.secondary_method
+            if "hold" in secondary_method:
+                hold_duration = secondary_method["hold"]
+            else:
+                hold_duration = self.config.input_filter_hold_duration
+        except (AttributeError, KeyError, TypeError):
+            hold_duration = self.config.input_filter_hold_duration
+        
         self.secondary_hold_timer = threading.Timer(
             hold_duration, self._on_secondary_hold
         )
@@ -226,13 +304,31 @@ class InputFilter:
 
     def _start_primary_smart_timer(self) -> None:
         """Start smart timer for primary button."""
-        smart_delay = self.config.input_filter_smart_delay
+        # Versuche zuerst die neue primary Konfiguration zu verwenden
+        try:
+            primary_method = self.config.primary_method
+            if "smart" in primary_method:
+                smart_delay = primary_method["smart"]
+            else:
+                smart_delay = self.config.input_filter_smart_delay
+        except (AttributeError, KeyError, TypeError):
+            smart_delay = self.config.input_filter_smart_delay
+        
         self.primary_smart_timer = threading.Timer(smart_delay, self._on_primary_smart)
         self.primary_smart_timer.start()
 
     def _start_secondary_smart_timer(self) -> None:
         """Start smart timer for secondary button."""
-        smart_delay = self.config.input_filter_smart_delay
+        # Versuche zuerst die neue secondary Konfiguration zu verwenden
+        try:
+            secondary_method = self.config.secondary_method
+            if "smart" in secondary_method:
+                smart_delay = secondary_method["smart"]
+            else:
+                smart_delay = self.config.input_filter_smart_delay
+        except (AttributeError, KeyError, TypeError):
+            smart_delay = self.config.input_filter_smart_delay
+        
         self.secondary_smart_timer = threading.Timer(
             smart_delay, self._on_secondary_smart
         )

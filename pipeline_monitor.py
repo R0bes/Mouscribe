@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Pipeline monitoring script for Mauscribe CI/CD pipelines.
 
 Fixes vs. previous version:
@@ -20,6 +21,11 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import requests
+
+# Ensure UTF-8 encoding for stdout on Windows
+if sys.platform == "win32":
+    import codecs
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 
 
 class PipelineMonitor:

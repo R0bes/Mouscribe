@@ -1,40 +1,39 @@
 # Mauscribe Konfiguration
 # ======================
 
-[input]
-# Input-Methode: "mouse_button", "keyboard", "custom"
-method = "mouse_button"
+[primary]
+name = "m_x2"
+method = { "click" = true }
 
-# Input-Filter Konfiguration
-[input_filter]
-# Filter-Modus für primären Button: "single_click", "double_click", "hold", "smart"
-primary_mode = "single_click"
-# Filter-Modus für sekundären Button: "single_click", "double_click", "hold", "smart"
-secondary_mode = "hold"
-# Mindestdauer für Hold-Modus in Sekunden
-hold_duration = 2
-# Doppelklick-Fenster in Sekunden (für double_click und smart Modus)
-double_click_window = 0.5
-# Verzögerung für Smart-Modus in Sekunden
-smart_delay = 0.2
+[secondary]
+name = "m_left"
+method = { "hold" = 2 }
 
-# Maus-Button Konfiguration
-[mouse_button]
-primary = "x2"      # Primärer Button (default 5. Maustaste)
-secondary = "left"    # Sekundärer Button (default 4. Maustaste)
-left_with_ctrl = false  # Strg + Linke Maus aktivieren
+[behavior]
+# Doppelklick-Schwelle in Sekunden
+debounce_time = 0.5
 
-# Tastatur-Konfiguration
-[keyboard]
-primary = "f9"      # Primäre Taste
-secondary = "shift+f9"  # Sekundäre Taste
+# Beispiel-Konfigurationen für verschiedene Methoden:
+# [primary]
+# name = "x2"
+# type = "mouse_button"
+# method = { "double_click" = 0.5 }  # Doppelklick mit 0.5s Fenster
+#
+# [secondary]
+# name = "right"
+# type = "mouse_button"
+# method = { "smart" = 0.3 }  # Smart-Modus mit 0.3s Verzögerung
+#
+# [primary]
+# name = "f9"
+# type = "keyboard"
+# method = { "press" = false }  # Tastatur-Taste release
+#
+# [secondary]
+# name = "shift+f9"
+# type = "keyboard"
+# method = { "hold" = 1.5 }  # Tastatur-Kombination mit Hold
 
-# Custom-Kombinationen
-[custom]
-combinations = [
-    ["ctrl", "shift", "v"],
-    ["alt", "v"]
-]
 
 # Audio-Einstellungen
 [audio]
@@ -53,52 +52,29 @@ test_device_on_startup = true
 # Bei Fehler zu Standard-Gerät wechseln
 fallback_to_default = true
 
-# STT-Einstellungen
-[stt]
-model = "medium"      # "base", "small", "medium", "large"
-language = "de"     # Sprache für Transkription
-compute_type = "float32"  # "float16" = schnell, "float32" = genau
-
-# Verhalten
-[behavior]
-# Automatisches Einfügen nach Transkription
-auto_paste_after_transcription = true
-
-# Leerzeichen nach Text hinzufügen
-add_space_after_text = true
-
-# Doppelklick-Fenster in Sekunden
-paste_double_click_window = 10.0
-
-# Doppelklick-Schwelle in Sekunden
-double_click_threshold = 0.5
-
-# Cursor-Feedback
-[cursor]
-enable = true
-type = "microphone"  # "microphone", "recording", "custom"
 
 # System-Sounds
 [system]
-# System-Sounds bei kurzen Aufnahmen wiederherstellen
-restore_system_sounds = true
 # System-Sound Reduzierung während Aufnahme (in Prozent)
 volume_reduction_factor = 0.15
 # Minimale System-Lautstärke während Aufnahme (in Prozent)
 min_volume_percent = 5
 
-# Rechtschreib- und Grammatikkorrektur
+
+[transcription]
+language = "de"     # Sprache für Transkription
+whisper_model = "base"      # "base", "small", "medium", "large"
+compute_type = "float32"  # "float16" = schnell, "float32" = genau
+
+
+# Rechtschreibkorrektur
 [spell_check]
 # Rechtschreibkorrektur aktivieren
 enabled = true
-# Grammatikprüfung aktivieren
-grammar_check = true
-# Sprache für Korrektur ("de", "en", "auto")
-language = "de"
-# Automatische Korrektur anwenden
+# Automatische Korrektur anwendenn (true) oder nur Vorschläge anzeigen  (false)
 auto_correct = true
-# Nur Vorschläge anzeigen (true) oder direkt korrigieren (false)
-suggest_only = false
+
+
 
 # Benutzerdefiniertes Wörterbuch
 [custom_dictionary]
@@ -118,9 +94,6 @@ level = "DEBUG"
 verbose = true
 log_errors = true
 
-# Aufnahme-Timeout (in Sekunden)
-[recording]
-timeout_seconds = 60
 
 # Auto-Updater
 [auto_update]

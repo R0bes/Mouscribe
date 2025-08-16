@@ -49,41 +49,44 @@ class Config:
 
         return value
 
+    # Primary and Secondary button properties
     @property
-    def input_method(self) -> str:
-        """Get input method configuration."""
-        return self._get("input.method", "mouse_button")
+    def primary_name(self) -> str:
+        """Get primary button name."""
+        return self._get("primary.name", "m_x2")
 
     @property
-    def mouse_button_primary(self) -> str:
-        """Get primary mouse button configuration."""
-        return self._get("mouse_button.primary", "x2")
+    def primary_type(self) -> str:
+        """Get primary button type."""
+        return self._get("primary.type", "mouse_button")
 
     @property
-    def mouse_button_secondary(self) -> str:
-        """Get secondary mouse button configuration."""
-        return self._get("mouse_button.secondary", "x1")
+    def primary_method(self) -> dict:
+        """Get primary button method configuration."""
+        return self._get("primary.method", {"klick": True})
 
     @property
-    def mouse_button_left_with_ctrl(self) -> bool:
-        """Get left mouse button with Ctrl configuration."""
-        return self._get("mouse_button.left_with_ctrl", True)
+    def secondary_name(self) -> str:
+        """Get secondary button name."""
+        return self._get("secondary.name", "m_left")
 
     @property
-    def keyboard_primary(self) -> str:
-        """Get primary keyboard shortcut."""
-        return self._get("keyboard.primary", "f8")
+    def secondary_type(self) -> str:
+        """Get secondary button type."""
+        return self._get("secondary.type", "mouse_button")
 
     @property
-    def keyboard_secondary(self) -> str:
-        """Get secondary keyboard shortcut."""
-        return self._get("keyboard.secondary", "f9")
+    def secondary_method(self) -> dict:
+        """Get secondary button method configuration."""
+        return self._get("secondary.method", {"hold": 2})
 
+    # Behavior properties
     @property
-    def custom_combinations(self) -> list[dict[str, Any]]:
-        """Get custom key combinations."""
-        return self._get("custom.combinations", [])
+    def behavior_debounce_time(self) -> float:
+        """Get debounce time for behavior settings."""
+        return self._get("behavior.debounce_time", 0.5)
 
+    # Audio properties
     @property
     def audio_sample_rate(self) -> int:
         """Get audio sample rate."""
@@ -95,14 +98,24 @@ class Config:
         return self._get("audio.channels", 1)
 
     @property
+    def audio_chunk_size(self) -> int:
+        """Get audio chunk size."""
+        return self._get("audio.chunk_size", 1024)
+
+    @property
+    def audio_format(self) -> str:
+        """Get audio format."""
+        return self._get("audio.format", "int16")
+
+    @property
     def audio_device(self) -> Optional[int]:
         """Get audio device ID."""
-        return self._get("audio.device", None)
+        return self._get("audio.device", 1)
 
     @property
     def audio_device_name(self) -> Optional[str]:
         """Get audio device name preference."""
-        return self._get("audio.device_name", None)
+        return self._get("audio.device_name", "")
 
     @property
     def audio_auto_select_device(self) -> bool:
@@ -119,81 +132,45 @@ class Config:
         """Get whether to fallback to default device if selected device fails."""
         return self._get("audio.fallback_to_default", True)
 
-    @property
-    def stt_model_size(self) -> str:
-        """Get STT model size."""
-        return self._get("stt.model_size", "base")
-
-    @property
-    def stt_compute_type(self) -> str:
-        """Get STT compute type."""
-        return self._get("stt.compute_type", "int8")
-
-    @property
-    def stt_language(self) -> str:
-        """Get STT language."""
-        return self._get("stt.language", "de")
-
-    @property
-    def behavior_add_space_after_text(self) -> bool:
-        """Get behavior for adding space after text."""
-        return self._get("behavior.add_space_after_text", True)
-
-    @property
-    def behavior_auto_paste_after_transcription(self) -> bool:
-        """Get auto-paste behavior setting."""
-        return self._get("behavior.auto_paste_after_transcription", False)
-
-    @property
-    def behavior_paste_double_click_window(self) -> float:
-        """Get double-click window for paste functionality."""
-        return self._get("behavior.paste_double_click_window", 5.0)
-
-    @property
-    def cursor_enable(self) -> bool:
-        """Get cursor feedback enable setting."""
-        return self._get("cursor.enable", False)
-
-    @property
-    def cursor_recording_type(self) -> str:
-        """Get cursor type during recording."""
-        return self._get("cursor.recording_type", "cross")
-
+    # System properties
     @property
     def system_volume_reduction_factor(self) -> float:
         """Get volume reduction factor."""
-        return self._get("system.volume_reduction_factor", 0.3)
+        return self._get("system.volume_reduction_factor", 0.15)
 
     @property
     def system_min_volume_percent(self) -> int:
         """Get minimum volume percentage."""
-        return self._get("system.min_volume_percent", 10)
+        return self._get("system.min_volume_percent", 5)
 
+    # Transcription properties
+    @property
+    def transcription_language(self) -> str:
+        """Get transcription language."""
+        return self._get("transcription.language", "de")
+
+    @property
+    def transcription_whisper_model(self) -> str:
+        """Get Whisper model size."""
+        return self._get("transcription.whisper_model", "base")
+
+    @property
+    def transcription_compute_type(self) -> str:
+        """Get transcription compute type."""
+        return self._get("transcription.compute_type", "float32")
+
+    # Spell check properties
     @property
     def spell_check_enabled(self) -> bool:
         """Get spell check enabled setting."""
         return self._get("spell_check.enabled", True)
 
     @property
-    def spell_check_language(self) -> str:
-        """Get spell check language setting."""
-        return self._get("spell_check.language", "de")
-
-    @property
-    def spell_check_grammar(self) -> bool:
-        """Get grammar check enabled setting."""
-        return self._get("spell_check.grammar_check", True)
-
-    @property
     def spell_check_auto_correct(self) -> bool:
         """Get auto-correct enabled setting."""
         return self._get("spell_check.auto_correct", True)
 
-    @property
-    def spell_check_suggest_only(self) -> bool:
-        """Get suggest-only mode setting."""
-        return self._get("spell_check.suggest_only", False)
-
+    # Custom dictionary properties
     @property
     def custom_dictionary_enabled(self) -> bool:
         """Get custom dictionary enabled setting."""
@@ -205,125 +182,121 @@ class Config:
         return self._get("custom_dictionary.auto_add_unknown", False)
 
     @property
-    def custom_dictionary_path(self) -> Optional[str]:
-        """Get custom dictionary path setting."""
-        path = self._get("custom_dictionary.path", "")
-        return path if path else None
+    def custom_dictionary_path(self) -> str:
+        """Get custom dictionary path."""
+        return self._get("custom_dictionary.path", "")
 
     @property
     def custom_dictionary_max_words(self) -> int:
-        """Get maximum words in dictionary setting."""
+        """Get maximum words in dictionary."""
         return self._get("custom_dictionary.max_words", 1000)
 
+    # Debug properties
     @property
     def debug_enabled(self) -> bool:
-        """Get debug mode setting."""
-        return self._get("debug.enabled", False)
+        """Get debug enabled setting."""
+        return self._get("debug.enabled", True)
 
     @property
     def debug_level(self) -> str:
-        """Get debug log level."""
-        return self._get("debug.level", "INFO")
+        """Get debug level."""
+        return self._get("debug.level", "DEBUG")
 
     @property
-    def volume_reduction_factor(self) -> float:
-        """Get volume reduction factor."""
-        return self._get("system.volume_reduction_factor", 0.15)
+    def debug_verbose(self) -> bool:
+        """Get debug verbose setting."""
+        return self._get("debug.verbose", True)
 
     @property
-    def min_volume_percent(self) -> int:
-        """Get minimum volume percentage."""
-        return self._get("system.min_volume_percent", 5)
+    def debug_log_errors(self) -> bool:
+        """Get debug log errors setting."""
+        return self._get("debug.log_errors", True)
 
-    @property
-    def recording_timeout_seconds(self) -> int:
-        """Get recording timeout in seconds."""
-        return self._get("recording.timeout_seconds", 60)
-
+    # Auto-update properties
     @property
     def auto_update_enabled(self) -> bool:
         """Get auto-update enabled setting."""
         return self._get("auto_update.enabled", True)
 
     @property
-    def auto_update_check_interval(self) -> Optional[int]:
+    def auto_update_check_interval(self) -> int:
         """Get auto-update check interval in seconds."""
-        return self._get("auto_update.check_interval", 86400)  # 24 hours
+        return self._get("auto_update.check_interval", 86400)
 
     @property
     def auto_update_check_on_startup(self) -> bool:
-        """Get check for updates on startup setting."""
+        """Get auto-update check on startup setting."""
         return self._get("auto_update.check_on_startup", True)
 
     @property
     def auto_update_auto_install(self) -> bool:
-        """Get auto-install updates setting."""
+        """Get auto-update auto install setting."""
         return self._get("auto_update.auto_install", False)
 
     @property
     def auto_update_include_prereleases(self) -> bool:
-        """Get include pre-releases setting."""
+        """Get auto-update include prereleases setting."""
         return self._get("auto_update.include_prereleases", False)
 
-    # Windows notification settings
+    # Notification properties
     @property
     def notifications_enabled(self) -> bool:
-        """Get whether Windows notifications are enabled."""
+        """Get notifications enabled setting."""
         return self._get("notifications.enabled", True)
 
     @property
     def notifications_duration(self) -> int:
-        """Get notification display duration in milliseconds."""
+        """Get notification duration in milliseconds."""
         return self._get("notifications.duration", 5000)
 
     @property
     def notifications_sound(self) -> bool:
-        """Get whether notification sounds are enabled."""
+        """Get notification sound setting."""
         return self._get("notifications.sound", True)
 
     @property
     def notifications_toast(self) -> bool:
-        """Get whether toast notifications are enabled."""
+        """Get notification toast setting."""
         return self._get("notifications.toast", True)
 
     @property
     def notifications_show_startup(self) -> bool:
-        """Get whether to show startup notification."""
+        """Get show startup notification setting."""
         return self._get("notifications.show_startup", True)
 
     @property
     def notifications_show_shutdown(self) -> bool:
-        """Get whether to show shutdown notification."""
+        """Get show shutdown notification setting."""
         return self._get("notifications.show_shutdown", True)
 
     @property
     def notifications_show_recording_events(self) -> bool:
-        """Get whether to show recording start/stop notifications."""
+        """Get show recording events setting."""
         return self._get("notifications.show_recording_events", True)
 
     @property
     def notifications_show_transcription_events(self) -> bool:
-        """Get whether to show transcription complete notifications."""
+        """Get show transcription events setting."""
         return self._get("notifications.show_transcription_events", True)
 
     @property
     def notifications_show_text_events(self) -> bool:
-        """Get whether to show text paste notifications."""
+        """Get show text events setting."""
         return self._get("notifications.show_text_events", True)
 
     @property
     def notifications_show_spell_check_events(self) -> bool:
-        """Get whether to show spell check complete notifications."""
+        """Get show spell check events setting."""
         return self._get("notifications.show_spell_check_events", True)
 
     @property
     def notifications_show_errors(self) -> bool:
-        """Get whether to show error notifications."""
+        """Get show error notifications setting."""
         return self._get("notifications.show_errors", True)
 
     @property
     def notifications_show_warnings(self) -> bool:
-        """Get whether to show warning notifications."""
+        """Get show warning notifications setting."""
         return self._get("notifications.show_warnings", True)
 
     # Database properties
@@ -333,84 +306,168 @@ class Config:
         return self._get("database.enabled", True)
 
     @property
-    def data_directory(self) -> str:
-        """Get data directory path."""
+    def database_data_directory(self) -> str:
+        """Get database data directory path."""
         return self._get("database.data_directory", "")
 
     @property
-    def audio_format(self) -> str:
-        """Get audio format for storage."""
+    def database_audio_format(self) -> str:
+        """Get database audio format for storage."""
         return self._get("database.audio_format", "wav")
 
     @property
-    def auto_save_recordings(self) -> bool:
+    def database_auto_save_recordings(self) -> bool:
         """Get auto-save recordings setting."""
         return self._get("database.auto_save_recordings", True)
 
     @property
-    def auto_save_transcriptions(self) -> bool:
+    def database_auto_save_transcriptions(self) -> bool:
         """Get auto-save transcriptions setting."""
         return self._get("database.auto_save_transcriptions", True)
 
     @property
-    def mark_as_training_data(self) -> bool:
+    def database_mark_as_training_data(self) -> bool:
         """Get mark as training data setting."""
         return self._get("database.mark_as_training_data", True)
 
     @property
-    def retention_days(self) -> int:
+    def database_retention_days(self) -> int:
         """Get retention period in days."""
         return self._get("database.retention_days", 30)
 
     @property
-    def max_database_size_mb(self) -> int:
+    def database_max_database_size_mb(self) -> int:
         """Get maximum database size in MB."""
         return self._get("database.max_database_size_mb", 1000)
 
     @property
-    def compress_audio(self) -> bool:
+    def database_compress_audio(self) -> bool:
         """Get audio compression setting."""
         return self._get("database.compress_audio", False)
 
     @property
-    def backup_before_cleanup(self) -> bool:
+    def database_backup_before_cleanup(self) -> bool:
         """Get backup before cleanup setting."""
         return self._get("database.backup_before_cleanup", True)
 
-    # Behavior properties
+    # Legacy properties for backward compatibility
     @property
-    def auto_paste_after_transcription(self) -> bool:
-        """Get auto-paste after transcription setting."""
+    def input_method(self) -> str:
+        """Get input method configuration (legacy)."""
+        return self._get("input.method", "mouse_button")
+
+    @property
+    def mouse_button_primary(self) -> str:
+        """Get primary mouse button configuration (legacy)."""
+        return self._get("mouse_button.primary", "m_x2")
+
+    @property
+    def mouse_button_secondary(self) -> str:
+        """Get secondary mouse button configuration (legacy)."""
+        return self._get("mouse_button.secondary", "m_left")
+
+    @property
+    def mouse_button_left_with_ctrl(self) -> bool:
+        """Get left mouse button with Ctrl configuration (legacy)."""
+        return self._get("mouse_button.left_with_ctrl", False)
+
+    @property
+    def keyboard_primary(self) -> str:
+        """Get primary keyboard shortcut (legacy)."""
+        return self._get("keyboard.primary", "f9")
+
+    @property
+    def keyboard_secondary(self) -> str:
+        """Get secondary keyboard shortcut (legacy)."""
+        return self._get("keyboard.secondary", "shift+f9")
+
+    @property
+    def custom_combinations(self) -> list[dict[str, Any]]:
+        """Get custom key combinations (legacy)."""
+        return self._get("custom.combinations", [])
+
+    @property
+    def behavior_add_space_after_text(self) -> bool:
+        """Get behavior for adding space after text (legacy)."""
+        return self._get("behavior.add_space_after_text", True)
+
+    @property
+    def behavior_auto_paste_after_transcription(self) -> bool:
+        """Get auto-paste behavior setting (legacy)."""
         return self._get("behavior.auto_paste_after_transcription", True)
 
-    # Input filter properties
+    @property
+    def behavior_paste_double_click_window(self) -> float:
+        """Get double-click window for paste functionality (legacy)."""
+        return self._get("behavior.paste_double_click_window", 5.0)
+
+    @property
+    def behavior_double_click_threshold(self) -> float:
+        """Get double-click threshold (legacy)."""
+        return self._get("behavior.double_click_threshold", 0.5)
+
+    @property
+    def cursor_enable(self) -> bool:
+        """Get cursor feedback enable setting (legacy)."""
+        return self._get("cursor.enable", False)
+
+    @property
+    def cursor_recording_type(self) -> str:
+        """Get cursor type during recording (legacy)."""
+        return self._get("cursor.recording_type", "cross")
+
+    @property
+    def stt_model(self) -> str:
+        """Get STT model size setting (legacy)."""
+        return self._get("stt.model", "medium")
+
+    @property
+    def stt_language(self) -> str:
+        """Get STT language setting (legacy)."""
+        return self._get("stt.language", "de")
+
+    @property
+    def stt_compute_type(self) -> str:
+        """Get STT compute type setting (legacy)."""
+        return self._get("stt.compute_type", "float32")
+
+    @property
+    def spell_check_language(self) -> str:
+        """Get spell check language setting (legacy)."""
+        return self._get("spell_check.language", "de")
+
+    @property
+    def spell_check_grammar(self) -> bool:
+        """Get grammar check enabled setting (legacy)."""
+        return self._get("spell_check.grammar_check", True)
+
+    @property
+    def spell_check_suggest_only(self) -> bool:
+        """Get suggest-only mode setting (legacy)."""
+        return self._get("spell_check.suggest_only", False)
+
+    # Input filter properties (legacy fallback)
     @property
     def input_filter_primary_mode(self) -> str:
-        """Get input filter mode for primary button."""
+        """Get input filter mode for primary button (legacy fallback)."""
         return self._get("input_filter.primary_mode", "single_click")
 
     @property
     def input_filter_secondary_mode(self) -> str:
-        """Get input filter mode for secondary button."""
+        """Get input filter mode for secondary button (legacy fallback)."""
         return self._get("input_filter.secondary_mode", "hold")
 
     @property
     def input_filter_hold_duration(self) -> float:
-        """Get hold duration for hold mode in seconds."""
+        """Get hold duration for hold mode in seconds (legacy fallback)."""
         return self._get("input_filter.hold_duration", 0.5)
 
     @property
     def input_filter_double_click_window(self) -> float:
-        """Get double click window in seconds."""
+        """Get double click window in seconds (legacy fallback)."""
         return self._get("input_filter.double_click_window", 0.5)
 
     @property
     def input_filter_smart_delay(self) -> float:
-        """Get smart delay in seconds."""
+        """Get smart delay in seconds (legacy fallback)."""
         return self._get("input_filter.smart_delay", 0.2)
-
-    # STT properties
-    @property
-    def stt_model(self) -> str:
-        """Get STT model size setting."""
-        return self._get("stt.model", "medium")
