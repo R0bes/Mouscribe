@@ -1,27 +1,39 @@
 # Mauscribe Konfiguration
 # ======================
 
-[input]
-# Input-Methode: "mouse_button", "keyboard", "custom"
-method = "mouse_button"
+[primary]
+name = "m_x2"
+method = { "click" = true }
 
-# Maus-Button Konfiguration
-[mouse_button]
-primary = "x2"      # Primärer Button (meist rechte Maustaste)
-secondary = "x1"    # Sekundärer Button (meist mittlere Maustaste)
-left_with_ctrl = true  # Strg + Linke Maus aktivieren
+[secondary]
+name = "m_left"
+method = { "hold" = 2 }
 
-# Tastatur-Konfiguration
-[keyboard]
-primary = "f9"      # Primäre Taste
-secondary = "shift+f9"  # Sekundäre Taste
+[behavior]
+# Doppelklick-Schwelle in Sekunden
+debounce_time = 0.5
 
-# Custom-Kombinationen
-[custom]
-combinations = [
-    ["ctrl", "shift", "v"],
-    ["alt", "v"]
-]
+# Beispiel-Konfigurationen für verschiedene Methoden:
+# [primary]
+# name = "x2"
+# type = "mouse_button"
+# method = { "double_click" = 0.5 }  # Doppelklick mit 0.5s Fenster
+#
+# [secondary]
+# name = "right"
+# type = "mouse_button"
+# method = { "smart" = 0.3 }  # Smart-Modus mit 0.3s Verzögerung
+#
+# [primary]
+# name = "f9"
+# type = "keyboard"
+# method = { "press" = false }  # Tastatur-Taste release
+#
+# [secondary]
+# name = "shift+f9"
+# type = "keyboard"
+# method = { "hold" = 1.5 }  # Tastatur-Kombination mit Hold
+
 
 # Audio-Einstellungen
 [audio]
@@ -29,58 +41,76 @@ sample_rate = 16000
 channels = 1
 chunk_size = 1024
 format = "int16"
+# Audio-Gerät ID (leer lassen für automatische Auswahl)
+device = 1
+# Bevorzugter Gerätename (z.B. "USB Microphone")
+device_name = ""
+# Automatisch bestes Gerät auswählen
+auto_select_device = true
+# Gerät beim Start testen
+test_device_on_startup = true
+# Bei Fehler zu Standard-Gerät wechseln
+fallback_to_default = true
 
-# STT-Einstellungen
-[stt]
-model = "base"      # "base", "small", "medium", "large"
-language = "de"     # Sprache für Transkription
-compute_type = "float32"  # "float16" = schnell, "float32" = genau
-
-# Verhalten
-[behavior]
-# Automatisches Einfügen nach Transkription
-auto_paste_after_transcription = false
-
-# Leerzeichen nach Text hinzufügen
-add_space_after_text = true
-
-# Doppelklick-Fenster in Sekunden
-paste_double_click_window = 10.0
-
-# Doppelklick-Schwelle in Sekunden
-double_click_threshold = 0.5
-
-# Cursor-Feedback
-[cursor]
-enable = true
-type = "microphone"  # "microphone", "recording", "custom"
 
 # System-Sounds
 [system]
-# System-Sounds bei kurzen Aufnahmen wiederherstellen
-restore_system_sounds = true
 # System-Sound Reduzierung während Aufnahme (in Prozent)
 volume_reduction_factor = 0.15
 # Minimale System-Lautstärke während Aufnahme (in Prozent)
 min_volume_percent = 5
 
-# Rechtschreib- und Grammatikkorrektur
+
+[transcription]
+language = "de"     # Sprache für Transkription
+whisper_model = "base"      # "base", "small", "medium", "large"
+compute_type = "float32"  # "float16" = schnell, "float32" = genau
+
+
+# Rechtschreibkorrektur
 [spell_check]
 # Rechtschreibkorrektur aktivieren
 enabled = true
-# Grammatikprüfung aktivieren  
-grammar_check = true
-# Sprache für Korrektur ("de", "en", "auto")
-language = "de"
-# Automatische Korrektur anwenden
+# Automatische Korrektur anwendenn (true) oder nur Vorschläge anzeigen  (false)
 auto_correct = true
-# Nur Vorschläge anzeigen (true) oder direkt korrigieren (false)
-suggest_only = false
 
-# Debug-Modus
+
+# Logging-Einstellungen
+[logging]
+# Logging aktivieren
+enabled = true
+# Log-Level für Console-Ausgabe ("DEBUG", "INFO", "WARNING", "ERROR")
+console_level = "INFO"
+# Log-Level für Datei-Ausgabe ("DEBUG", "INFO", "WARNING", "ERROR")
+file_level = "DEBUG"
+# Emoji-Unterstützung aktivieren
+emoji_enabled = true
+# Log-Datei aktivieren
+file_enabled = true
+# Log-Datei-Name
+log_filename = "mauscribe.log"
+# Externe Bibliotheken unterdrücken (pynput, pycaw, etc.)
+suppress_external_logs = true
+
+
+# Benutzerdefiniertes Wörterbuch
+[custom_dictionary]
+# Benutzerdefiniertes Wörterbuch aktivieren
+enabled = true
+# Automatisch unbekannte Wörter zum Wörterbuch hinzufügen
+auto_add_unknown = false
+# Wörterbuch-Pfad (leer = Standard-Pfad im Benutzerverzeichnis)
+path = ""
+# Maximale Anzahl von Wörtern im Wörterbuch (0 = unbegrenzt)
+max_words = 1000
+
+
 [debug]
+enabled = true  # Standardwert: false
+level = "DEBUG"
 verbose = true
 log_errors = true
+
 
 # Auto-Updater
 [auto_update]
@@ -94,3 +124,53 @@ check_on_startup = true
 auto_install = false
 # Pre-Releases einschließen
 include_prereleases = false
+
+# Windows-Benachrichtigungen
+[notifications]
+# Windows-Benachrichtigungen aktivieren
+enabled = true
+# Anzeigedauer in Millisekunden
+duration = 5000
+# Benachrichtigungstöne aktivieren
+sound = true
+# Toast-Benachrichtigungen aktivieren
+toast = true
+# Start-Benachrichtigung anzeigen
+show_startup = true
+# Beendigungs-Benachrichtigung anzeigen
+show_shutdown = true
+# Aufnahme-Ereignisse anzeigen (Start/Stopp)
+show_recording_events = true
+# Transkriptions-Ereignisse anzeigen
+show_transcription_events = true
+# Text-Ereignisse anzeigen (Einfügen)
+show_text_events = true
+# Rechtschreibprüfungs-Ereignisse anzeigen
+show_spell_check_events = true
+# Fehler-Benachrichtigungen anzeigen
+show_errors = true
+# Warnungs-Benachrichtigungen anzeigen
+show_warnings = true
+
+# Audio-Datenbank
+[database]
+# Datenbank aktivieren
+enabled = true
+# Datenverzeichnis (leer = Standard im Programmverzeichnis)
+data_directory = ""
+# Audio-Format für Speicherung ("wav", "flac", "mp3")
+audio_format = "wav"
+# Automatisch alle Aufnahmen speichern
+auto_save_recordings = true
+# Automatisch alle Transkriptionen speichern
+auto_save_transcriptions = true
+# Aufnahmen als Trainingsdaten markieren
+mark_as_training_data = true
+# Aufbewahrungszeitraum in Tagen (0 = unbegrenzt)
+retention_days = 30
+# Maximale Datenbankgröße in MB (0 = unbegrenzt)
+max_database_size_mb = 1000
+# Komprimierung für Audio-Dateien
+compress_audio = false
+# Backup vor Aufräumen erstellen
+backup_before_cleanup = true

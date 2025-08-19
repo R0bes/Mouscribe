@@ -1,19 +1,21 @@
 # Requirements für Windows-Systeme
 # Diese Datei enthält alle Dependencies einschließlich Windows-spezifischer Pakete
 
+comtypes
 faster-whisper
 numpy
-sounddevice
-webrtcvad
-pynput
-pycaw
-comtypes
-python-dotenv
 openai
-pyperclip
-pyautogui
-pywin32
-pystray
 pillow
+pyautogui
+pycaw
+pynput
+pyperclip
 pyspellchecker
+pystray
+python-dotenv
+pywin32>=223
 requests
+sounddevice
+soundfile
+webrtcvad
+winotify>=1.1.0
