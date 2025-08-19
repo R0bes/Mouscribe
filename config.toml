@@ -75,6 +75,23 @@ enabled = true
 auto_correct = true
 
 
+# Logging-Einstellungen
+[logging]
+# Logging aktivieren
+enabled = true
+# Log-Level für Console-Ausgabe ("DEBUG", "INFO", "WARNING", "ERROR")
+console_level = "INFO"
+# Log-Level für Datei-Ausgabe ("DEBUG", "INFO", "WARNING", "ERROR")
+file_level = "DEBUG"
+# Emoji-Unterstützung aktivieren
+emoji_enabled = true
+# Log-Datei aktivieren
+file_enabled = true
+# Log-Datei-Name
+log_filename = "mauscribe.log"
+# Externe Bibliotheken unterdrücken (pynput, pycaw, etc.)
+suppress_external_logs = true
+
 
 # Benutzerdefiniertes Wörterbuch
 [custom_dictionary]

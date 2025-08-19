@@ -2,7 +2,7 @@
 """Test script for Windows notifications."""
 
 import logging
-from src.ui.windows_notifications import WindowsNotificationManager
+from src.ui.windows_notifications import NotificationManager
 from src.utils.config import Config
 
 def test_notifications():
@@ -14,7 +14,7 @@ def test_notifications():
     
     # Initialize notification manager
     config = Config()
-    notif = WindowsNotificationManager(config)
+    notif = NotificationManager(config)
     
     print("Showing test notification...")
     

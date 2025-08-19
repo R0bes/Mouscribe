@@ -33,22 +33,22 @@ except ImportError:
 from ..utils.logger import get_logger
 
 
-class WindowsNotificationManager:
-    """Manages Windows notifications for Mauscribe application."""
+class NotificationManager:
+    """Manages notifications for Mauscribe application."""
 
     def __init__(self, config=None):
-        """Initialize the Windows notification manager."""
-        self.logger = get_logger(self.__class__.__name__)
+        """Initialize the notification manager."""
+        file_name = os.path.splitext(os.path.basename(__file__))[0]
+        self.logger = get_logger(file_name.title())
         self.config = config
         self.is_available = WINDOWS_AVAILABLE and self._check_windows_version()
-
         if not self.is_available:
             self.logger.warning(
-                "Windows notifications are not available on this system"
+                "notifications are not available on this system"
             )
             return
 
-        self.logger.info("Windows notification manager initialized")
+        self.logger.info("notification manager initialized")
 
         # Notification settings from config or defaults
         if self.config:
@@ -65,19 +65,19 @@ class WindowsNotificationManager:
         self.notification_counter = 0
 
     def _check_windows_version(self) -> bool:
-        """Check if Windows version supports modern notifications."""
+        """Check if version supports modern notifications."""
         try:
             if not WINDOWS_AVAILABLE:
                 return False
 
-            # Check Windows version (Windows 10+ supports modern notifications)
+            # Check version (10+ supports modern notifications)
             version = sys.getwindowsversion()
             major_version = version.major
             minor_version = version.minor
 
             # Windows 10 is version 10.0, Windows 11 is version 10.0 with higher build
             if major_version >= 10:
-                self.logger.info(
+                self.logger.debug(
                     f"Windows {major_version}.{minor_version} detected - notifications supported"
                 )
                 return True

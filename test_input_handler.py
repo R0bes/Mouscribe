@@ -5,7 +5,7 @@ Tests the primary and secondary button configurations with different methods.
 """
 
 import time
-from src.input.input_handler import InputHandler
+from src.input_handler import InputHandler
 from src.utils.config import Config
 
 

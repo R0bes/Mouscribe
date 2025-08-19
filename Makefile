@@ -10,7 +10,7 @@ endif
 
 
 # 🎯 Standardziel
-.PHONY: help, server_up, ui_up, ui_down, up, down, clean, commit, push
+.PHONY: help, server_up, ui_up, ui_down, up, down, clean, commit, push, status
 help:
 	@echo 🌟 Verfügbare Kommandos:
 	@echo 
@@ -57,6 +57,11 @@ help:
 	@echo     test-unit    - 🔬 Nur Unit Tests
 	@echo     test-e2e     - 🌐 End-to-End Tests
 	@echo     test-help    - 📚 Hilfe für Test-Kommandos
+
+
+status:
+	@echo 🔍 Git Status...
+	git status
 
 # 🖥️ Server Management
 .PHONY: server_up

@@ -26,8 +26,8 @@ class AudioDatabase:
         self.config = config or Config()
 
         # Database path
-        if self.config.data_directory:
-            data_dir = Path(self.config.data_directory)
+        if self.config.database_data_directory:
+            data_dir = Path(self.config.database_data_directory)
         else:
             # Use absolute path from current working directory
             data_dir = Path.cwd() / "data"
@@ -132,8 +132,8 @@ class AudioDatabase:
             filename = f"recording_{timestamp}.{audio_format}"
 
             # Ensure audio directory exists
-            if self.config.data_directory:
-                audio_dir = Path(self.config.data_directory) / "audio"
+            if self.config.database_data_directory:
+                audio_dir = Path(self.config.database_data_directory) / "audio"
             else:
                 # Use absolute path from current working directory
                 audio_dir = Path.cwd() / "data" / "audio"

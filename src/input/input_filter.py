@@ -60,8 +60,8 @@ class InputFilter:
 
     def set_callbacks(
         self,
-        primary_callback: Callable[[bool], None],
-        secondary_callback: Callable[[bool], None],
+        primary_callback: Callable[[bool], None] | None,
+        secondary_callback: Callable[[bool], None] | None,
     ) -> None:
         """Set the callback functions for filtered input events.
 

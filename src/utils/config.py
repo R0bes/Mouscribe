@@ -194,23 +194,59 @@ class Config:
     # Debug properties
     @property
     def debug_enabled(self) -> bool:
-        """Get debug enabled setting."""
-        return self._get("debug.enabled", True)
+        """Get debug mode enabled setting."""
+        return self._get("debug.enabled", False)
 
     @property
     def debug_level(self) -> str:
-        """Get debug level."""
-        return self._get("debug.level", "DEBUG")
+        """Get debug level setting."""
+        return self._get("debug.level", "INFO")
 
     @property
     def debug_verbose(self) -> bool:
-        """Get debug verbose setting."""
-        return self._get("debug.verbose", True)
+        """Get verbose logging setting."""
+        return self._get("debug.verbose", False)
 
     @property
     def debug_log_errors(self) -> bool:
-        """Get debug log errors setting."""
+        """Get log errors setting."""
         return self._get("debug.log_errors", True)
+
+    # Logging properties
+    @property
+    def logging_enabled(self) -> bool:
+        """Get logging enabled setting."""
+        return self._get("logging.enabled", True)
+
+    @property
+    def logging_console_level(self) -> str:
+        """Get console logging level."""
+        return self._get("logging.console_level", "INFO")
+
+    @property
+    def logging_file_level(self) -> str:
+        """Get file logging level."""
+        return self._get("logging.file_level", "DEBUG")
+
+    @property
+    def logging_emoji_enabled(self) -> bool:
+        """Get emoji logging enabled setting."""
+        return self._get("logging.emoji_enabled", True)
+
+    @property
+    def logging_file_enabled(self) -> bool:
+        """Get file logging enabled setting."""
+        return self._get("logging.file_enabled", True)
+
+    @property
+    def logging_filename(self) -> str:
+        """Get log filename."""
+        return self._get("logging.log_filename", "mauscribe.log")
+
+    @property
+    def logging_suppress_external(self) -> bool:
+        """Get suppress external logs setting."""
+        return self._get("logging.suppress_external_logs", True)
 
     # Auto-update properties
     @property
