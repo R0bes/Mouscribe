@@ -4,6 +4,16 @@ __pycache__/
 *$py.class
 *.db
 
+# Audio files and directories
+audio/
+data/audio/
+*.wav
+*.npy
+*.mp3
+*.flac
+*.ogg
+*.m4a
+
 # C extensions
 *.so
 
