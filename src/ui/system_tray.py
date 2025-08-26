@@ -3,11 +3,11 @@
 System Tray Management Module
 Handles system tray icon, menu, and related functionality
 """
+import os
 import subprocess
 import threading
 from pathlib import Path
 from typing import Any, Optional
-import os
 
 import pystray
 from PIL import Image, ImageDraw
@@ -29,7 +29,12 @@ class SystemTrayManager:
         self.config = config
         self.app_instance = app_instance
 
-        logger_name = os.path.splitext(os.path.basename(__file__))[0].replace("_", " ").title().replace(" ", "")
+        logger_name = (
+            os.path.splitext(os.path.basename(__file__))[0]
+            .replace("_", " ")
+            .title()
+            .replace(" ", "")
+        )
         self.logger = get_logger(logger_name)
 
         # State management
@@ -153,7 +158,9 @@ class SystemTrayManager:
                 self.system_tray.icon = self.create_icon()
                 self.logger.debug("System tray icon updated")
             except Exception as e:
-                self.logger.error(f"❌ Fehler beim Aktualisieren des System Tray Icons: {e}")
+                self.logger.error(
+                    f"❌ Fehler beim Aktualisieren des System Tray Icons: {e}"
+                )
 
     def run(self) -> None:
         """Run the system tray in a separate thread."""

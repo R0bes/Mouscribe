@@ -11,7 +11,10 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import requests
+try:
+    import requests  # type: ignore
+except ImportError:
+    requests = None  # type: ignore
 
 from .utils import config
 from .utils.logger import get_logger

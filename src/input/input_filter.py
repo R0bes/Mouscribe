@@ -87,13 +87,13 @@ class InputFilter:
                 # Fallback auf die alte input_filter Konfiguration
                 primary_mode_str = self.config.input_filter_primary_mode
                 self.primary_mode = InputMode(primary_mode_str)
-            
+
             self.logger.info(
-                f"Primary button filter mode set to: {self.primary_mode.value}"
+                f"🎯 Primary Button Filter-Modus gesetzt auf: {self.primary_mode.value}"
             )
         except (ValueError, AttributeError):
             self.logger.warning(
-                f"Invalid primary button filter mode, using single_click"
+                "Invalid primary button filter mode, using single_click"
             )
             self.primary_mode = InputMode.SINGLE_CLICK
 
@@ -110,14 +110,12 @@ class InputFilter:
                 # Fallback auf die alte input_filter Konfiguration
                 secondary_mode_str = self.config.input_filter_secondary_mode
                 self.secondary_mode = InputMode(secondary_mode_str)
-            
+
             self.logger.info(
-                f"Secondary button filter mode set to: {self.secondary_mode.value}"
+                f"🎯 Secondary Button Filter-Modus gesetzt auf: {self.secondary_mode.value}"
             )
         except (ValueError, AttributeError):
-            self.logger.warning(
-                f"Invalid secondary button filter mode, using hold"
-            )
+            self.logger.warning("Invalid secondary button filter mode, using hold")
             self.secondary_mode = InputMode.HOLD
 
     def process_primary_input(self, pressed: bool) -> None:
@@ -269,7 +267,7 @@ class InputFilter:
                 hold_duration = self.config.input_filter_hold_duration
         except (AttributeError, KeyError, TypeError):
             hold_duration = self.config.input_filter_hold_duration
-        
+
         self.primary_hold_timer = threading.Timer(hold_duration, self._on_primary_hold)
         self.primary_hold_timer.start()
 
@@ -284,7 +282,7 @@ class InputFilter:
                 hold_duration = self.config.input_filter_hold_duration
         except (AttributeError, KeyError, TypeError):
             hold_duration = self.config.input_filter_hold_duration
-        
+
         self.secondary_hold_timer = threading.Timer(
             hold_duration, self._on_secondary_hold
         )
@@ -313,7 +311,7 @@ class InputFilter:
                 smart_delay = self.config.input_filter_smart_delay
         except (AttributeError, KeyError, TypeError):
             smart_delay = self.config.input_filter_smart_delay
-        
+
         self.primary_smart_timer = threading.Timer(smart_delay, self._on_primary_smart)
         self.primary_smart_timer.start()
 
@@ -328,7 +326,7 @@ class InputFilter:
                 smart_delay = self.config.input_filter_smart_delay
         except (AttributeError, KeyError, TypeError):
             smart_delay = self.config.input_filter_smart_delay
-        
+
         self.secondary_smart_timer = threading.Timer(
             smart_delay, self._on_secondary_smart
         )

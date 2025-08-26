@@ -90,7 +90,9 @@ class InputHandler:
     def _start(self) -> None:
         try:
             self._ml = mouse.Listener(on_click=self._on_mouse_click)
-            self._kl = keyboard.Listener(on_press=self._on_key_press, on_release=self._on_key_release)
+            self._kl = keyboard.Listener(
+                on_press=self._on_key_press, on_release=self._on_key_release
+            )
             self._ml.start()
             self._kl.start()
             self._active = True
@@ -100,7 +102,9 @@ class InputHandler:
 
     def _on_mouse_click(self, x: int, y: int, btn: Any, pressed: bool) -> None:
         try:
-            if self._db.hit(f"mouse:{btn}:{'down' if pressed else 'up'}", self._mouse_ms):
+            if self._db.hit(
+                f"mouse:{btn}:{'down' if pressed else 'up'}", self._mouse_ms
+            ):
                 return
 
             if btn == self.mapper.get_primary_mouse_button():

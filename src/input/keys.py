@@ -102,7 +102,9 @@ class ButtonMapper:
 
         return None
 
-    def parse_key_combination(self, combination_str: str) -> list[Union[keyboard.Key, str]]:
+    def parse_key_combination(
+        self, combination_str: str
+    ) -> list[Union[keyboard.Key, str]]:
         """Parse key combination string (e.g., "ctrl+shift+f9").
 
         Args:
@@ -132,7 +134,9 @@ class ButtonMapper:
         """Get primary mouse button from configuration."""
         # Versuche zuerst die neue primary Konfiguration zu verwenden
         try:
-            if hasattr(self.config, "primary_name") and hasattr(self.config, "primary_type"):
+            if hasattr(self.config, "primary_name") and hasattr(
+                self.config, "primary_type"
+            ):
                 if self.config.primary_type == "mouse_button":
                     button_name = self.config.primary_name
                     return self.get_mouse_button(button_name)
@@ -147,7 +151,9 @@ class ButtonMapper:
         """Get secondary mouse button from configuration."""
         # Versuche zuerst die neue secondary Konfiguration zu verwenden
         try:
-            if hasattr(self.config, "secondary_name") and hasattr(self.config, "secondary_type"):
+            if hasattr(self.config, "secondary_name") and hasattr(
+                self.config, "secondary_type"
+            ):
                 if self.config.secondary_type == "mouse_button":
                     button_name = self.config.secondary_name
                     return self.get_mouse_button(button_name)
@@ -162,7 +168,9 @@ class ButtonMapper:
         """Get primary keyboard key from configuration."""
         # Versuche zuerst die neue primary Konfiguration zu verwenden
         try:
-            if hasattr(self.config, "primary_name") and hasattr(self.config, "primary_type"):
+            if hasattr(self.config, "primary_name") and hasattr(
+                self.config, "primary_type"
+            ):
                 if self.config.primary_type == "keyboard":
                     key_name = self.config.primary_name
                     return self.get_keyboard_key(key_name)
@@ -177,7 +185,9 @@ class ButtonMapper:
         """Get secondary keyboard key from configuration."""
         # Versuche zuerst die neue secondary Konfiguration zu verwenden
         try:
-            if hasattr(self.config, "secondary_name") and hasattr(self.config, "secondary_type"):
+            if hasattr(self.config, "secondary_name") and hasattr(
+                self.config, "secondary_type"
+            ):
                 if self.config.secondary_type == "keyboard":
                     key_name = self.config.secondary_name
                     return self.get_keyboard_key(key_name)
@@ -245,7 +255,9 @@ def get_button_mapper(config: Optional[Config] = None) -> ButtonMapper:
     return ButtonMapper(config)
 
 
-def get_mouse_button(button_name: str, config: Optional[Config] = None) -> Optional[mouse.Button]:
+def get_mouse_button(
+    button_name: str, config: Optional[Config] = None
+) -> Optional[mouse.Button]:
     """Get mouse button from name.
 
     Args:
@@ -259,7 +271,9 @@ def get_mouse_button(button_name: str, config: Optional[Config] = None) -> Optio
     return mapper.get_mouse_button(button_name)
 
 
-def get_keyboard_key(key_name: str, config: Optional[Config] = None) -> Union[keyboard.Key, str, None]:
+def get_keyboard_key(
+    key_name: str, config: Optional[Config] = None
+) -> Union[keyboard.Key, str, None]:
     """Get keyboard key from name.
 
     Args:

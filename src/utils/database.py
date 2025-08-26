@@ -35,7 +35,7 @@ class AudioDatabase:
         db_path = data_dir / "audio_database.db"
 
         self.db_path = str(db_path)
-        self.logger.info(f"Initializing audio database at: {self.db_path}")
+        self.logger.info(f"🗄️  Initialisiere Audio-Datenbank: {self.db_path}")
 
         # Store data_dir for later use
         self.data_dir = data_dir
@@ -111,7 +111,7 @@ class AudioDatabase:
                 )
 
                 conn.commit()
-                self.logger.info("Database tables initialized successfully")
+                self.logger.info("✅ Datenbank-Tabellen erfolgreich initialisiert")
 
         except Exception as e:
             self.logger.error(f"Failed to initialize database: {e}")

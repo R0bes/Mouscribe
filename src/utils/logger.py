@@ -18,39 +18,59 @@ _logging_initialized = False
 
 def setup_logging(config=None):
     """Setup logging configuration for Mauscribe.
-    
+
     Args:
         config: Optional Config object for logging settings
     """
     global _logging_initialized
-    
+
     if _logging_initialized:
         return
-    
+
     # Get logging settings from config or use defaults
-    if config and hasattr(config, 'logging_enabled') and config.logging_enabled:
+    if config and hasattr(config, "logging_enabled") and config.logging_enabled:
         # Parse log levels from config
-        console_level_str = config.logging_console_level if hasattr(config, 'logging_console_level') else "INFO"
-        file_level_str = config.logging_file_level if hasattr(config, 'logging_file_level') else "DEBUG"
-        
+        console_level_str = (
+            config.logging_console_level
+            if hasattr(config, "logging_console_level")
+            else "INFO"
+        )
+        file_level_str = (
+            config.logging_file_level
+            if hasattr(config, "logging_file_level")
+            else "DEBUG"
+        )
+
         # Convert string levels to logging constants
         level_map = {
             "DEBUG": logging.DEBUG,
             "INFO": logging.INFO,
             "WARNING": logging.WARNING,
             "ERROR": logging.ERROR,
-            "CRITICAL": logging.CRITICAL
+            "CRITICAL": logging.CRITICAL,
         }
-        
+
         console_level = level_map.get(console_level_str.upper(), logging.INFO)
         file_level = level_map.get(file_level_str.upper(), logging.DEBUG)
-        
+
         # Check if file logging is enabled
-        file_enabled = config.logging_file_enabled if hasattr(config, 'logging_file_enabled') else True
-        log_filename = config.logging_filename if hasattr(config, 'logging_filename') else "mauscribe.log"
-        
+        file_enabled = (
+            config.logging_file_enabled
+            if hasattr(config, "logging_file_enabled")
+            else True
+        )
+        log_filename = (
+            config.logging_filename
+            if hasattr(config, "logging_filename")
+            else "mauscribe.log"
+        )
+
         # Check if external log suppression is enabled
-        suppress_external = config.logging_suppress_external if hasattr(config, 'logging_suppress_external') else True
+        suppress_external = (
+            config.logging_suppress_external
+            if hasattr(config, "logging_suppress_external")
+            else True
+        )
     else:
         # Default values if no config or logging disabled
         console_level = logging.INFO
@@ -58,7 +78,7 @@ def setup_logging(config=None):
         file_enabled = True
         log_filename = "mauscribe.log"
         suppress_external = True
-    
+
     # Create formatter
     formatter = logging.Formatter(
         "%(asctime)s - %(name)-15s - %(levelname)s - %(message)s",
@@ -80,7 +100,7 @@ def setup_logging(config=None):
     # Setup root logger - but don't add handlers to avoid duplication
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
-    
+
     # Only add handlers if they don't exist
     if not root_logger.handlers:
         root_logger.addHandler(console_handler)
@@ -95,7 +115,7 @@ def setup_logging(config=None):
         logging.getLogger("faster_whisper").setLevel(logging.WARNING)
         logging.getLogger("urllib3").setLevel(logging.WARNING)
         logging.getLogger("PIL").setLevel(logging.WARNING)
-    
+
     _logging_initialized = True
 
 
@@ -110,9 +130,9 @@ class MauscribeLogger:
             config: Optional Config object for emoji settings
         """
         self.logger = logging.getLogger(name)
-        
+
         # Get emoji mode from config or use default
-        if config and hasattr(config, 'logging_emoji_enabled'):
+        if config and hasattr(config, "logging_emoji_enabled"):
             self._emoji_mode = config.logging_emoji_enabled
         else:
             self._emoji_mode = True  # Default to emoji mode
