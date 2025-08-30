@@ -66,9 +66,7 @@ class AudioRecorder:
                                 "index": i,
                                 "name": input_device.get("name", f"Device {i}"),
                                 "max_inputs": input_device.get("max_inputs", 1),
-                                "default_samplerate": input_device.get(
-                                    "default_samplerate", 44100
-                                ),
+                                "default_samplerate": input_device.get("default_samplerate", 44100),
                                 "is_default": i == default_input["index"],
                             }
                         )
@@ -156,9 +154,7 @@ class AudioRecorder:
         except Exception:
             raise RuntimeError("Kein funktionierendes Audio-Gerät verfügbar")
 
-    def _audio_callback(
-        self, indata: np.ndarray, frames: int, _: Any, status: Any
-    ) -> None:
+    def _audio_callback(self, indata: np.ndarray, frames: int, _: Any, status: Any) -> None:
         """Callback für eingehende Audio-Daten."""
         if not self._active or indata is None:
             return
@@ -172,9 +168,11 @@ class AudioRecorder:
     def start_recording(self) -> None:
         """Starte die Audioaufnahme."""
         if self._active:
+            self.logger.warning("⚠️  Aufnahme läuft bereits")
             return
 
         if not self._selected_device:
+            self.logger.error("❌ Kein Audio-Gerät ausgewählt")
             raise RuntimeError("Kein Audio-Gerät ausgewählt")
 
         # Aufnahme vorbereiten
@@ -182,43 +180,62 @@ class AudioRecorder:
         self._active = True
         self._start_time = time.time()
 
-        # Audio-Stream starten
-        self._stream = sd.InputStream(
-            device=self._selected_device["index"],
-            samplerate=self.sample_rate_hz,
-            channels=self.num_channels,
-            dtype=np.float32,
-            callback=self._audio_callback,
-            blocksize=512,  # Kleinere Blöcke für bessere Reaktionszeit
-        )
+        try:
+            # Audio-Stream starten
+            self._stream = sd.InputStream(
+                device=self._selected_device["index"],
+                samplerate=self.sample_rate_hz,
+                channels=self.num_channels,
+                dtype=np.float32,
+                callback=self._audio_callback,
+                blocksize=512,  # Kleinere Blöcke für bessere Reaktionszeit
+            )
 
-        self._stream.start()
+            self._stream.start()
+            self.logger.info(f"🎙️  Audio-Stream gestartet auf Gerät: {self._selected_device['name']}")
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Starten des Audio-Streams: {e}")
+            self._active = False
+            self._stream = None
+            raise RuntimeError(f"Audio-Stream konnte nicht gestartet werden: {e}")
 
     def stop_recording(self) -> np.ndarray:
         """Stoppe die Aufnahme und gib die Audio-Daten zurück."""
         if not self._active:
+            self.logger.warning("⚠️  Keine aktive Aufnahme zum Stoppen")
             return np.array([], dtype=np.float32)
 
         # Prüfe Mindestaufnahmezeit
         recording_duration = time.time() - self._start_time
         if recording_duration < self._min_recording_duration:
             self.logger.warning(
-                f"Aufnahme zu kurz ({recording_duration:.2f}s < {self._min_recording_duration}s) - ignoriere"
+                f"⚠️  Aufnahme zu kurz ({recording_duration:.2f}s < {self._min_recording_duration}s) - ignoriere"
             )
             self._active = False
             if self._stream:
-                self._stream.stop()
-                self._stream.close()
-                self._stream = None
+                try:
+                    self._stream.stop()
+                    self._stream.close()
+                except Exception as e:
+                    self.logger.warning(f"⚠️  Fehler beim Stoppen des Streams: {e}")
+                finally:
+                    self._stream = None
             return np.array([], dtype=np.float32)
 
         # Aufnahme stoppen
         self._active = False
 
+        # Stream sicher stoppen
         if self._stream:
-            self._stream.stop()
-            self._stream.close()
-            self._stream = None
+            try:
+                self._stream.stop()
+                self._stream.close()
+                self.logger.debug("🎵 Audio-Stream erfolgreich gestoppt")
+            except Exception as e:
+                self.logger.warning(f"⚠️  Fehler beim Stoppen des Streams: {e}")
+            finally:
+                self._stream = None
 
         # Audio-Daten verarbeiten
         with self._buffer_lock:
@@ -226,19 +243,23 @@ class AudioRecorder:
             self._chunks = []
 
         if not chunks_to_process:
+            self.logger.warning("⚠️  Keine Audio-Chunks zum Verarbeiten verfügbar")
             return np.array([], dtype=np.float32)
 
-        # Audio-Chunks zusammenfügen
-        audio = np.concatenate(chunks_to_process, axis=0)
+        try:
+            # Audio-Chunks zusammenfügen
+            audio = np.concatenate(chunks_to_process, axis=0)
 
-        # Bei mehreren Kanälen zu Mono konvertieren
-        if audio.ndim == 2 and audio.shape[1] > 1:
-            audio = np.mean(audio, axis=1)
+            # Bei mehreren Kanälen zu Mono konvertieren
+            if audio.ndim == 2 and audio.shape[1] > 1:
+                audio = np.mean(audio, axis=1)
 
-        self.logger.info(
-            f"Aufnahme gestoppt: {len(audio)} Samples, {recording_duration:.2f}s"
-        )
-        return audio.astype(np.float32)
+            self.logger.info(f"✅ Aufnahme gestoppt: {len(audio)} Samples, {recording_duration:.2f}s")
+            return audio.astype(np.float32)
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Verarbeiten der Audio-Daten: {e}")
+            return np.array([], dtype=np.float32)
 
     def is_recording(self) -> bool:
         """Prüfe, ob gerade aufgenommen wird."""

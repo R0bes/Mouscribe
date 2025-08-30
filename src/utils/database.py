@@ -100,15 +100,9 @@ class AudioDatabase:
                 )
 
                 # Create indexes for better performance
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_audio_timestamp ON audio_recordings(timestamp)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_transcription_audio_id ON transcriptions(audio_recording_id)"
-                )
-                cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_training_transcription_id ON training_data(transcription_id)"
-                )
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_audio_timestamp ON audio_recordings(timestamp)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_transcription_audio_id ON transcriptions(audio_recording_id)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_training_transcription_id ON training_data(transcription_id)")
 
                 conn.commit()
                 self.logger.info("✅ Datenbank-Tabellen erfolgreich initialisiert")
@@ -123,9 +117,9 @@ class AudioDatabase:
         sample_rate: int,
         channels: int,
         duration: float,
-        audio_format: str = "wav",
+        audio_format: str = "mp3",
     ) -> int:
-        """Save audio recording to file and database."""
+        """Save audio recording to file and database with compression."""
         try:
             # Generate unique filename
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
@@ -138,17 +132,23 @@ class AudioDatabase:
                 # Use absolute path from current working directory
                 audio_dir = Path.cwd() / "data" / "audio"
 
+            # Create directory structure
             audio_dir.mkdir(parents=True, exist_ok=True)
+            self.logger.debug(f"Audio directory ensured: {audio_dir}")
 
             audio_file_path = audio_dir / filename
 
-            # Save audio file
-            self._save_audio_file(
-                audio_data, audio_file_path, sample_rate, channels, audio_format
-            )
+            # Save audio file with compression
+            actual_file_path = self._save_audio_file(audio_data, audio_file_path, sample_rate, channels, audio_format)
 
-            # Get file size
-            file_size = audio_file_path.stat().st_size
+            # Get file size from actual saved file
+            if actual_file_path and actual_file_path.exists():
+                file_size = actual_file_path.stat().st_size
+                final_file_path = str(actual_file_path)
+            else:
+                # Fallback: use original path
+                file_size = audio_file_path.stat().st_size if audio_file_path.exists() else 0
+                final_file_path = str(audio_file_path)
 
             # Save to database
             with sqlite3.connect(self.db_path) as conn:
@@ -160,7 +160,7 @@ class AudioDatabase:
                     VALUES (?, ?, ?, ?, ?, ?)
                 """,
                     (
-                        str(audio_file_path),
+                        final_file_path,
                         duration,
                         sample_rate,
                         channels,
@@ -175,11 +175,11 @@ class AudioDatabase:
                 if recording_id is None:
                     raise RuntimeError("Failed to get recording ID from database")
 
-                self.logger.info(f"Audio recording saved with ID: {recording_id}")
+                self.logger.info(f"✅ Audio recording saved with ID: {recording_id} to {final_file_path}")
                 return recording_id
 
         except Exception as e:
-            self.logger.error(f"Failed to save audio recording: {e}")
+            self.logger.error(f"❌ Failed to save audio recording: {e}")
             raise
 
     def _save_audio_file(
@@ -189,30 +189,87 @@ class AudioDatabase:
         sample_rate: int,
         channels: int,
         format: str,
-    ) -> None:
-        """Save audio data to file."""
+    ) -> Path:
+        """Save audio data to file with compression."""
         try:
-            import soundfile as sf
-
-            # Ensure audio data is in correct format
+            # Try to use soundfile for WAV first
             if format.lower() == "wav":
-                sf.write(str(file_path), audio_data, sample_rate)
-            else:
-                # For other formats, convert to WAV as fallback
-                sf.write(str(file_path), audio_data, sample_rate)
+                try:
+                    import soundfile as sf
 
-            self.logger.debug(f"Audio file saved to: {file_path}")
+                    sf.write(str(file_path), audio_data, sample_rate)
+                    self.logger.debug(f"✅ Audio saved as WAV: {file_path}")
+                    return file_path
+                except ImportError:
+                    self.logger.warning("soundfile not available for WAV, trying pydub...")
+                except Exception as e:
+                    self.logger.warning(f"soundfile failed for WAV: {e}, trying pydub...")
 
-        except ImportError:
-            self.logger.warning("soundfile not available, using numpy.save as fallback")
-            # Change file extension to .npy when using numpy.save
+            # Try to use pydub for MP3/OGG compression
+            try:
+                from pydub import AudioSegment
+
+                # Convert numpy array to AudioSegment
+                # Normalize audio to 16-bit range
+                audio_normalized = np.int16(audio_data * 32767)
+
+                # Create AudioSegment from numpy array
+                audio_segment = AudioSegment(
+                    audio_normalized.tobytes(),
+                    frame_rate=sample_rate,
+                    sample_width=2,  # 16-bit
+                    channels=1 if audio_data.ndim == 1 else audio_data.shape[1],
+                )
+
+                # Save with compression
+                if format.lower() == "mp3":
+                    audio_segment.export(str(file_path), format="mp3", bitrate="128k")
+                elif format.lower() == "ogg":
+                    audio_segment.export(str(file_path), format="ogg", bitrate="128k")
+                else:
+                    # Fallback to WAV
+                    audio_segment.export(str(file_path), format="wav")
+
+                self.logger.debug(f"✅ Audio saved as {format.upper()}: {file_path}")
+                return file_path
+
+            except ImportError:
+                self.logger.warning("pydub not available, trying soundfile...")
+            except Exception as e:
+                self.logger.warning(f"pydub failed: {e}, trying soundfile...")
+
+            # Try soundfile as fallback
+            try:
+                import soundfile as sf
+
+                sf.write(str(file_path), audio_data, sample_rate)
+                self.logger.debug(f"✅ Audio saved with soundfile: {file_path}")
+                return file_path
+            except ImportError:
+                self.logger.warning("soundfile not available, using numpy.save as fallback")
+            except Exception as e:
+                self.logger.warning(f"soundfile failed: {e}, using numpy.save as fallback")
+
+            # Final fallback: numpy.save
+            self.logger.warning("Using numpy.save as fallback - no compression")
             npy_file_path = file_path.with_suffix(".npy")
             np.save(str(npy_file_path), audio_data)
-            # Update the file_path to point to the .npy file
-            file_path = npy_file_path
+
+            # WICHTIG: Aktualisiere den file_path Parameter, damit die aufrufende Methode den korrekten Pfad kennt
+            # Da wir den Parameter nicht direkt ändern können, müssen wir das in der aufrufenden Methode behandeln
+            return npy_file_path
+
         except Exception as e:
-            self.logger.error(f"Failed to save audio file: {e}")
-            raise
+            self.logger.error(f"❌ Failed to save audio file: {e}")
+            # Last resort: numpy.save
+            try:
+                npy_file_path = file_path.with_suffix(".npy")
+                np.save(str(npy_file_path), audio_data)
+                self.logger.info(f"✅ Audio saved as numpy array: {npy_file_path}")
+                return npy_file_path
+            except Exception as e2:
+                self.logger.error(f"❌ Even numpy.save failed: {e2}")
+                raise e
 
     def save_transcription(
         self,
@@ -298,9 +355,7 @@ class AudioDatabase:
             self.logger.error(f"Failed to save training data: {e}")
             raise
 
-    def get_recordings_for_training(
-        self, limit: Optional[int] = None
-    ) -> list[dict[str, Any]]:
+    def get_recordings_for_training(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """Get recordings marked as valid for training."""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -364,9 +419,7 @@ class AudioDatabase:
                 total_transcriptions = cursor.fetchone()[0]
 
                 # Training data count
-                cursor.execute(
-                    "SELECT COUNT(*) FROM training_data WHERE is_valid_for_training = TRUE"
-                )
+                cursor.execute("SELECT COUNT(*) FROM training_data WHERE is_valid_for_training = TRUE")
                 training_count = cursor.fetchone()[0]
 
                 # Total duration

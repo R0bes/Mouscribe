@@ -333,8 +333,8 @@ class PipelineMonitor:
             print(f"[OK] Pipeline-Run für Commit {last_commit_short} gefunden!")
             self._show_detailed_pipeline_status(workflow_runs[0])
         else:
-            print(f"⏳ Noch kein Pipeline-Run für Commit {last_commit_short} gefunden.")
-            print(f"   Warte auf Pipeline-Start...")
+            print("⏳ Noch kein Pipeline-Run für Commit {} gefunden.".format(last_commit_short))
+            print("   Warte auf Pipeline-Start...")
         print()
 
         start_time = time.time()
@@ -360,8 +360,8 @@ class PipelineMonitor:
 
             # Only monitor the specific commit - no fallback to other runs
             if not workflow_runs:
-                print(f"⏳ Warte auf Pipeline-Start für Commit {last_commit_short}...")
-                print(f"   (Noch kein Workflow-Run für diesen Commit gefunden)")
+                print("⏳ Warte auf Pipeline-Start für Commit {}...".format(last_commit_short))
+                print("   (Noch kein Workflow-Run für diesen Commit gefunden)")
                 
                 # Show waiting time every 30 seconds
                 elapsed = time.time() - start_time
@@ -375,8 +375,8 @@ class PipelineMonitor:
             # Verify this is actually the run for our commit
             run_commit = latest_run.get("head_sha", "")
             if run_commit != last_commit_full:
-                print(f"⚠️  Commit-Mismatch: Erwartet {last_commit_short}, aber Run ist für {run_commit[:8]}")
-                print(f"   Warte auf korrekten Pipeline-Run...")
+                print("⚠️  Commit-Mismatch: Erwartet {}, aber Run ist für {}".format(last_commit_short, run_commit[:8]))
+                print("   Warte auf korrekten Pipeline-Run...")
                 time.sleep(15)
                 continue
 
@@ -503,14 +503,14 @@ class PipelineMonitor:
         waiting_jobs = [job for job in jobs if job.get("status") == "waiting"]
         failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
         
-        print(f"\n📈 Job-Übersicht:")
-        print(f"   Total: {total_jobs} | ✅ Abgeschlossen: {len(completed_jobs)} | 🔄 Läuft: {len(running_jobs)} | ⏳ Wartet: {len(queued_jobs + waiting_jobs)}")
+        print("\n📈 Job-Übersicht:")
+        print("   Total: {} | ✅ Abgeschlossen: {} | 🔄 Läuft: {} | ⏳ Wartet: {}".format(total_jobs, len(completed_jobs), len(running_jobs), len(queued_jobs + waiting_jobs)))
         
         if failed_jobs:
-            print(f"   ❌ Fehlgeschlagen: {len(failed_jobs)}")
+            print("   ❌ Fehlgeschlagen: {}".format(len(failed_jobs)))
         
         # Show detailed job status
-        print(f"\n[INFO] Job-Details:")
+        print("\n[INFO] Job-Details:")
         for i, job in enumerate(jobs, 1):
             name = job.get('name', 'Unknown Job')
             status = job.get('status', 'unknown')
@@ -619,11 +619,11 @@ class PipelineMonitor:
                 pass
 
         # Get jobs and analyze failures
-        print(f"\nFetching job details...")
+        print("\nFetching job details...")
         jobs = self.get_workflow_jobs(workflow_id)
         
         if jobs:
-            print(f"Found {len(jobs)} jobs")
+            print("Found {} jobs".format(len(jobs)))
             
             # Categorize jobs
             failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
@@ -680,24 +680,24 @@ class PipelineMonitor:
                                     error_lines.append(line.strip())
                             
                             if error_lines:
-                                print(f"   Key errors ({len(error_lines)} found):")
+                                print("   Key errors ({}) found:".format(len(error_lines)))
                                 # Show more error lines for better debugging
                                 for line in error_lines[-15:]:  # Show last 15 error lines
                                     if len(line) > 100:
                                         line = line[:97] + "..."
-                                    print(f"     {line}")
+                                    print("     {}".format(line))
                             else:
                                 # If no specific error lines found, show last 50 lines for context
-                                 print(f"   Last 50 log lines for context:")
-                                 for line in logs[-50:]:
-                                     if len(line) > 150:
-                                         line = line[:147] + "..."
-                                     print(f"     {line}")
+                                print("   Last 50 log lines for context:")
+                                for line in logs[-50:]:
+                                    if len(line) > 150:
+                                        line = line[:147] + "..."
+                                    print("     {}".format(line))
                         else:
-                            print(f"   ⚠️  Logs not available via API")
+                            print("   ⚠️  Logs not available via API")
             
             # Show all jobs in order with their status
-            print(f"\n📊 JOBS")
+            print("\n📊 JOBS")
             print("-" * 30)
             
             for i, job in enumerate(jobs, 1):
@@ -725,20 +725,20 @@ class PipelineMonitor:
                     icon = "❓"
                     status_text = "UNKNOWN"
                 
-                print(f"{i:2d}. {icon}  {job_name:<30} [{status_text}]")
+                print("{:2d}. {}  {:<30} [{}]".format(i, icon, job_name, status_text))
             
             # Show summary
             total_jobs = len(jobs)
-            print(f"\n📊 SUMMARY:")
-            print(f"   Failed: {len(failed_jobs)}")
-            print(f"   Successful: {len(successful_jobs)}")
-            print(f"   Cancelled: {len(cancelled_jobs)}")
-            print(f"   Skipped: {len(skipped_jobs)}")
-            print(f"   Total: {total_jobs}")
+            print("\n📊 SUMMARY:")
+            print("   Failed: {}".format(len(failed_jobs)))
+            print("   Successful: {}".format(len(successful_jobs)))
+            print("   Cancelled: {}".format(len(cancelled_jobs)))
+            print("   Skipped: {}".format(len(skipped_jobs)))
+            print("   Total: {}".format(total_jobs))
             
                     
         else:
-            print(f"⚠️  No jobs found")
+            print("⚠️  No jobs found")
 
 
 

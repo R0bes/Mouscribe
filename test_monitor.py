@@ -11,7 +11,7 @@ def test_workflow_runs():
     
     # Get current branch
     branch = monitor.get_current_branch()
-    print(f"Current branch: {branch}")
+    print("Current branch: {}".format(branch))
     
     # Get workflow runs for the branch
     runs = monitor.get_workflow_runs(branch, "")
@@ -39,13 +39,13 @@ def test_workflow_runs():
                     
                     # Try to get logs for failed jobs
                     if job.get('conclusion') == 'failure':
-                        print(f"    Getting logs for failed job '{job.get('name')}'...")
+                        print("    Getting logs for failed job '{}'...".format(job.get('name')))
                         logs = monitor.get_job_logs(run.get('id'), job.get('name'))
-                        print(f"    Logs found: {len(logs)} lines")
+                        print("    Logs found: {} lines".format(len(logs)))
                         if logs:
-                            print(f"    First few log lines:")
+                            print("    First few log lines:")
                             for line in logs[:3]:
-                                print(f"      {line}")
+                                print("      {}".format(line))
         else:
             print("  ❌ Could not get workflow details")
 

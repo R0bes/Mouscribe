@@ -1,0 +1,23 @@
+# Test-Abhängigkeiten für Mauscribe
+# ===================================
+
+black>=23.0.0
+
+# Coverage
+coverage>=7.0.0
+
+# Code-Qualität
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Performance-Tests
+psutil>=5.9.0
+# Test-Framework
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-timeout>=2.1.0
+responses>=0.23.0
+
+# Mocking und Testing
+unittest-mock>=1.0.0

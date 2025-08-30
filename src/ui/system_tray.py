@@ -29,12 +29,7 @@ class SystemTrayManager:
         self.config = config
         self.app_instance = app_instance
 
-        logger_name = (
-            os.path.splitext(os.path.basename(__file__))[0]
-            .replace("_", " ")
-            .title()
-            .replace(" ", "")
-        )
+        logger_name = os.path.splitext(os.path.basename(__file__))[0].replace("_", " ").title().replace(" ", "")
         self.logger = get_logger(logger_name)
 
         # State management
@@ -49,25 +44,17 @@ class SystemTrayManager:
 
         # Draw microphone icon
         # Microphone body (rectangle)
-        draw.rectangle(
-            (20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2
-        )
+        draw.rectangle((20, 15, 44, 45), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
 
         # Microphone head (circle)
-        draw.ellipse(
-            (18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2
-        )
+        draw.ellipse((18, 8, 46, 36), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
 
         # Microphone stand
-        draw.rectangle(
-            (30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2
-        )
+        draw.rectangle((30, 45, 34, 55), fill=(70, 130, 180), outline=(50, 100, 150), width=2)
 
         # Recording indicator (red dot when recording)
         if self.is_recording:
-            draw.ellipse(
-                [50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1
-            )
+            draw.ellipse([50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1)
 
         return img
 
@@ -95,24 +82,20 @@ class SystemTrayManager:
                 pystray.MenuItem("Exit", on_clicked),
             )
 
-            self.system_tray = pystray.Icon(
-                "mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu
-            )
+            self.system_tray = pystray.Icon("mauscribe", icon_image, "Mauscribe - Voice-to-Text Tool", menu)
             self.logger.info("🖥️  System Tray erfolgreich initialisiert")
         except Exception as e:
-            self.logger.error(f"❌ System Tray konnte nicht initialisiert werden: {e}")
-            self.logger.warning(
-                "⚠️  System Tray nicht verfügbar - Anwendung läuft im Konsolenmodus"
-            )
+            self.logger.error("❌ System Tray konnte nicht initialisiert werden: {}".format(e))
+            self.logger.warning("⚠️  System Tray nicht verfügbar - Anwendung läuft im Konsolenmodus")
             self.system_tray = None
 
     def _log_status(self) -> None:
         """Log current application status."""
         status = "Recording" if self.is_recording else "Idle"
-        self.logger.info(f"📊 Mauscribe Status: {status}")
-        self.logger.info(f"🖱️  Input Methode: {self.config.input_method}")
-        self.logger.info(f"🔘 Maus-Taste: {self.config.mouse_button_primary}")
-        self.logger.info(f"🎤 Audio-Gerät: {self.config.audio_device}")
+        self.logger.info("📊 Mauscribe Status: {}".format(status))
+        self.logger.info("🖱️  Input Methode: mouse_button")
+        self.logger.info("🔘 Maus-Taste: {}".format(self.config.primary_name))
+        self.logger.info("🎤 Audio-Gerät: {}".format(self.config.audio_device))
 
     def _open_database_manager(self) -> None:
         """Open the database manager GUI."""
@@ -125,13 +108,13 @@ class SystemTrayManager:
                     gui = DatabaseManagerGUI()
                     gui.run()
                 except Exception as e:
-                    self.logger.error(f"Failed to open database manager: {e}")
+                    self.logger.error("Failed to open database manager: {}".format(e))
 
             thread = threading.Thread(target=open_gui, daemon=True)
             thread.start()
             self.logger.info("📊 Database Manager geöffnet")
         except Exception as e:
-            self.logger.error(f"Failed to open database manager: {e}")
+            self.logger.error("Failed to open database manager: {}".format(e))
 
     def _open_config_file(self) -> None:
         """Open the configuration file in default editor."""
@@ -140,9 +123,7 @@ class SystemTrayManager:
             try:
                 subprocess.run(["notepad", str(config_path)], shell=True)
             except Exception as e:
-                self.logger.error(
-                    f"❌ Konfigurationsdatei konnte nicht geöffnet werden: {e}"
-                )
+                self.logger.error("❌ Konfigurationsdatei konnte nicht geöffnet werden: {}".format(e))
         else:
             self.logger.warning("⚠️  Konfigurationsdatei nicht gefunden")
 
@@ -158,9 +139,7 @@ class SystemTrayManager:
                 self.system_tray.icon = self.create_icon()
                 self.logger.debug("System tray icon updated")
             except Exception as e:
-                self.logger.error(
-                    f"❌ Fehler beim Aktualisieren des System Tray Icons: {e}"
-                )
+                self.logger.error("❌ Fehler beim Aktualisieren des System Tray Icons: {}".format(e))
 
     def run(self) -> None:
         """Run the system tray in a separate thread."""
@@ -171,7 +150,7 @@ class SystemTrayManager:
         try:
             self.system_tray.run()
         except Exception as e:
-            self.logger.error(f"❌ System Tray Fehler: {e}")
+            self.logger.error("❌ System Tray Fehler: {}".format(e))
 
     def stop(self) -> None:
         """Stop the system tray."""
@@ -180,7 +159,7 @@ class SystemTrayManager:
                 self.system_tray.stop()
                 self.logger.info("✅ System Tray beendet")
             except Exception as e:
-                self.logger.error(f"❌ Fehler beim Beenden des System Tray: {e}")
+                self.logger.error("❌ Fehler beim Beenden des System Tray: {}".format(e))
 
     def is_available(self) -> bool:
         """Check if system tray is available.

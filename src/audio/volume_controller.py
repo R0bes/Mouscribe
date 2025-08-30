@@ -58,22 +58,25 @@ class VolumeController:
             True wenn erfolgreich, False sonst
         """
         if not self._volume_interface:
-            self.logger.debug(
-                "Kein Lautstärke-Interface verfügbar - überspringe Lautstärke-Änderung"
-            )
+            self.logger.debug("Kein Lautstärke-Interface verfügbar - überspringe Lautstärke-Änderung")
             return False
 
         try:
             # Aktuelle System-Lautstärke speichern
-            self._system_volume = self._volume_interface.GetMasterVolumeLevelScalar()
+            current_volume = self._volume_interface.GetMasterVolumeLevelScalar()
+            if current_volume is None:
+                self.logger.warning("⚠️  Konnte aktuelle Lautstärke nicht abrufen")
+                return False
+
+            self._system_volume = current_volume
+
             # Lautstärke auf Zielwert reduzieren
             self._volume_interface.SetMasterVolumeLevelScalar(self._target_volume, None)
-            self.logger.debug(
-                f"Lautstärke reduziert von {self._system_volume:.2f} auf {self._target_volume:.2f}"
-            )
+            self.logger.debug(f"✅ Lautstärke reduziert von {self._system_volume:.2f} auf {self._target_volume:.2f}")
             return True
+
         except Exception as e:
-            self.logger.warning(f"Fehler beim Ändern der Lautstärke: {e}")
+            self.logger.warning(f"⚠️  Fehler beim Ändern der Lautstärke: {e}")
             self._system_volume = None
             return False
 
@@ -85,19 +88,16 @@ class VolumeController:
             True wenn erfolgreich, False sonst
         """
         if not self._volume_interface or self._system_volume is None:
-            self.logger.debug(
-                "Kein Lautstärke-Interface verfügbar oder keine ursprüngliche Lautstärke gespeichert"
-            )
+            self.logger.debug("Kein Lautstärke-Interface verfügbar oder keine ursprüngliche Lautstärke gespeichert")
             return False
 
         try:
             self._volume_interface.SetMasterVolumeLevelScalar(self._system_volume, None)
-            self.logger.debug(
-                f"Lautstärke wiederhergestellt auf {self._system_volume:.2f}"
-            )
+            self.logger.debug(f"✅ Lautstärke wiederhergestellt auf {self._system_volume:.2f}")
             return True
+
         except Exception as e:
-            self.logger.error(f"Fehler beim Wiederherstellen der Lautstärke: {e}")
+            self.logger.error(f"❌ Fehler beim Wiederherstellen der Lautstärke: {e}")
             return False
 
     def cleanup(self) -> None:
@@ -107,8 +107,6 @@ class VolumeController:
             if self.restore_volume():
                 self.logger.info("✅ Volume-Controller erfolgreich aufgeräumt")
             else:
-                self.logger.warning(
-                    "⚠️  Lautstärke konnte nicht wiederhergestellt werden"
-                )
+                self.logger.warning("⚠️  Lautstärke konnte nicht wiederhergestellt werden")
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Aufräumen des Volume-Controllers: {e}")

@@ -53,12 +53,8 @@ class DictionaryGUI:
         title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
 
         # Wörterbuch-Informationen
-        info_frame = ttk.LabelFrame(
-            main_frame, text="Wörterbuch-Informationen", padding="10"
-        )
-        info_frame.grid(
-            row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 20)
-        )
+        info_frame = ttk.LabelFrame(main_frame, text="Wörterbuch-Informationen", padding="10")
+        info_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 20))
 
         self.info_label = ttk.Label(info_frame, text="Lade Informationen...")
         self.info_label.grid(row=0, column=0, sticky=tk.W)
@@ -67,9 +63,7 @@ class DictionaryGUI:
         add_frame = ttk.LabelFrame(main_frame, text="Wort hinzufügen", padding="10")
         add_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
 
-        ttk.Label(add_frame, text="Wort:").grid(
-            row=0, column=0, sticky=tk.W, padx=(0, 10)
-        )
+        ttk.Label(add_frame, text="Wort:").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
         self.add_entry = ttk.Entry(add_frame, width=30)
         self.add_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(0, 10))
         self.add_entry.bind("<Return>", lambda e: self.add_word())
@@ -80,22 +74,14 @@ class DictionaryGUI:
         add_frame.columnconfigure(1, weight=1)
 
         # Wortliste
-        list_frame = ttk.LabelFrame(
-            main_frame, text="Wörter im Wörterbuch", padding="10"
-        )
-        list_frame.grid(
-            row=3, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 10)
-        )
+        list_frame = ttk.LabelFrame(main_frame, text="Wörter im Wörterbuch", padding="10")
+        list_frame.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 10))
 
         # Suchleiste
         search_frame = ttk.Frame(list_frame)
-        search_frame.grid(
-            row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10)
-        )
+        search_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
 
-        ttk.Label(search_frame, text="Suchen:").grid(
-            row=0, column=0, sticky=tk.W, padx=(0, 10)
-        )
+        ttk.Label(search_frame, text="Suchen:").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
         self.search_entry = ttk.Entry(search_frame, width=30)
         self.search_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(0, 10))
         self.search_entry.bind("<KeyRelease>", self.filter_words)
@@ -107,9 +93,7 @@ class DictionaryGUI:
         list_container.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         self.word_listbox = tk.Listbox(list_container, height=15, selectmode=tk.SINGLE)
-        scrollbar = ttk.Scrollbar(
-            list_container, orient=tk.VERTICAL, command=self.word_listbox.yview
-        )
+        scrollbar = ttk.Scrollbar(list_container, orient=tk.VERTICAL, command=self.word_listbox.yview)
         self.word_listbox.configure(yscrollcommand=scrollbar.set)
 
         self.word_listbox.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -122,34 +106,20 @@ class DictionaryGUI:
         button_frame = ttk.Frame(list_frame)
         button_frame.grid(row=2, column=0, columnspan=2, pady=(10, 0))
 
-        ttk.Button(
-            button_frame, text="Wort entfernen", command=self.remove_selected_word
-        ).grid(row=0, column=0, padx=(0, 10))
-        ttk.Button(
-            button_frame, text="Alle anzeigen", command=self.refresh_word_list
-        ).grid(row=0, column=1, padx=(0, 10))
-        ttk.Button(
-            button_frame, text="Wörterbuch leeren", command=self.clear_dictionary
-        ).grid(row=0, column=2, padx=(0, 10))
+        ttk.Button(button_frame, text="Wort entfernen", command=self.remove_selected_word).grid(row=0, column=0, padx=(0, 10))
+        ttk.Button(button_frame, text="Alle anzeigen", command=self.refresh_word_list).grid(row=0, column=1, padx=(0, 10))
+        ttk.Button(button_frame, text="Wörterbuch leeren", command=self.clear_dictionary).grid(row=0, column=2, padx=(0, 10))
 
         # Import/Export
         io_frame = ttk.LabelFrame(main_frame, text="Import/Export", padding="10")
         io_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
 
-        ttk.Button(io_frame, text="Wörter importieren", command=self.import_words).grid(
-            row=0, column=0, padx=(0, 10)
-        )
-        ttk.Button(io_frame, text="Wörter exportieren", command=self.export_words).grid(
-            row=0, column=1, padx=(0, 10)
-        )
+        ttk.Button(io_frame, text="Wörter importieren", command=self.import_words).grid(row=0, column=0, padx=(0, 10))
+        ttk.Button(io_frame, text="Wörter exportieren", command=self.export_words).grid(row=0, column=1, padx=(0, 10))
 
         # Statusleiste
-        self.status_label = ttk.Label(
-            main_frame, text="Bereit", relief=tk.SUNKEN, anchor=tk.W
-        )
-        self.status_label.grid(
-            row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(10, 0)
-        )
+        self.status_label = ttk.Label(main_frame, text="Bereit", relief=tk.SUNKEN, anchor=tk.W)
+        self.status_label.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(10, 0))
 
         # Alle Wörter speichern
         self.all_words = []
@@ -194,9 +164,7 @@ class DictionaryGUI:
                 self.word_listbox.insert(tk.END, word)
         else:
             # Gefilterte Wörter anzeigen
-            filtered_words = [
-                word for word in self.all_words if search_term in word.lower()
-            ]
+            filtered_words = [word for word in self.all_words if search_term in word.lower()]
             for word in filtered_words:
                 self.word_listbox.insert(tk.END, word)
 
@@ -220,9 +188,7 @@ class DictionaryGUI:
                     f"Wort '{word}' wurde erfolgreich zum Wörterbuch hinzugefügt",
                 )
             else:
-                messagebox.showerror(
-                    "Fehler", f"Fehler beim Hinzufügen des Wortes '{word}'"
-                )
+                messagebox.showerror("Fehler", f"Fehler beim Hinzufügen des Wortes '{word}'")
 
         except Exception as e:
             messagebox.showerror("Fehler", f"Fehler beim Hinzufügen des Wortes: {e}")
@@ -237,20 +203,14 @@ class DictionaryGUI:
 
         word = self.word_listbox.get(selection[0])
 
-        if messagebox.askyesno(
-            "Bestätigung", f"Möchten Sie das Wort '{word}' wirklich entfernen?"
-        ):
+        if messagebox.askyesno("Bestätigung", f"Möchten Sie das Wort '{word}' wirklich entfernen?"):
             try:
                 if self.dictionary.remove_word(word):
                     self.refresh_word_list()
                     self.status_label.config(text=f"Wort '{word}' erfolgreich entfernt")
-                    messagebox.showinfo(
-                        "Erfolg", f"Wort '{word}' wurde erfolgreich entfernt"
-                    )
+                    messagebox.showinfo("Erfolg", f"Wort '{word}' wurde erfolgreich entfernt")
                 else:
-                    messagebox.showerror(
-                        "Fehler", f"Fehler beim Entfernen des Wortes '{word}'"
-                    )
+                    messagebox.showerror("Fehler", f"Fehler beim Entfernen des Wortes '{word}'")
 
             except Exception as e:
                 messagebox.showerror("Fehler", f"Fehler beim Entfernen des Wortes: {e}")
@@ -265,16 +225,12 @@ class DictionaryGUI:
                 if self.dictionary.clear_dictionary():
                     self.refresh_word_list()
                     self.status_label.config(text="Wörterbuch erfolgreich geleert")
-                    messagebox.showinfo(
-                        "Erfolg", "Das Wörterbuch wurde erfolgreich geleert"
-                    )
+                    messagebox.showinfo("Erfolg", "Das Wörterbuch wurde erfolgreich geleert")
                 else:
                     messagebox.showerror("Fehler", "Fehler beim Leeren des Wörterbuchs")
 
             except Exception as e:
-                messagebox.showerror(
-                    "Fehler", f"Fehler beim Leeren des Wörterbuchs: {e}"
-                )
+                messagebox.showerror("Fehler", f"Fehler beim Leeren des Wörterbuchs: {e}")
 
     def import_words(self):
         """Importiert Wörter aus einer Datei."""
@@ -291,17 +247,13 @@ class DictionaryGUI:
                 words = [line.strip() for line in f if line.strip()]
 
             if not words:
-                messagebox.showwarning(
-                    "Warnung", "Die ausgewählte Datei enthält keine Wörter"
-                )
+                messagebox.showwarning("Warnung", "Die ausgewählte Datei enthält keine Wörter")
                 return
 
             imported = self.dictionary.import_words(words)
             self.refresh_word_list()
 
-            self.status_label.config(
-                text=f"{imported} von {len(words)} Wörtern importiert"
-            )
+            self.status_label.config(text=f"{imported} von {len(words)} Wörtern importiert")
             messagebox.showinfo(
                 "Import abgeschlossen",
                 f"{imported} von {len(words)} Wörtern wurden erfolgreich importiert",

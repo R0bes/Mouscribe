@@ -1,0 +1,198 @@
+name: 🚀 Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger bei Version-Tags (z.B. v1.0.0)
+  workflow_dispatch:  # Manueller Trigger möglich
+
+env:
+  PYTHON_VERSION: '3.11'
+  PYTHON_VERSION_MAC: '3.11'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    name: 🪟 Windows Build
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: 🔨 Build executable
+        run: |
+          pyinstaller --onefile --windowed --name mauscribe src/main.py
+          echo "✅ Windows build completed"
+
+      - name: 📤 Upload Windows artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mauscribe-windows
+          path: dist/mauscribe.exe
+
+  build-linux:
+    runs-on: ubuntu-latest
+    name: 🐧 Linux Build
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: 🔨 Build executable
+        run: |
+          pyinstaller --onefile --name mauscribe src/main.py
+          echo "✅ Linux build completed"
+
+      - name: 📤 Upload Linux artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mauscribe-linux
+          path: dist/mauscribe
+
+  build-macos:
+    runs-on: macos-latest
+    name: 🍎 macOS Build
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION_MAC }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: 🔨 Build executable
+        run: |
+          pyinstaller --onefile --name mauscribe src/main.py
+          echo "✅ macOS build completed"
+
+      - name: 📤 Upload macOS artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mauscribe-macos
+          path: dist/mauscribe
+
+  create-release:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    name: 🎯 Create Release
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📋 Generate release notes
+        id: release_notes
+        run: |
+          # Extrahiere Version aus Tag
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          # Generiere Release Notes
+          echo "notes=🚀 Mauscribe $VERSION Release" >> $GITHUB_OUTPUT
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "## 🎉 What's New in $VERSION" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### ✨ Features" >> $GITHUB_OUTPUT
+          echo "- Automated speech-to-text transcription" >> $GITHUB_OUTPUT
+          echo "- Multi-language support (German/English)" >> $GITHUB_OUTPUT
+          echo "- Customizable input methods" >> $GITHUB_OUTPUT
+          echo "- Audio recording and storage" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### 🛠️ Technical Improvements" >> $GITHUB_OUTPUT
+          echo "- Built with PyInstaller for cross-platform compatibility" >> $GITHUB_OUTPUT
+          echo "- Optimized audio processing" >> $GITHUB_OUTPUT
+          echo "- Enhanced error handling and logging" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### 📥 Downloads" >> $GITHUB_OUTPUT
+          echo "- **Windows**: mauscribe.exe" >> $GITHUB_OUTPUT
+          echo "- **Linux**: mauscribe" >> $GITHUB_OUTPUT
+          echo "- **macOS**: mauscribe" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### 🔧 Installation" >> $GITHUB_OUTPUT
+          echo "1. Download the appropriate file for your platform" >> $GITHUB_OUTPUT
+          echo "2. Make it executable (Linux/macOS): `chmod +x mauscribe`" >> $GITHUB_OUTPUT
+          echo "3. Run the application" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### 📝 Changelog" >> $GITHUB_OUTPUT
+          echo "See [CHANGELOG.md](https://github.com/R0bes/Mauscribe/blob/main/CHANGELOG.md) for detailed changes." >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 🏷️ Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_notes.outputs.version }}
+          release_name: Mauscribe ${{ steps.release_notes.outputs.version }}
+          body: ${{ steps.release_notes.outputs.notes }}
+          draft: false
+          prerelease: false
+
+      - name: 📥 Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: dist/
+
+      - name: 📤 Upload Windows executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/mauscribe-windows/mauscribe.exe
+          asset_name: mauscribe-windows.exe
+          asset_content_type: application/octet-stream
+
+      - name: 📤 Upload Linux executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/mauscribe-linux/mauscribe
+          asset_name: mauscribe-linux
+          asset_content_type: application/octet-stream
+
+      - name: 📤 Upload macOS executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/mauscribe-macos/mauscribe
+          asset_name: mauscribe-macos
+          asset_content_type: application/octet-stream
+
+      - name: 🎉 Release complete
+        run: |
+          echo "🚀 Release ${{ steps.release_notes.outputs.version }} created successfully!"
+          echo "📥 Assets uploaded:"
+          echo "  - Windows: mauscribe-windows.exe"
+          echo "  - Linux: mauscribe-linux"
+          echo "  - macOS: mauscribe-macos"

@@ -10,40 +10,40 @@ endif
 
 
 # 🎯 Standardziel
-.PHONY: help, server_up, ui_up, ui_down, up, down, clean, commit, push, status
+.PHONY: help, server_up, ui_up, ui_down, up, down, clean, commit, push, status, release, release-patch, release-minor, release-major
 help:
 	@echo 🌟 Verfügbare Kommandos:
-	@echo 
+	@echo
 	@echo 🖥️  Server Management:
 	@echo     server_up    - 🚀 Startet den Python-Server
 	@echo     server_down  - 🛑 Stoppt den Python-Server
-	@echo 
+	@echo
 	@echo 🎨 UI Management:
 	@echo     ui_up        - 🚀 Startet die Vite-UI im Entwicklungsmodus
 	@echo     ui_down      - 🛑 Stoppt die Vite-UI
-	@echo 
+	@echo
 	@echo 🔄 Kombinierte Kommandos:
 	@echo     up           - 🚀 Startet sowohl Server als auch UI
 	@echo     down         - 🛑 Stoppt sowohl Server als auch UI
-	@echo 
+	@echo
 	@echo 🧹 Wartung:
 	@echo     clean        - 🧹 Räumt temporäre Dateien auf
-	@echo 
+	@echo
 	@echo 📝 Git Commands:
 	@echo     commit MSG="message"       - 💾 Git commit mit Nachricht + Pre-Commit
 	@echo     fcommit MSG="message"      - 🚀 Schneller Commit ohne Checks
 	@echo     push                        - 📤 Git push zum Remote-Repository
 	@echo     git MSG="message"          - 🚀 Commit und Push in einem Schritt
-	@echo 
+	@echo
 	@echo 🔄 Pull Request Management:
 	@echo     pr                          - 🔄 Erstellt PR automatisch (Commit + Push + PR)
 	@echo     pr-draft                    - 🔄 Erstellt Draft PR
 	@echo     pr-merge                    - 🔄 Erstellt PR und merged nach Pipeline-Erfolg
-	@echo 
+	@echo
 	@echo 🔒 Pre-Commit Checks:
 	@echo     pre-commit   - 🔒 Führt Tests und Linting aus
 	@echo     lint-check   - 🔍 Prüft Code-Format und Qualität
-	@echo 
+	@echo
 	@echo 💡 Beispiele:
 	@echo     make commit MSG="Fix bug"           - Commit mit Nachricht + Pre-Commit Checks
 	@echo     make fcommit MSG="Quick fix"        - Schneller Commit ohne Checks
@@ -51,12 +51,18 @@ help:
 	@echo     make pr MSG="New feature"           - Commit, Push und PR erstellen
 	@echo     make pr-draft MSG="Work in progress" - Draft PR erstellen
 	@echo     make pr-merge MSG="Ready to merge"  - PR erstellen und nach Pipeline mergen
-	@echo 
+	@echo
 	@echo 🧪 Testing:
 	@echo     test-all     - 🧪 Alle Tests ausführen
 	@echo     test-unit    - 🔬 Nur Unit Tests
 	@echo     test-e2e     - 🌐 End-to-End Tests
 	@echo     test-help    - 📚 Hilfe für Test-Kommandos
+	@echo
+	@echo 🚀 Release Management:
+	@echo     release VERSION=X.Y.Z - 🏷️  Erstellt neuen Release mit Version
+	@echo     release-patch          - 🔧 Patch-Release (1.0.0 → 1.0.1)
+	@echo     release-minor          - ✨ Minor-Release (1.0.0 → 1.1.0)
+	@echo     release-major          - 🎉 Major-Release (1.0.0 → 2.0.0)
 
 
 status:
@@ -89,7 +95,7 @@ ui_down:
 
 # 🔄 Kombinierte Kommandos
 .PHONY: up
-up: ui_up server_up 
+up: ui_up server_up
 	@echo 🎉 Alle Services erfolgreich gestartet! 🚀
 
 .PHONY: down
@@ -204,7 +210,7 @@ coverage: test-coverage
 # 📚 Test help
 test-help:
 	@echo 📚 Verfügbare Test-Kommandos:
-	@echo 
+	@echo
 	@echo 🧪 Vollständige Tests:
 	@echo   test-all        - 🧪 Alle Tests mit Coverage
 	@echo   test-coverage   - 📊 Tests mit Coverage-Report
@@ -212,20 +218,20 @@ test-help:
 	@echo   test-performance- ⚡ Performance Tests
 	@echo   test-security   - 🔒 Security Tests
 	@echo   test-parallel   - 🚀 Tests parallel ausführen
-	@echo 
+	@echo
 	@echo 🔬 Spezifische Tests:
 	@echo   test-unit       - 🔬 Nur Unit Tests
 	@echo   test-integration- 🔗 Nur Integration Tests
 	@echo   test-e2e        - 🌐 Nur E2E Tests
 	@echo   test-module     - 🎯 Spezifisches Modul testen
-	@echo 
+	@echo
 	@echo ⚡ Schnelle Tests:
 	@echo   test-quick      - ⚡ Schneller Test-Lauf (Unit only)
-	@echo 
+	@echo
 	@echo 🧹 Wartung:
 	@echo   test-clean      - 🧹 Test-Artefakte aufräumen
 	@echo   coverage        - 📊 Coverage-Report im Browser öffnen
-	@echo 
+	@echo
 	@echo 💡 Beispiel: make test-module MODULE=server.api
 
 # 📝 Git Commands
@@ -233,7 +239,7 @@ test-help:
 commit: pre-commit
 	@echo 📝 Git Status:
 	@git status --short
-	@echo 
+	@echo
 	@echo 💾 Committing changes...
 	@git add .
 ifeq ($(OS),Windows_NT)
@@ -260,7 +266,7 @@ pre-commit:
 	@echo 🔍 Prüfe Code-Format...
 	@$(MAKE) lint
 	@echo ✅ Pre-Commit Checks erfolgreich!
-	@echo 
+	@echo
 
 # 🔍 Linting und Code-Qualität (Mauscribe)
 .PHONY: lint
@@ -282,7 +288,7 @@ fcommit:
 	@echo 🚀 Schneller Commit ohne Pre-Commit Checks...
 	@echo 📝 Git Status:
 	@git status --short
-	@echo 
+	@echo
 	@echo 💾 Committing changes...
 	@git add .
 ifeq ($(OS),Windows_NT)
@@ -306,6 +312,9 @@ push:
 	@echo 🔍 Git Push wird ausgeführt...
 	@git push
 	@echo ✅ Push erfolgreich abgeschlossen!
+	@echo
+	@echo 🔍 Pipeline-Monitor startet automatisch...
+	@python pipeline_monitor.py
 
 .PHONY: monitor
 monitor:
@@ -314,7 +323,7 @@ monitor:
 
 .PHONY: push-and-monitor
 push-and-monitor: push
-	@echo 
+	@echo
 	@echo 🔍 Pipeline-Monitor startet in 3 Sekunden...
 ifeq ($(OS),Windows_NT)
 	@timeout /t 3 /nobreak >nul
@@ -402,3 +411,32 @@ pr-merge: pr
 	@echo 🔄 Merge PR über GitHub CLI...
 	@gh pr merge --merge || echo ⚠️  GitHub CLI nicht verfügbar - PR manuell mergen
 	@echo ✅ Pull Request erfolgreich gemergt!
+
+# 🚀 Release Management
+.PHONY: release
+release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "❌ Version angeben! Beispiel: make release VERSION=1.0.0"; \
+		exit 1; \
+	fi
+	@echo 🚀 Erstelle Release $(VERSION)...
+	@python scripts/create_release.py $(VERSION)
+	@echo ✅ Release $(VERSION) erfolgreich erstellt!
+
+.PHONY: release-patch
+release-patch:
+	@echo 🔧 Erstelle Patch-Release...
+	@python scripts/create_release.py --type patch --no-build
+	@echo ✅ Patch-Release erfolgreich erstellt!
+
+.PHONY: release-minor
+release-minor:
+	@echo ✨ Erstelle Minor-Release...
+	@python scripts/create_release.py --type minor --no-build
+	@echo ✅ Minor-Release erfolgreich erstellt!
+
+.PHONY: release-major
+release-major:
+	@echo 🎉 Erstelle Major-Release...
+	@python scripts/create_release.py --type major --no-build
+	@echo ✅ Major-Release erfolgreich erstellt!

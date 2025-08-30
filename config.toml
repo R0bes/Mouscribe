@@ -1,176 +1,92 @@
 # Mauscribe Konfiguration
 # ======================
 
-[primary]
-name = "m_x2"
-method = { "click" = true }
+# Version
+version = "1.0.0"
 
-[secondary]
-name = "m_left"
-method = { "hold" = 2 }
+# Input-Konfiguration
+[input]
+primary = { name = "m_x2", type = "mouse_button", method = { "click" = true } }
+secondary = { name = "m_x1", type = "mouse_button", method = { "hold" = 1 } }
 
+# Verhalten
 [behavior]
-# Doppelklick-Schwelle in Sekunden
 debounce_time = 0.5
-
-# Beispiel-Konfigurationen für verschiedene Methoden:
-# [primary]
-# name = "x2"
-# type = "mouse_button"
-# method = { "double_click" = 0.5 }  # Doppelklick mit 0.5s Fenster
-#
-# [secondary]
-# name = "right"
-# type = "mouse_button"
-# method = { "smart" = 0.3 }  # Smart-Modus mit 0.3s Verzögerung
-#
-# [primary]
-# name = "f9"
-# type = "keyboard"
-# method = { "press" = false }  # Tastatur-Taste release
-#
-# [secondary]
-# name = "shift+f9"
-# type = "keyboard"
-# method = { "hold" = 1.5 }  # Tastatur-Kombination mit Hold
-
 
 # Audio-Einstellungen
 [audio]
 sample_rate = 16000
 channels = 1
 chunk_size = 1024
-format = "int16"
-# Audio-Gerät ID (leer lassen für automatische Auswahl)
+format = "wav"
 device = 1
-# Bevorzugter Gerätename (z.B. "USB Microphone")
-device_name = ""
-# Automatisch bestes Gerät auswählen
 auto_select_device = true
-# Gerät beim Start testen
 test_device_on_startup = true
-# Bei Fehler zu Standard-Gerät wechseln
-fallback_to_default = true
 
-
-# System-Sounds
+# System
 [system]
-# System-Sound Reduzierung während Aufnahme (in Prozent)
 volume_reduction_factor = 0.15
-# Minimale System-Lautstärke während Aufnahme (in Prozent)
 min_volume_percent = 5
 
-
+# Transkription
 [transcription]
-language = "de"     # Sprache für Transkription
-whisper_model = "base"      # "base", "small", "medium", "large"
-compute_type = "float32"  # "float16" = schnell, "float32" = genau
-
+language = "de"
+whisper_model = "base"
+compute_type = "float32"
 
 # Rechtschreibkorrektur
 [spell_check]
-# Rechtschreibkorrektur aktivieren
 enabled = true
-# Automatische Korrektur anwendenn (true) oder nur Vorschläge anzeigen  (false)
 auto_correct = true
 
-
-# Logging-Einstellungen
+# Logging
 [logging]
-# Logging aktivieren
 enabled = true
-# Log-Level für Console-Ausgabe ("DEBUG", "INFO", "WARNING", "ERROR")
 console_level = "INFO"
-# Log-Level für Datei-Ausgabe ("DEBUG", "INFO", "WARNING", "ERROR")
 file_level = "DEBUG"
-# Emoji-Unterstützung aktivieren
 emoji_enabled = true
-# Log-Datei aktivieren
 file_enabled = true
-# Log-Datei-Name
-log_filename = "mauscribe.log"
-# Externe Bibliotheken unterdrücken (pynput, pycaw, etc.)
+filename = "mauscribe.log"
 suppress_external_logs = true
 
-
-# Benutzerdefiniertes Wörterbuch
-[custom_dictionary]
-# Benutzerdefiniertes Wörterbuch aktivieren
+# Wörterbuch
+[dictionary]
 enabled = true
-# Automatisch unbekannte Wörter zum Wörterbuch hinzufügen
 auto_add_unknown = false
-# Wörterbuch-Pfad (leer = Standard-Pfad im Benutzerverzeichnis)
 path = ""
-# Maximale Anzahl von Wörtern im Wörterbuch (0 = unbegrenzt)
 max_words = 1000
 
-
+# Debug
 [debug]
-enabled = true  # Standardwert: false
-level = "DEBUG"
-verbose = true
-log_errors = true
+enabled = false
+level = "INFO"
+verbose = false
 
-
-# Auto-Updater
-[auto_update]
-# Automatische Updates aktivieren
+# Updates
+[updates]
 enabled = true
-# Update-Check-Intervall in Sekunden (Standard: 24 Stunden)
 check_interval = 86400
-# Nach Updates suchen beim Programmstart
 check_on_startup = true
-# Automatisch Updates installieren (false = nur nach Bestätigung)
 auto_install = false
-# Pre-Releases einschließen
 include_prereleases = false
 
-# Windows-Benachrichtigungen
+# Benachrichtigungen
 [notifications]
-# Windows-Benachrichtigungen aktivieren
 enabled = true
-# Anzeigedauer in Millisekunden
 duration = 5000
-# Benachrichtigungstöne aktivieren
 sound = true
-# Toast-Benachrichtigungen aktivieren
 toast = true
-# Start-Benachrichtigung anzeigen
-show_startup = true
-# Beendigungs-Benachrichtigung anzeigen
-show_shutdown = true
-# Aufnahme-Ereignisse anzeigen (Start/Stopp)
-show_recording_events = true
-# Transkriptions-Ereignisse anzeigen
-show_transcription_events = true
-# Text-Ereignisse anzeigen (Einfügen)
-show_text_events = true
-# Rechtschreibprüfungs-Ereignisse anzeigen
-show_spell_check_events = true
-# Fehler-Benachrichtigungen anzeigen
-show_errors = true
-# Warnungs-Benachrichtigungen anzeigen
-show_warnings = true
+show_all = true
 
-# Audio-Datenbank
+# Datenbank
 [database]
-# Datenbank aktivieren
 enabled = true
-# Datenverzeichnis (leer = Standard im Programmverzeichnis)
 data_directory = ""
-# Audio-Format für Speicherung ("wav", "flac", "mp3")
 audio_format = "wav"
-# Automatisch alle Aufnahmen speichern
 auto_save_recordings = true
-# Automatisch alle Transkriptionen speichern
 auto_save_transcriptions = true
-# Aufnahmen als Trainingsdaten markieren
 mark_as_training_data = true
-# Aufbewahrungszeitraum in Tagen (0 = unbegrenzt)
 retention_days = 30
-# Maximale Datenbankgröße in MB (0 = unbegrenzt)
-max_database_size_mb = 1000
-# Komprimierung für Audio-Dateien
+max_size_mb = 1000
 compress_audio = false
-# Backup vor Aufräumen erstellen
 backup_before_cleanup = true
