@@ -15,12 +15,11 @@ function Main {
     Write-ColorOutput "================================================" "Blue"
     Write-ColorOutput ""
     Write-ColorOutput "Workflow-Schritte:" "Cyan"
-    Write-ColorOutput "1. Git-Status pruefen" "White"
+    Write-ColorOutput "1. Version automatisch erhöhen (Patch)" "White"
     Write-ColorOutput "2. Alle Aenderungen committen" "White"
-    Write-ColorOutput "3. Version aus pyproject.toml lesen" "White"
-    Write-ColorOutput "4. Git-Tag erstellen" "White"
-    Write-ColorOutput "5. Tag zu GitHub pushen" "White"
-    Write-ColorOutput "6. GitHub Release automatisch erstellen" "White"
+    Write-ColorOutput "3. Git-Tag erstellen" "White"
+    Write-ColorOutput "4. Tag zu GitHub pushen" "White"
+    Write-ColorOutput "5. GitHub Release automatisch erstellen" "White"
     Write-ColorOutput ""
     Write-ColorOutput "Hinweis: Alle uncommitted changes werden automatisch committed!" "Yellow"
     Write-ColorOutput ""
@@ -36,42 +35,56 @@ function Main {
     Write-ColorOutput "Workflow gestartet..." "Green"
     Write-ColorOutput ""
     
-    # 1. Git-Status pruefen
-    Write-ColorOutput "Pruefe Git-Status..." "Blue"
-    $gitStatus = git status --porcelain
-    
-    if ($gitStatus) {
-        Write-ColorOutput "Uncommitted changes gefunden:" "Yellow"
-        Write-ColorOutput $gitStatus "Yellow"
-        Write-ColorOutput ""
-        Write-ColorOutput "Committte alle Aenderungen..." "Blue"
-        git add .
-        $commitMsg = "feat: Add MSIX support and release automation"
+    # 1. Version lesen und erhöhen
+    Write-ColorOutput "Lese und erhöhe Version..." "Blue"
+    try {
+        $currentVersion = python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])"
+        Write-ColorOutput "Aktuelle Version: $currentVersion" "Cyan"
         
-        # Versuche Commit ohne Pre-commit Hooks
-        try {
-            git commit -m $commitMsg --no-verify
-            Write-ColorOutput "Aenderungen committed (ohne Pre-commit Hooks)" "Green"
-        } catch {
-            Write-ColorOutput "Fehler beim Commit: $($_.Exception.Message)" "Red"
-            Write-ColorOutput "Versuche Commit mit Pre-commit Hooks..." "Yellow"
-            git commit -m $commitMsg
-            Write-ColorOutput "Aenderungen committed" "Green"
+        # Version erhöhen (Patch-Version)
+        $versionParts = $currentVersion.Split('.')
+        if ($versionParts.Length -eq 3) {
+            $major = [int]$versionParts[0]
+            $minor = [int]$versionParts[1]
+            $patch = [int]$versionParts[2]
+            $patch++
+            $newVersion = "$major.$minor.$patch"
+        } else {
+            Write-ColorOutput "Ungültiges Versionsformat: $currentVersion" "Red"
+            exit 1
         }
-    } else {
-        Write-ColorOutput "Keine uncommitted changes" "Green"
+        
+        Write-ColorOutput "Neue Version: $newVersion" "Green"
+        
+        # Version in pyproject.toml aktualisieren
+        Write-ColorOutput "Aktualisiere pyproject.toml..." "Blue"
+        $pyprojectContent = Get-Content "pyproject.toml" -Raw
+        $pyprojectContent = $pyprojectContent -replace "version = `"$currentVersion`"", "version = `"$newVersion`""
+        $pyprojectContent | Set-Content "pyproject.toml" -Encoding UTF8
+        Write-ColorOutput "pyproject.toml aktualisiert" "Green"
+        
+        $version = $newVersion
+    } catch {
+        Write-ColorOutput "Fehler beim Lesen/Erhöhen der Version: $($_.Exception.Message)" "Red"
+        exit 1
     }
     
     Write-ColorOutput ""
     
-    # 2. Version lesen
-    Write-ColorOutput "Lese Version..." "Blue"
+    # 2. Alle Änderungen committen (inklusive Version-Update)
+    Write-ColorOutput "Committte alle Aenderungen..." "Blue"
+    git add .
+    $commitMsg = "feat: Add MSIX support and release automation (v$version)"
+    
+    # Versuche Commit ohne Pre-commit Hooks
     try {
-        $version = python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])"
-        Write-ColorOutput "Version: $version" "Cyan"
+        git commit -m $commitMsg --no-verify
+        Write-ColorOutput "Aenderungen committed (ohne Pre-commit Hooks)" "Green"
     } catch {
-        Write-ColorOutput "Fehler beim Lesen der Version: $($_.Exception.Message)" "Red"
-        exit 1
+        Write-ColorOutput "Fehler beim Commit: $($_.Exception.Message)" "Red"
+        Write-ColorOutput "Versuche Commit mit Pre-commit Hooks..." "Yellow"
+        git commit -m $commitMsg
+        Write-ColorOutput "Aenderungen committed" "Green"
     }
     
     Write-ColorOutput ""
