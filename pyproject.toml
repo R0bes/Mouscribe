@@ -1,7 +1,6 @@
-﻿# pyproject.toml - Python project configuration for Mauscribe
-[project]
+﻿[project]
 name = "mauscribe"
-version = "1.0.1"
+version = "1.0.2"
 description = "Voice-to-Text Tool mit Push-to-Talk und Clipboard-Management"
 authors = [
     {name = "Robs", email = "rob.schwe@gmail.com"}
@@ -109,3 +108,4 @@ directory = "coverage_html"
 
 [tool.coverage.xml]
 output = "coverage.xml"
+
