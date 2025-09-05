@@ -1,0 +1,179 @@
+name: Build MSIX Release
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-msix:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Create Assets Directory
+      run: |
+        mkdir -p assets/icons
+        mkdir -p assets/cursors
+        mkdir -p msix/certificates
+        mkdir -p msix/manifest
+    
+    - name: Create MSIX Assets
+      shell: pwsh
+      run: |
+        # Erstelle Standard-Assets falls nicht vorhanden
+        if (-not (Test-Path "assets/icons/mauscribe_icon.png")) {
+          $iconContent = '<svg width="150" height="150" xmlns="http://www.w3.org/2000/svg"><rect width="150" height="150" fill="#0078d4"/><text x="75" y="85" text-anchor="middle" fill="white" font-size="24" font-family="Arial">M</text></svg>'
+          $iconContent | Out-File -FilePath "assets/icons/mauscribe_icon.svg" -Encoding UTF8
+        }
+    
+    - name: Get Version
+      shell: pwsh
+      run: |
+        # Hole Version aus Git-Tag oder GitHub Release
+        if ("${{ github.event_name }}" -eq "release") {
+          $version = "${{ github.event.release.tag_name }}"
+          $version = $version.TrimStart('v')  # Entferne 'v' Prefix falls vorhanden
+        } else {
+          # Für Push auf main: Hole neueste Version aus pyproject.toml
+          $pyprojectContent = Get-Content "pyproject.toml" -Raw
+          if ($pyprojectContent -match 'version = "([^"]+)"') {
+            $version = $matches[1]
+          } else {
+            $version = "1.0.0.0"
+          }
+        }
+        
+        Write-Host "Building MSIX version: $version"
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+        echo "TAG_NAME=v$version" >> $env:GITHUB_ENV
+    
+    - name: Build MSIX Package
+      shell: pwsh
+      run: |
+        # Erstelle MSIX-Paket mit automatischer Version
+        & "msix/scripts/build_msix.ps1" -Version $env:VERSION -Sign
+        
+        # Prüfe ob MSIX erstellt wurde
+        if (Test-Path "dist/mauscribe.msix") {
+          $size = (Get-Item "dist/mauscribe.msix").Length
+          Write-Host "MSIX created successfully: $size bytes"
+        } else {
+          Write-Error "MSIX creation failed!"
+          exit 1
+        }
+    
+    - name: Upload MSIX Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mauscribe-msix-${{ github.run_number }}
+        path: dist/mauscribe.msix
+        retention-days: 30
+    
+    - name: Create Release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/mauscribe.msix
+        tag_name: ${{ env.TAG_NAME }}
+        name: Mauscribe ${{ env.TAG_NAME }}
+        body: |
+          ## 🚀 Mauscribe MSIX Release
+          
+          ### 📦 Installation
+          1. Laden Sie `mauscribe.msix` herunter
+          2. Doppelklicken Sie auf die Datei
+          3. Bestätigen Sie die Installation
+          
+          ### 🌐 Download
+          **Direkter Download:** [mauscribe.msix](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG_NAME }}/mauscribe.msix)
+          
+          **GitHub Page:** [https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)
+          
+          ### ✨ Features
+          - Native Windows Toasts
+          - System-Tray Integration
+          - Automatische Updates
+          - Vollständige Windows-Integration
+          
+          ### 🔧 Systemanforderungen
+          - Windows 10 (Version 1803) oder höher
+          - Windows 11
+          
+          ### 📝 Hinweise
+          - Bei der ersten Installation werden Sie nach Berechtigungen für Maus-Input gefragt
+          - Klicken Sie auf "Zulassen" um alle Features zu nutzen
+          
+          ### 🐛 Probleme?
+          Falls die Installation fehlschlägt, prüfen Sie:
+          - Windows-Version (mindestens 10.0.17134)
+          - Administrator-Berechtigungen
+          - Windows Defender/Firewall-Einstellungen
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Upload to Release (Manual)
+      if: github.event_name == 'workflow_dispatch'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/mauscribe.msix
+        tag_name: ${{ env.TAG_NAME }}
+        name: Mauscribe ${{ env.TAG_NAME }}
+        body: |
+          ## 🚀 Mauscribe MSIX Release
+          
+          ### 📦 Installation
+          1. Laden Sie `mauscribe.msix` herunter
+          2. Doppelklicken Sie auf die Datei
+          3. Bestätigen Sie die Installation
+          
+          ### 🌐 Download
+          **Direkter Download:** [mauscribe.msix](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG_NAME }}/mauscribe.msix)
+          
+          **GitHub Page:** [https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)
+          
+          ### ✨ Features
+          - Native Windows Toasts
+          - System-Tray Integration
+          - Automatische Updates
+          - Vollständige Windows-Integration
+          
+          ### 🔧 Systemanforderungen
+          - Windows 10 (Version 1803) oder höher
+          - Windows 11
+          
+          ### 📝 Hinweise
+          - Bei der ersten Installation werden Sie nach Berechtigungen für Maus-Input gefragt
+          - Klicken Sie auf "Zulassen" um alle Features zu nutzen
+          
+          ### 🐛 Probleme?
+          Falls die Installation fehlschlägt, prüfen Sie:
+          - Windows-Version (mindestens 10.0.17134)
+          - Administrator-Berechtigungen
+          - Windows Defender/Firewall-Einstellungen
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

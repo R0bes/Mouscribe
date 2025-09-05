@@ -20,10 +20,15 @@ class ButtonMapper:
         # Mouse button mapping
         self.mouse_button_map = {
             "m_left": mouse.Button.left,
+            "left": mouse.Button.left,
             "m_right": mouse.Button.right,
+            "right": mouse.Button.right,
             "m_middle": mouse.Button.middle,
+            "middle": mouse.Button.middle,
             "m_x1": mouse.Button.x1,
+            "x1": mouse.Button.x1,
             "m_x2": mouse.Button.x2,
+            "x2": mouse.Button.x2,
         }
 
         # Keyboard key mapping
@@ -84,7 +89,9 @@ class ButtonMapper:
 
         return None
 
-    def parse_key_combination(self, combination_str: str) -> list[Union[keyboard.Key, str]]:
+    def parse_key_combination(
+        self, combination_str: str
+    ) -> list[Union[keyboard.Key, str]]:
         """Parse key combination string (e.g., "ctrl+shift+f9")."""
         if not combination_str:
             return []
@@ -127,6 +134,18 @@ class ButtonMapper:
             return self.get_keyboard_key(key_name)
         return None
 
+    def get_third_mouse_button(self) -> Optional[mouse.Button]:
+        """Get third mouse button from configuration."""
+        button_name = self.config.third_name
+        return self.get_mouse_button(button_name)
+
+    def get_third_keyboard_key(self) -> Union[keyboard.Key, str, None]:
+        """Get third keyboard key from configuration."""
+        if self.config.third_type == "keyboard":
+            key_name = self.config.third_name
+            return self.get_keyboard_key(key_name)
+        return None
+
     def is_valid_mouse_button(self, button_name: str) -> bool:
         """Check if mouse button name is valid."""
         return self.get_mouse_button(button_name) is not None
@@ -150,13 +169,17 @@ def get_button_mapper(config: Optional[Config] = None) -> ButtonMapper:
     return ButtonMapper(config)
 
 
-def get_mouse_button(button_name: str, config: Optional[Config] = None) -> Optional[mouse.Button]:
+def get_mouse_button(
+    button_name: str, config: Optional[Config] = None
+) -> Optional[mouse.Button]:
     """Get mouse button from name."""
     mapper = get_button_mapper(config)
     return mapper.get_mouse_button(button_name)
 
 
-def get_keyboard_key(key_name: str, config: Optional[Config] = None) -> Union[keyboard.Key, str, None]:
+def get_keyboard_key(
+    key_name: str, config: Optional[Config] = None
+) -> Union[keyboard.Key, str, None]:
     """Get keyboard key from name."""
     mapper = get_button_mapper(config)
     return mapper.get_keyboard_key(key_name)

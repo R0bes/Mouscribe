@@ -1,6 +1,6 @@
 # Mauscribe - Voice-to-Text Tool
 
-Ein fortschrittliches Sprach-zu-Text-Tool, das Audio-Aufnahmen über Mausklicks steuert und transkribierten Text automatisch in die Zwischenablage kopiert.
+Ein fortschrittliches Sprach-zu-Text-Tool, das Audio-Aufnahmen über Mausklicks steuert und transkribierten Text in die Zwischenablage kopiert.
 
 ## 🚀 Features
 
@@ -82,7 +82,7 @@ whisper_model = "base"  # tiny, base, small, medium, large
 
 4. **Text einfügen**:
    - Transkribierter Text wird automatisch in die Zwischenablage kopiert
-   - Text wird automatisch in das aktive Fenster eingefügt
+   - Text kann manuell mit Strg+V eingefügt werden oder über den sekundären Button
 
 ### Erweiterte Funktionen
 
@@ -122,6 +122,7 @@ min_volume_percent = 5          # Minimale Lautstärke in Prozent
 
 [behavior]
 debounce_time = 0.5             # Entprellzeit für Mausklicks
+auto_paste_after_transcription = false  # Automatisches Einfügen nach Transkription
 ```
 
 ### Benachrichtigungen

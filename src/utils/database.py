@@ -35,7 +35,7 @@ class AudioDatabase:
         db_path = data_dir / "audio_database.db"
 
         self.db_path = str(db_path)
-        self.logger.info(f"🗄️  Initialisiere Audio-Datenbank: {self.db_path}")
+        self.logger.debug(f"🗄️  Initialisiere Audio-Datenbank: {self.db_path}")
 
         # Store data_dir for later use
         self.data_dir = data_dir
@@ -100,12 +100,18 @@ class AudioDatabase:
                 )
 
                 # Create indexes for better performance
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_audio_timestamp ON audio_recordings(timestamp)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_transcription_audio_id ON transcriptions(audio_recording_id)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_training_transcription_id ON training_data(transcription_id)")
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_audio_timestamp ON audio_recordings(timestamp)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_transcription_audio_id ON transcriptions(audio_recording_id)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_training_transcription_id ON training_data(transcription_id)"
+                )
 
                 conn.commit()
-                self.logger.info("✅ Datenbank-Tabellen erfolgreich initialisiert")
+                self.logger.debug("✅ Datenbank-Tabellen erfolgreich initialisiert")
 
         except Exception as e:
             self.logger.error(f"Failed to initialize database: {e}")
@@ -139,7 +145,9 @@ class AudioDatabase:
             audio_file_path = audio_dir / filename
 
             # Save audio file with compression
-            actual_file_path = self._save_audio_file(audio_data, audio_file_path, sample_rate, channels, audio_format)
+            actual_file_path = self._save_audio_file(
+                audio_data, audio_file_path, sample_rate, channels, audio_format
+            )
 
             # Get file size from actual saved file
             if actual_file_path and actual_file_path.exists():
@@ -147,7 +155,9 @@ class AudioDatabase:
                 final_file_path = str(actual_file_path)
             else:
                 # Fallback: use original path
-                file_size = audio_file_path.stat().st_size if audio_file_path.exists() else 0
+                file_size = (
+                    audio_file_path.stat().st_size if audio_file_path.exists() else 0
+                )
                 final_file_path = str(audio_file_path)
 
             # Save to database
@@ -175,7 +185,9 @@ class AudioDatabase:
                 if recording_id is None:
                     raise RuntimeError("Failed to get recording ID from database")
 
-                self.logger.info(f"✅ Audio recording saved with ID: {recording_id} to {final_file_path}")
+                self.logger.debug(
+                    f"✅ Audio recording saved with ID: {recording_id} to {final_file_path}"
+                )
                 return recording_id
 
         except Exception as e:
@@ -201,9 +213,13 @@ class AudioDatabase:
                     self.logger.debug(f"✅ Audio saved as WAV: {file_path}")
                     return file_path
                 except ImportError:
-                    self.logger.warning("soundfile not available for WAV, trying pydub...")
+                    self.logger.warning(
+                        "soundfile not available for WAV, trying pydub..."
+                    )
                 except Exception as e:
-                    self.logger.warning(f"soundfile failed for WAV: {e}, trying pydub...")
+                    self.logger.warning(
+                        f"soundfile failed for WAV: {e}, trying pydub..."
+                    )
 
             # Try to use pydub for MP3/OGG compression
             try:
@@ -246,9 +262,13 @@ class AudioDatabase:
                 self.logger.debug(f"✅ Audio saved with soundfile: {file_path}")
                 return file_path
             except ImportError:
-                self.logger.warning("soundfile not available, using numpy.save as fallback")
+                self.logger.warning(
+                    "soundfile not available, using numpy.save as fallback"
+                )
             except Exception as e:
-                self.logger.warning(f"soundfile failed: {e}, using numpy.save as fallback")
+                self.logger.warning(
+                    f"soundfile failed: {e}, using numpy.save as fallback"
+                )
 
             # Final fallback: numpy.save
             self.logger.warning("Using numpy.save as fallback - no compression")
@@ -306,7 +326,7 @@ class AudioDatabase:
                 if transcription_id is None:
                     raise RuntimeError("Failed to get transcription ID from database")
 
-                self.logger.info(f"Transcription saved with ID: {transcription_id}")
+                self.logger.debug(f"Transcription saved with ID: {transcription_id}")
                 return transcription_id
 
         except Exception as e:
@@ -348,14 +368,16 @@ class AudioDatabase:
                 if training_data_id is None:
                     raise RuntimeError("Failed to get training data ID from database")
 
-                self.logger.info(f"Training data saved with ID: {training_data_id}")
+                self.logger.debug(f"Training data saved with ID: {training_data_id}")
                 return training_data_id
 
         except Exception as e:
             self.logger.error(f"Failed to save training data: {e}")
             raise
 
-    def get_recordings_for_training(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
+    def get_recordings_for_training(
+        self, limit: Optional[int] = None
+    ) -> list[dict[str, Any]]:
         """Get recordings marked as valid for training."""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -419,7 +441,9 @@ class AudioDatabase:
                 total_transcriptions = cursor.fetchone()[0]
 
                 # Training data count
-                cursor.execute("SELECT COUNT(*) FROM training_data WHERE is_valid_for_training = TRUE")
+                cursor.execute(
+                    "SELECT COUNT(*) FROM training_data WHERE is_valid_for_training = TRUE"
+                )
                 training_count = cursor.fetchone()[0]
 
                 # Total duration
@@ -509,3 +533,118 @@ class AudioDatabase:
         except Exception as e:
             self.logger.error(f"Failed to cleanup old recordings: {e}")
             return 0
+
+    def get_all_recordings_with_transcriptions(self) -> list[dict[str, Any]]:
+        """Get all recordings with their transcriptions."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+
+                cursor.execute(
+                    """
+                    SELECT 
+                        ar.id,
+                        ar.timestamp,
+                        ar.duration_seconds,
+                        ar.audio_file_path,
+                        ar.file_size_bytes,
+                        t.raw_text,
+                        t.corrected_text,
+                        t.language,
+                        t.created_at as transcription_created_at
+                    FROM audio_recordings ar
+                    LEFT JOIN transcriptions t ON ar.id = t.audio_recording_id
+                    ORDER BY ar.timestamp DESC
+                    """
+                )
+
+                rows = cursor.fetchall()
+                recordings = []
+
+                for row in rows:
+                    recording = {
+                        "id": row[0],
+                        "created_at": row[1],
+                        "duration": row[2],
+                        "audio_file_path": row[3],
+                        "file_size": row[4],
+                        "transcription_text": row[5]
+                        or row[6]
+                        or "",  # Use corrected_text if raw_text is None
+                        "language": row[7],
+                        "transcription_created_at": row[8],
+                        "tags": "",  # Placeholder for future tags
+                    }
+                    recordings.append(recording)
+
+                return recordings
+
+        except Exception as e:
+            self.logger.error(f"Failed to get recordings with transcriptions: {e}")
+            return []
+
+    def get_recording_by_id(self, recording_id: int) -> Optional[dict[str, Any]]:
+        """Get a specific recording by ID."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+
+                cursor.execute(
+                    """
+                    SELECT 
+                        ar.id,
+                        ar.timestamp,
+                        ar.duration_seconds,
+                        ar.audio_file_path,
+                        ar.file_size_bytes,
+                        ar.sample_rate,
+                        ar.channels,
+                        ar.audio_format,
+                        t.raw_text,
+                        t.corrected_text,
+                        t.language,
+                        t.confidence_score,
+                        t.processing_time_ms
+                    FROM audio_recordings ar
+                    LEFT JOIN transcriptions t ON ar.id = t.audio_recording_id
+                    WHERE ar.id = ?
+                    """,
+                    (recording_id,),
+                )
+
+                row = cursor.fetchone()
+                if row:
+                    return {
+                        "id": row[0],
+                        "created_at": row[1],
+                        "duration": row[2],
+                        "audio_file_path": row[3],
+                        "file_size": row[4],
+                        "sample_rate": row[5],
+                        "channels": row[6],
+                        "audio_format": row[7],
+                        "transcription_text": row[8] or row[9] or "",
+                        "language": row[10],
+                        "confidence_score": row[11],
+                        "processing_time_ms": row[12],
+                    }
+                return None
+
+        except Exception as e:
+            self.logger.error(f"Failed to get recording by ID: {e}")
+            return None
+
+    def export_all_data(self) -> dict[str, Any]:
+        """Export all database data."""
+        try:
+            recordings = self.get_all_recordings_with_transcriptions()
+
+            return {
+                "export_timestamp": datetime.now().isoformat(),
+                "total_recordings": len(recordings),
+                "recordings": recordings,
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to export all data: {e}")
+            return {}

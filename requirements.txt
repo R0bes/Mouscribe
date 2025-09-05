@@ -1,18 +1,40 @@
-comtypes
-faster-whisper
+# Core dependencies
 numpy
-openai
-pillow
-pyautogui
-pycaw
-pynput
-pyperclip
-pyspellchecker
-pystray
-python-dotenv
-pywin32
-requests
-sounddevice
-soundfile
-tomli-w
+pyaudio
 webrtcvad
+openai
+whisper
+faster_whisper
+pyperclip
+keyboard
+mouse
+pynput
+psutil
+pyautogui
+comtypes
+pycaw
+
+# Audio processing
+soundfile
+pydub
+sounddevice
+
+# Database
+# sqlite3 is built-in to Python, no need to install
+
+# Configuration
+toml
+tomli-w
+
+# WebRTC VAD
+# webrtcvad already listed above
+
+# Windows Toast Notifications
+win10toast-click
+pystray
+
+# Development dependencies
+pytest
+mypy
+black
+flake8

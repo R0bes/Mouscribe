@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional, Set
 
+from ..utils.config import Config
 from ..utils.logger import get_logger
 
 try:
@@ -11,43 +12,50 @@ try:
     SPELL_CHECKER_AVAILABLE = True
 except ImportError:
     SPELL_CHECKER_AVAILABLE = False
-    get_logger(__name__).warning("Warnung: pyspellchecker nicht verfügbar. Rechtschreibprüfung deaktiviert.")
-
-from ..utils.config import Config
+    get_logger(__name__).warning(
+        "Warnung: pyspellchecker nicht verfügbar. Rechtschreibprüfung deaktiviert."
+    )
 from ..utils.dictionary import CustomDict, get_custom_dictionary
 
 
 class SpellChecker:
     """
-    Einfacher Rechtschreibprüfer für deutsche und englische Texte.
+    Multilingualer Rechtschreibprüfer für deutsche und englische Texte.
 
     Verwendet pyspellchecker für Rechtschreibprüfung ohne externe Dependencies.
     Fokus auf Rechtschreibung, einfache Grammatikregeln.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, config: Optional[Config] = None) -> None:
         self.logger = get_logger(self.__class__.__name__)
 
-        self._spell_checker: SC | None = None
+        self._spell_checkers: Dict[str, SC] = {}
         # Verwende getattr mit Standardwerten für mypy-Kompatibilität
-        config_instance = Config()
-        self._language = getattr(config_instance, "spell_check_language", "de")
-        self._enabled = getattr(config_instance, "spell_check_enabled", True) and SPELL_CHECKER_AVAILABLE
-        self._grammar_check = getattr(config_instance, "spell_check_grammar", True)
-        self._auto_correct = getattr(config_instance, "spell_check_auto_correct", False)
-        self._suggest_only = getattr(config_instance, "spell_check_suggest_only", False)
+        self.config = config or Config()
+        self._primary_language = getattr(self.config, "spell_check_language", "de")
+        self._enabled = (
+            getattr(self.config, "spell_check_enabled", True)
+            and SPELL_CHECKER_AVAILABLE
+        )
+        self._grammar_check = getattr(self.config, "spell_check_grammar", True)
+        self._auto_correct = getattr(self.config, "spell_check_auto_correct", False)
+        self._suggest_only = getattr(self.config, "spell_check_suggest_only", False)
 
         # Benutzerdefiniertes Wörterbuch
         self._custom_dictionary: CustomDict | None = None
-        self._custom_dict_enabled = getattr(config_instance, "custom_dictionary_enabled", True)
-        self._auto_add_unknown = getattr(config_instance, "custom_dictionary_auto_add_unknown", False)
-        self._max_words = getattr(config_instance, "custom_dictionary_max_words", 1000)
+        self._custom_dict_enabled = getattr(
+            self.config, "custom_dictionary_enabled", True
+        )
+        self._auto_add_unknown = getattr(
+            self.config, "custom_dictionary_auto_add_unknown", False
+        )
+        self._max_words = getattr(self.config, "custom_dictionary_max_words", 1000)
 
         # Einfache deutsche Grammatikregeln
         self._grammar_patterns = self._setup_grammar_patterns()
 
         if self._enabled:
-            self._initialize_spell_checker()
+            self._initialize_spell_checkers()
 
         if self._custom_dict_enabled:
             self._initialize_custom_dictionary()
@@ -56,7 +64,7 @@ class SpellChecker:
         """Erstellt einfache Grammatikregeln für Deutsch."""
         patterns = []
 
-        if self._language == "de":
+        if self._primary_language == "de":
             patterns.extend(
                 [
                     # Groß-/Kleinschreibung nach Punkt
@@ -116,34 +124,25 @@ class SpellChecker:
 
         return patterns
 
-    def _initialize_spell_checker(self) -> None:
-        """Initialisiert den SpellChecker mit robuster Fehlerbehandlung."""
+    def _initialize_spell_checkers(self) -> None:
+        """Initialisiert die SpellChecker für mehrere Sprachen."""
         try:
-            self.logger.info(f"🔤 Initialisiere Rechtschreibprüfung für Sprache: {self._language}")
+            self.logger.info(
+                f"🔤 Initialisiere multilinguale Rechtschreibprüfung (DE/EN)"
+            )
 
-            # Spezielle Behandlung für deutsche Sprache
-            if self._language == "de":
-                try:
-                    # Versuche deutsche Sprache
-                    self._spell_checker = SC(language="de")
-                    self.logger.info("✅ Deutsche Rechtschreibprüfung erfolgreich initialisiert")
-                except Exception as de_error:
-                    self.logger.warning(f"⚠️ Deutsche Sprache nicht verfügbar: {de_error}")
-                    self.logger.info("🔄 Versuche Fallback auf englische Sprache...")
-                    try:
-                        self._spell_checker = SC(language="en")
-                        self.logger.info("✅ Fallback auf englische Rechtschreibprüfung erfolgreich")
-                        self._language = "en"  # Aktualisiere Sprache
-                    except Exception as en_error:
-                        self.logger.error(f"❌ Auch englische Sprache fehlgeschlagen: {en_error}")
-                        raise en_error
-            else:
-                # Für andere Sprachen
-                self._spell_checker = SC(language=self._language)
-                self.logger.info("✅ Rechtschreibprüfung erfolgreich initialisiert")
+            # Initialisiere deutsche und englische Spell Checker
+            self._spell_checkers["de"] = SC(language="de")
+            self._spell_checkers["en"] = SC(language="en")
+
+            self.logger.info(
+                "✅ Multilinguale Rechtschreibprüfung erfolgreich initialisiert"
+            )
 
         except Exception as e:
-            self.logger.error(f"❌ Fehler bei der Initialisierung der Rechtschreibprüfung: {e}")
+            self.logger.error(
+                f"❌ Fehler bei der Initialisierung der Rechtschreibprüfung: {e}"
+            )
             self.logger.info("🔄 Versuche ohne Rechtschreibprüfung weiterzumachen...")
             self._enabled = False
 
@@ -152,14 +151,18 @@ class SpellChecker:
         try:
             self.logger.info("📚 Initialisiere benutzerdefiniertes Wörterbuch...")
             self._custom_dictionary = get_custom_dictionary()
-            self.logger.info(f"📚 Benutzerdefiniertes Wörterbuch geladen: {self._custom_dictionary.get_word_count()} Wörter")
+            self.logger.info(
+                f"📚 Benutzerdefiniertes Wörterbuch geladen: {self._custom_dictionary.get_word_count()} Wörter"
+            )
         except Exception as e:
-            self.logger.error(f"❌ Fehler beim Laden des benutzerdefinierten Wörterbuchs: {e}")
+            self.logger.error(
+                f"❌ Fehler beim Laden des benutzerdefinierten Wörterbuchs: {e}"
+            )
             self._custom_dict_enabled = False
 
     def check_text(self, text: str) -> str | None:
         """
-        Prüft und korrigiert einen Text.
+        Prüft und korrigiert einen Text multilingual (DE/EN).
 
         Args:
             text: Der zu prüfende Text
@@ -167,15 +170,15 @@ class SpellChecker:
         Returns:
             Korrigierter Text oder None bei Fehlern
         """
-        if not self._enabled or not self._spell_checker or not text.strip():
+        if not self._enabled or not self._spell_checkers or not text.strip():
             return text
 
         try:
             corrected_text = text
             corrections_made = []
 
-            # 1. Grammatikregeln anwenden
-            if self._grammar_check:
+            # 1. Grammatikregeln anwenden (nur für Deutsch)
+            if self._grammar_check and self._primary_language == "de":
                 for rule in self._grammar_patterns:
                     if re.search(rule["pattern"], corrected_text, re.IGNORECASE):
                         old_text = corrected_text
@@ -197,54 +200,79 @@ class SpellChecker:
                         if old_text != corrected_text:
                             corrections_made.append(f"Grammatik: {rule['description']}")
 
-            # 2. Rechtschreibprüfung
+            # 2. Multilinguale Rechtschreibprüfung
             words = re.findall(r"\b[a-zA-ZäöüßÄÖÜ]+\b", corrected_text)
 
             # Filtere Wörter, die im benutzerdefinierten Wörterbuch sind
             if self._custom_dictionary:
-                words_to_check = [word for word in words if not self._custom_dictionary.has_word(word)]
+                words_to_check = [
+                    word for word in words if not self._custom_dictionary.has_word(word)
+                ]
             else:
                 words_to_check = words
 
-            misspelled = self._spell_checker.unknown(words_to_check)
+            # Prüfe jedes Wort mit beiden Sprachen
+            for word in words_to_check:
+                best_correction = None
+                best_language = None
 
-            if misspelled:
-                if self._suggest_only:
-                    self._print_suggestions(text, misspelled)
-                elif self._auto_correct:
-                    # Automatische Korrektur
-                    for word in misspelled:
-                        candidates = self._spell_checker.candidates(word)
+                # Versuche zuerst die primäre Sprache
+                if self._primary_language in self._spell_checkers:
+                    spell_checker = self._spell_checkers[self._primary_language]
+                    if word not in spell_checker:
+                        candidates = spell_checker.candidates(word)
                         if candidates:
-                            best_candidate = min(candidates, key=lambda x: abs(len(x) - len(word)))
-                            # Nur ersetzen wenn ähnlich genug
-                            if self._is_similar_word(word, best_candidate):
-                                corrected_text = re.sub(
-                                    r"\b" + re.escape(word) + r"\b",
-                                    best_candidate,
-                                    corrected_text,
-                                    flags=re.IGNORECASE,
-                                )
-                                corrections_made.append(f"Rechtschreibung: {word} -> {best_candidate}")
-
-                # Automatisch unbekannte Wörter zum Wörterbuch hinzufügen (falls aktiviert)
-                if self._auto_add_unknown and self._custom_dictionary:
-                    for word in misspelled:
-                        if self._custom_dictionary.get_word_count() < self._max_words or self._max_words == 0:
-                            if self._custom_dictionary.add_word(word):
-                                self.logger.info(f"Wort '{word}' automatisch zum Wörterbuch hinzugefügt")
-                        else:
-                            self.logger.warning(
-                                f"Wörterbuch ist voll ({self._max_words} Wörter), kann '{word}' nicht hinzufügen"
+                            best_correction = min(
+                                candidates, key=lambda x: abs(len(x) - len(word))
                             )
+                            best_language = self._primary_language
 
-            # Ergebnis ausgeben
+                # Falls keine Korrektur gefunden, versuche die andere Sprache
+                if not best_correction:
+                    other_lang = "en" if self._primary_language == "de" else "de"
+                    if other_lang in self._spell_checkers:
+                        spell_checker = self._spell_checkers[other_lang]
+                        if word not in spell_checker:
+                            candidates = spell_checker.candidates(word)
+                            if candidates:
+                                best_correction = min(
+                                    candidates, key=lambda x: abs(len(x) - len(word))
+                                )
+                                best_language = other_lang
+
+                # Wende Korrektur an wenn gefunden und ähnlich genug
+                if best_correction and self._is_similar_word(word, best_correction):
+                    corrected_text = re.sub(
+                        r"\b" + re.escape(word) + r"\b",
+                        best_correction,
+                        corrected_text,
+                        flags=re.IGNORECASE,
+                    )
+                    corrections_made.append(
+                        f"Rechtschreibung ({best_language}): {word} -> {best_correction}"
+                    )
+
+            # Automatisch unbekannte Wörter zum Wörterbuch hinzufügen (falls aktiviert)
+            if self._auto_add_unknown and self._custom_dictionary:
+                for word in words_to_check:
+                    if (
+                        self._custom_dictionary.get_word_count() < self._max_words
+                        or self._max_words == 0
+                    ):
+                        if self._custom_dictionary.add_word(word):
+                            self.logger.debug(
+                                f"Wort '{word}' automatisch zum Wörterbuch hinzugefügt"
+                            )
+                    else:
+                        self.logger.warning(
+                            f"Wörterbuch ist voll ({self._max_words} Wörter), kann '{word}' nicht hinzufügen"
+                        )
+
+            # Ergebnis ausgeben nur bei Korrekturen
             if corrections_made and corrected_text != text:
                 self.logger.info("Korrekturen angewendet:")
                 for correction in corrections_made:
                     self.logger.info(f"  - {correction}")
-                self.logger.info(f"  Vorher: {text}")
-                self.logger.info(f"  Nachher: {corrected_text}")
 
             return corrected_text
 
@@ -301,7 +329,9 @@ class SpellChecker:
 
             # Filtere Wörter, die im benutzerdefinierten Wörterbuch sind
             if self._custom_dictionary:
-                words_to_check = [word for word in words if not self._custom_dictionary.has_word(word)]
+                words_to_check = [
+                    word for word in words if not self._custom_dictionary.has_word(word)
+                ]
             else:
                 words_to_check = words
 
@@ -434,8 +464,8 @@ class SpellChecker:
     def close(self) -> None:
         """Schließt den SpellChecker und gibt Ressourcen frei."""
         try:
-            if self._spell_checker:
-                self._spell_checker = None
+            if self._spell_checkers:
+                self._spell_checkers.clear()
             self.logger.info("🔒 SpellChecker geschlossen")
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Schließen des SpellCheckers: {e}")

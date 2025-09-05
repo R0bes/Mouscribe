@@ -1,7 +1,7 @@
 # src/config.py - Configuration management for Mauscribe
 """
-Simplified configuration management for Mauscribe application.
-Handles TOML configuration file loading with clean, unified structure.
+Improved configuration management for Mauscribe application.
+Handles TOML configuration file loading with clean, unified structure and validation.
 """
 
 import tomllib
@@ -27,11 +27,62 @@ class Config:
                 self._config_data = tomllib.load(f)
             self.logger.debug(f"Configuration loaded from {self.config_path}")
         except FileNotFoundError:
-            self.logger.info(f"Configuration file {self.config_path} not found, using defaults")
+            self.logger.info(
+                f"Configuration file {self.config_path} not found, using defaults"
+            )
             self._config_data = {}
         except Exception as e:
             self.logger.error(f"Error loading configuration: {e}, using defaults")
             self._config_data = {}
+
+    def save_config(self) -> None:
+        """Save current configuration to TOML file.
+
+        This method ensures that the complete configuration structure is preserved
+        and written to the TOML file, maintaining all existing sections and values.
+        """
+        try:
+            import tomli_w
+
+            # Ensure we have a complete configuration structure
+            # The _config_data should already contain all sections from the original file
+            # plus any new values that have been set
+
+            with open(self.config_path, "wb") as f:
+                tomli_w.dump(self._config_data, f)
+            self.logger.debug(f"Configuration saved to {self.config_path}")
+        except Exception as e:
+            self.logger.error(f"Error saving configuration: {e}")
+
+    def set_whisper_model(self, model: str) -> None:
+        """Set Whisper model and save to configuration.
+
+        Args:
+            model: Whisper model size (tiny, base, small, medium, large)
+        """
+        valid_models = ["tiny", "base", "small", "medium", "large"]
+        if model not in valid_models:
+            self.logger.warning(
+                f"Invalid Whisper model: {model}. Valid models: {valid_models}"
+            )
+            return
+
+        # Ensure transcription section exists
+        if "transcription" not in self._config_data:
+            self._config_data["transcription"] = {}
+
+        # Update the configuration value
+        self._config_data["transcription"]["whisper_model"] = model
+        self.save_config()
+        self.logger.info(f"Whisper model changed to: {model}")
+
+    def get_available_whisper_models(self) -> list[str]:
+        """Get list of available Whisper models.
+
+        Returns:
+            List of available Whisper model names
+        """
+        return ["tiny", "base", "small", "medium", "large"]
 
     def _get(self, key: str, default: Any = None) -> Any:
         """Get configuration value with dot notation support."""
@@ -45,6 +96,28 @@ class Config:
                 return default
 
         return value
+
+    def _validate_notification_config(
+        self, key: str, value: Any, expected_type: type, min_value: Optional[Any] = None
+    ) -> Any:
+        """Validate notification configuration values."""
+        try:
+            if not isinstance(value, expected_type):
+                self.logger.warning(
+                    f"⚠️ Ungültiger Typ für {key}: erwartet {expected_type.__name__}, erhalten {type(value).__name__}"
+                )
+                return None
+
+            if min_value is not None and value < min_value:
+                self.logger.warning(
+                    f"⚠️ Ungültiger Wert für {key}: {value} ist kleiner als {min_value}"
+                )
+                return None
+
+            return value
+        except Exception as e:
+            self.logger.error(f"❌ Fehler bei der Validierung von {key}: {e}")
+            return None
 
     # Input properties
     @property
@@ -77,6 +150,21 @@ class Config:
         """Get secondary button method configuration."""
         return self._get("input.secondary.method", {"hold": 1})
 
+    @property
+    def third_name(self) -> str:
+        """Get third button name."""
+        return self._get("input.third.name", "m_x1")
+
+    @property
+    def third_type(self) -> str:
+        """Get third button type."""
+        return self._get("input.third.type", "mouse_button")
+
+    @property
+    def third_method(self) -> dict:
+        """Get third button method configuration."""
+        return self._get("input.third.method", {"click": True})
+
     # Behavior properties
     @property
     def behavior_debounce_time(self) -> float:
@@ -86,7 +174,7 @@ class Config:
     @property
     def behavior_auto_paste_after_transcription(self) -> bool:
         """Get auto-paste after transcription setting."""
-        return self._get("behavior.auto_paste_after_transcription", True)
+        return self._get("behavior.auto_paste_after_transcription", False)
 
     # Audio properties
     @property
@@ -176,12 +264,29 @@ class Config:
     @property
     def dictionary_path(self) -> str:
         """Get dictionary path."""
-        return self._get("dictionary.path", "")
+        return self._get("dictionary.path", "data/config/custom_dictionary.json")
+
+    @property
+    def dictionary_filename(self) -> str:
+        """Get dictionary filename."""
+        return self._get("dictionary.filename", "custom_dictionary.json")
 
     @property
     def dictionary_max_words(self) -> int:
         """Get maximum words in dictionary."""
         return self._get("dictionary.max_words", 1000)
+
+    def get_dictionary_file_path(self) -> str:
+        """Get the full path to the dictionary file."""
+        from pathlib import Path
+
+        # If path is absolute, use it directly
+        if Path(self.dictionary_path).is_absolute():
+            return self.dictionary_path
+
+        # Otherwise, resolve relative to project root
+        project_root = Path(__file__).parent.parent.parent
+        return str(project_root / self.dictionary_path)
 
     # Debug properties
     @property
@@ -228,7 +333,7 @@ class Config:
     @property
     def logging_filename(self) -> str:
         """Get log filename."""
-        return self._get("logging.filename", "mauscribe.log")
+        return self._get("logging.filename", "logs/mauscribe.log")
 
     @property
     def logging_suppress_external(self) -> bool:
@@ -261,31 +366,42 @@ class Config:
         """Get updates include prereleases setting."""
         return self._get("updates.include_prereleases", False)
 
-    # Notification properties
-    @property
-    def notifications_enabled(self) -> bool:
-        """Get notifications enabled setting."""
-        return self._get("notifications.enabled", True)
-
+    # Notification properties with validation
     @property
     def notifications_duration(self) -> int:
-        """Get notification duration in milliseconds."""
-        return self._get("notifications.duration", 5000)
+        """Get notification duration in milliseconds with validation."""
+        value = self._get("notifications.duration", 3000)
+        validated_value = self._validate_notification_config(
+            "notifications.duration", value, int, 100
+        )
+        return validated_value if validated_value is not None else 3000
 
     @property
     def notifications_sound(self) -> bool:
-        """Get notification sound setting."""
-        return self._get("notifications.sound", True)
+        """Get notification sound setting with validation."""
+        value = self._get("notifications.sound", True)
+        validated_value = self._validate_notification_config(
+            "notifications.sound", value, bool
+        )
+        return validated_value if validated_value is not None else True
 
     @property
     def notifications_toast(self) -> bool:
-        """Get notification toast setting."""
-        return self._get("notifications.toast", True)
+        """Get notification toast setting with validation."""
+        value = self._get("notifications.toast", True)
+        validated_value = self._validate_notification_config(
+            "notifications.toast", value, bool
+        )
+        return validated_value if validated_value is not None else True
 
     @property
     def notifications_show_all(self) -> bool:
-        """Get show all notifications setting."""
-        return self._get("notifications.show_all", True)
+        """Get show all notifications setting with validation."""
+        value = self._get("notifications.show_all", True)
+        validated_value = self._validate_notification_config(
+            "notifications.show_all", value, bool
+        )
+        return validated_value if validated_value is not None else True
 
     # Database properties
     @property
@@ -337,6 +453,32 @@ class Config:
     def database_backup_before_cleanup(self) -> bool:
         """Get backup before cleanup setting."""
         return self._get("database.backup_before_cleanup", True)
+
+    # GUI properties
+    @property
+    def gui_auto_start(self) -> bool:
+        """Get GUI auto-start setting."""
+        return self._get("gui.auto_start", True)
+
+    @property
+    def gui_window_width(self) -> int:
+        """Get GUI window width."""
+        return self._get("gui.window_width", 800)
+
+    @property
+    def gui_window_height(self) -> int:
+        """Get GUI window height."""
+        return self._get("gui.window_height", 600)
+
+    @property
+    def gui_theme(self) -> str:
+        """Get GUI theme setting."""
+        return self._get("gui.theme", "default")
+
+    @property
+    def gui_show_on_startup(self) -> bool:
+        """Get GUI show on startup setting."""
+        return self._get("gui.show_on_startup", True)
 
     # Legacy compatibility properties (for backward compatibility)
     @property

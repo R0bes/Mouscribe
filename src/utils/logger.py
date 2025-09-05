@@ -30,8 +30,16 @@ def setup_logging(config=None):
     # Get logging settings from config or use defaults
     if config and hasattr(config, "logging_enabled") and config.logging_enabled:
         # Parse log levels from config
-        console_level_str = config.logging_console_level if hasattr(config, "logging_console_level") else "INFO"
-        file_level_str = config.logging_file_level if hasattr(config, "logging_file_level") else "DEBUG"
+        console_level_str = (
+            config.logging_console_level
+            if hasattr(config, "logging_console_level")
+            else "INFO"
+        )
+        file_level_str = (
+            config.logging_file_level
+            if hasattr(config, "logging_file_level")
+            else "DEBUG"
+        )
 
         # Convert string levels to logging constants
         level_map = {
@@ -46,17 +54,29 @@ def setup_logging(config=None):
         file_level = level_map.get(file_level_str.upper(), logging.DEBUG)
 
         # Check if file logging is enabled
-        file_enabled = config.logging_file_enabled if hasattr(config, "logging_file_enabled") else True
-        log_filename = config.logging_filename if hasattr(config, "logging_filename") else "mauscribe.log"
+        file_enabled = (
+            config.logging_file_enabled
+            if hasattr(config, "logging_file_enabled")
+            else True
+        )
+        log_filename = (
+            config.logging_filename
+            if hasattr(config, "logging_filename")
+            else "logs/mauscribe.log"
+        )
 
         # Check if external log suppression is enabled
-        suppress_external = config.logging_suppress_external if hasattr(config, "logging_suppress_external") else True
+        suppress_external = (
+            config.logging_suppress_external
+            if hasattr(config, "logging_suppress_external")
+            else True
+        )
     else:
         # Default values if no config or logging disabled
         console_level = logging.INFO
         file_level = logging.DEBUG
         file_enabled = True
-        log_filename = "mauscribe.log"
+        log_filename = "logs/mauscribe.log"
         suppress_external = True
 
     # Create formatter
@@ -227,7 +247,9 @@ def get_logger(name: str, config=None) -> MauscribeLogger:
 
 
 # Convenience function for quick emoji logging
-def log_with_emoji(level: str, message: str, emoji: str = "", logger_name: Optional[str] = None) -> None:
+def log_with_emoji(
+    level: str, message: str, emoji: str = "", logger_name: Optional[str] = None
+) -> None:
     """Quick logging function with emoji support.
 
     Args:

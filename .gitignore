@@ -1,3 +1,6 @@
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -25,7 +28,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -35,6 +37,8 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+lib/
+data/
 MANIFEST
 
 # PyInstaller
@@ -194,8 +198,6 @@ test-results/
 test-output/
 bandit-report.json
 
-# Pre-commit
-.pre-commit-config.yaml.bak
 
 # Temporary files
 *.tmp

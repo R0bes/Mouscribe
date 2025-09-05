@@ -192,7 +192,7 @@ class AudioRecorder:
             )
 
             self._stream.start()
-            self.logger.info(f"🎙️  Audio-Stream gestartet auf Gerät: {self._selected_device['name']}")
+            self.logger.debug(f"🎙️  Audio-Stream gestartet auf Gerät: {self._selected_device['name']}")
 
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Starten des Audio-Streams: {e}")
@@ -254,7 +254,7 @@ class AudioRecorder:
             if audio.ndim == 2 and audio.shape[1] > 1:
                 audio = np.mean(audio, axis=1)
 
-            self.logger.info(f"✅ Aufnahme gestoppt: {len(audio)} Samples, {recording_duration:.2f}s")
+            self.logger.debug(f"✅ Aufnahme gestoppt: {len(audio)} Samples, {recording_duration:.2f}s")
             return audio.astype(np.float32)
 
         except Exception as e:

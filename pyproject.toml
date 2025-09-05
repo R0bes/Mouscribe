@@ -2,7 +2,7 @@
 [project]
 name = "mauscribe"
 version = "1.0.0"
-description = "Voice-to-Text Tool mit Push-to-Talk und automatischem Clipboard-Management"
+description = "Voice-to-Text Tool mit Push-to-Talk und Clipboard-Management"
 authors = [
     {name = "Robs", email = "rob.schwe@gmail.com"}
 ]
@@ -58,3 +58,54 @@ exclude = [
     ".venv/",
     ".env/"
 ]
+
+[tool.flake8]
+max-line-length = 127
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "env",
+    ".env",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".pytest_cache",
+    ".coverage",
+    "coverage_html"
+]
+ignore = [ "E203", "W503", "F401", "F841", "E402", "C901", "E265", "E501" ]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/__init__.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod"
+]
+
+[tool.coverage.html]
+directory = "coverage_html"
+
+[tool.coverage.xml]
+output = "coverage.xml"

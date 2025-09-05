@@ -19,20 +19,27 @@ class CustomDict:
     Das Wörterbuch wird in einer JSON-Datei gespeichert und automatisch geladen.
     """
 
-    def __init__(self, dictionary_path: Optional[str] = None):
+    def __init__(self, dictionary_path: Optional[str] = None, config=None):
         """
         Initialisiert das benutzerdefinierte Wörterbuch.
 
         Args:
             dictionary_path: Pfad zur Wörterbuch-Datei (optional)
+            config: Config-Objekt für Pfad-Konfiguration (optional)
         """
         self.logger = get_logger(self.__class__.__name__)
 
         if dictionary_path is None:
-            # Standard-Pfad im Benutzerverzeichnis
-            user_dir = Path.home() / ".mauscribe"
-            user_dir.mkdir(exist_ok=True)
-            dictionary_path = str(user_dir / "custom_dictionary.json")
+            if config:
+                # Verwende konfigurierten Pfad
+                dictionary_path = config.get_dictionary_file_path()
+            else:
+                # Fallback: Standard-Pfad im data/config Ordner
+                project_root = Path(__file__).parent.parent.parent
+                data_dir = project_root / "data" / "config"
+                data_dir.mkdir(parents=True, exist_ok=True)
+                dictionary_path = str(data_dir / "custom_dictionary.json")
+
         self.dictionary_path = Path(dictionary_path)
         self._words: set[str] = set()
         self._load_dictionary()
@@ -45,7 +52,9 @@ class CustomDict:
                     data = json.load(f)
                     self._words = set(data.get("words", []))
             else:
-                self.logger.info("Kein benutzerdefiniertes Wörterbuch gefunden, erstelle neues")
+                self.logger.info(
+                    "Kein benutzerdefiniertes Wörterbuch gefunden, erstelle neues"
+                )
                 self._words = set()
         except Exception as e:
             self.logger.error(f"Fehler beim Laden des Wörterbuchs: {e}")
@@ -200,7 +209,9 @@ class CustomDict:
             if self.add_word(word):
                 imported_count += 1
 
-        self.logger.info(f"{imported_count} von {len(words)} Wörtern erfolgreich importiert")
+        self.logger.info(
+            f"{imported_count} von {len(words)} Wörtern erfolgreich importiert"
+        )
         return imported_count
 
     def export_words(self) -> list[str]:
@@ -233,7 +244,11 @@ class CustomDict:
             "word_count": self.get_word_count(),
             "words": self.get_all_words(),
             "exists": self.dictionary_path.exists(),
-            "file_size": (self.dictionary_path.stat().st_size if self.dictionary_path.exists() else 0),
+            "file_size": (
+                self.dictionary_path.stat().st_size
+                if self.dictionary_path.exists()
+                else 0
+            ),
         }
 
 
@@ -241,11 +256,11 @@ class CustomDict:
 _custom_dictionary: Optional[CustomDict] = None
 
 
-def get_custom_dictionary() -> CustomDict:
+def get_custom_dictionary(config=None) -> CustomDict:
     """Gibt die globale CustomDictionary-Instanz zurück."""
     global _custom_dictionary
     if _custom_dictionary is None:
-        _custom_dictionary = CustomDict()
+        _custom_dictionary = CustomDict(config=config)
     return _custom_dictionary
 
 

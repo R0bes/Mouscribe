@@ -45,6 +45,7 @@ class InputHandler:
         self,
         primary_callback: Callable[[bool], None] | None,
         secondary_callback: Callable[[bool], None] | None,
+        third_callback: Callable[[bool], None] | None = None,
     ) -> None:
         self.log = get_logger(self.__class__.__name__)
         self.config = Config()
@@ -53,6 +54,7 @@ class InputHandler:
         # Direct callbacks
         self.primary_callback = primary_callback
         self.secondary_callback = secondary_callback
+        self.third_callback = third_callback
 
         # Debounce settings
         self._mouse_ms = 200
@@ -64,7 +66,12 @@ class InputHandler:
         self._kl: keyboard.Listener | None = None
         self._active = False
 
-        self._start()
+        # Don't start automatically - will be started by the main app
+
+    def start(self) -> None:
+        """Start input listeners."""
+        if not self._active:
+            self._start()
 
     def stop(self) -> None:
         """Stop all input listeners."""
@@ -82,12 +89,15 @@ class InputHandler:
     def _start(self) -> None:
         """Start input listeners."""
         try:
+            self.log.info("🚀 Starting input listeners...")
             self._ml = mouse.Listener(on_click=self._on_mouse_click)
-            self._kl = keyboard.Listener(on_press=self._on_key_press, on_release=self._on_key_release)
+            self._kl = keyboard.Listener(
+                on_press=self._on_key_press, on_release=self._on_key_release
+            )
             self._ml.start()
             self._kl.start()
             self._active = True
-            self.log.info("Input listeners started")
+            self.log.info("Input listeners started successfully")
         except Exception as e:
             self.log.error(f"Failed to start listeners: {e}")
             raise
@@ -96,7 +106,9 @@ class InputHandler:
         """Handle mouse click events."""
         try:
             # Debounce check
-            if self._db.hit(f"mouse:{btn}:{'down' if pressed else 'up'}", self._mouse_ms):
+            if self._db.hit(
+                f"mouse:{btn}:{'down' if pressed else 'up'}", self._mouse_ms
+            ):
                 return
 
             # Check primary button
@@ -109,6 +121,12 @@ class InputHandler:
             secondary_btn = self.mapper.get_secondary_mouse_button()
             if btn == secondary_btn:
                 self._trigger_callback(self.secondary_callback, pressed)
+                return
+
+            # Check third button
+            third_btn = self.mapper.get_third_mouse_button()
+            if btn == third_btn:
+                self._trigger_callback(self.third_callback, pressed)
                 return
 
         except Exception as e:
@@ -141,17 +159,26 @@ class InputHandler:
                 self._trigger_callback(self.secondary_callback, pressed)
                 return
 
+            # Check third key
+            third_key = self.mapper.get_third_keyboard_key()
+            if key == third_key:
+                self._trigger_callback(self.third_callback, pressed)
+                return
+
         except Exception as e:
             self.log.error(f"Keyboard handler error: {e}")
 
-    def _trigger_callback(self, callback: Callable[[bool], None] | None, pressed: bool) -> None:
+    def _trigger_callback(
+        self, callback: Callable[[bool], None] | None, pressed: bool
+    ) -> None:
         """Safely trigger a callback if it exists."""
         if callback:
             try:
                 callback(pressed)
-                self.log.debug(f"Callback triggered: pressed={pressed}")
             except Exception as e:
                 self.log.error(f"Callback error: {e}")
+        else:
+            self.log.warning(f"No callback registered for event: pressed={pressed}")
 
     def is_active(self) -> bool:
         """Check if input handler is active."""
