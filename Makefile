@@ -1,442 +1,167 @@
-# 🚀 Makefile für Chat Backend Agent
-# Einheitliche Workflows für Entwicklung und Deployment
+# Mauscribe - Voice-to-Text Tool
+# Elegant and functional Makefile for development workflow
 
-# Windows-spezifische Shell-Einstellungen
+.PHONY: help setup install-dev check tests validate fix run clean install-windows install-linux
+.DEFAULT_GOAL := help
+
+# Project configuration
+PROJECT_NAME := mauscribe
+VENV_DIR := .venv
+PYTHON := python
+PIP := $(VENV_DIR)/Scripts/pip.exe
+PYTHON_VENV := $(VENV_DIR)/Scripts/python.exe
+
+# Detect operating system
 ifeq ($(OS),Windows_NT)
-SHELL := powershell.exe
-.SHELLFLAGS := -NoProfile -ExecutionPolicy Bypass -Command
-.ONESHELL:
+    DETECTED_OS := windows
+else
+    DETECTED_OS := linux
+    PYTHON := python3
+    PIP := $(VENV_DIR)/bin/pip
+    PYTHON_VENV := $(VENV_DIR)/bin/python
 endif
 
+# Help target - shows available commands
+help: ## Show this help message
+	@echo "Mauscribe Development Commands"
+	@echo "================================"
+	@echo ""
+	@echo "Setup & Installation:"
+	@echo "  setup           Create virtual environment if not present"
+	@echo "  install-dev     Install all development dependencies"
+	@echo "  install-windows Install Windows-specific dependencies"
+	@echo "  install-linux   Install Linux-specific dependencies"
+	@echo ""
+	@echo "Development:"
+	@echo "  check           Run all static code analysis"
+	@echo "  tests           Run all dynamic tests"
+	@echo "  tests-coverage  Run tests with detailed coverage"
+	@echo "  validate        Run complete validation (checks + tests)"
+	@echo "  fix             Auto-fix code issues"
+	@echo "  run             Run the Mauscribe application"
+	@echo "  run-dev         Run application in development mode"
+	@echo "  dev             Quick development cycle (fix + check + test)"
+	@echo ""
+	@echo "Maintenance:"
+	@echo "  clean           Clean up generated files and caches"
+	@echo "  status          Show project status and environment info"
+	@echo "  help            Show this help message"
 
-# 🎯 Standardziel
-.PHONY: help, server_up, ui_up, ui_down, up, down, clean, commit, push, status, release, release-patch, release-minor, release-major
-help:
-	@echo 🌟 Verfügbare Kommandos:
-	@echo
-	@echo 🖥️  Server Management:
-	@echo     server_up    - 🚀 Startet den Python-Server
-	@echo     server_down  - 🛑 Stoppt den Python-Server
-	@echo
-	@echo 🎨 UI Management:
-	@echo     ui_up        - 🚀 Startet die Vite-UI im Entwicklungsmodus
-	@echo     ui_down      - 🛑 Stoppt die Vite-UI
-	@echo
-	@echo 🔄 Kombinierte Kommandos:
-	@echo     up           - 🚀 Startet sowohl Server als auch UI
-	@echo     down         - 🛑 Stoppt sowohl Server als auch UI
-	@echo
-	@echo 🧹 Wartung:
-	@echo     clean        - 🧹 Räumt temporäre Dateien auf
-	@echo
-	@echo 📝 Git Commands:
-	@echo     commit MSG="message"       - 💾 Git commit mit Nachricht + Pre-Commit
-	@echo     fcommit MSG="message"      - 🚀 Schneller Commit ohne Checks
-	@echo     push                        - 📤 Git push zum Remote-Repository
-	@echo     git MSG="message"          - 🚀 Commit und Push in einem Schritt
-	@echo
-	@echo 🔄 Pull Request Management:
-	@echo     pr                          - 🔄 Erstellt PR automatisch (Commit + Push + PR)
-	@echo     pr-draft                    - 🔄 Erstellt Draft PR
-	@echo     pr-merge                    - 🔄 Erstellt PR und merged nach Pipeline-Erfolg
-	@echo
-	@echo 🔒 Pre-Commit Checks:
-	@echo     pre-commit   - 🔒 Führt Tests und Linting aus
-	@echo     lint-check   - 🔍 Prüft Code-Format und Qualität
-	@echo
-	@echo 💡 Beispiele:
-	@echo     make commit MSG="Fix bug"           - Commit mit Nachricht + Pre-Commit Checks
-	@echo     make fcommit MSG="Quick fix"        - Schneller Commit ohne Checks
-	@echo     make git MSG="Update code"          - Commit und Push in einem Schritt
-	@echo     make pr MSG="New feature"           - Commit, Push und PR erstellen
-	@echo     make pr-draft MSG="Work in progress" - Draft PR erstellen
-	@echo     make pr-merge MSG="Ready to merge"  - PR erstellen und nach Pipeline mergen
-	@echo
-	@echo 🧪 Testing:
-	@echo     test-all     - 🧪 Alle Tests ausführen
-	@echo     test-unit    - 🔬 Nur Unit Tests
-	@echo     test-e2e     - 🌐 End-to-End Tests
-	@echo     test-help    - 📚 Hilfe für Test-Kommandos
-	@echo
-	@echo 🚀 Release Management:
-	@echo     release VERSION=X.Y.Z - 🏷️  Erstellt neuen Release mit Version
-	@echo     release-patch          - 🔧 Patch-Release (1.0.0 → 1.0.1)
-	@echo     release-minor          - ✨ Minor-Release (1.0.0 → 1.1.0)
-	@echo     release-major          - 🎉 Major-Release (1.0.0 → 2.0.0)
-
-
-status:
-	@echo 🔍 Git Status...
-	git status
-
-# 🖥️ Server Management
-.PHONY: server_up
-server_up:
-	@echo 🚀 Starte Python-Server...
-	@cd server && python3 main.py
-
-.PHONY: server_down
-server_down:
-	@echo 🛑 Stoppe Python-Server...
-	@echo ⚠️  Verwende Ctrl+C um den Server zu stoppen
-
-# 🎨 UI Management
-.PHONY: ui_up
-ui_up:
-	@echo 🎨 Starte Vite-UI im Entwicklungsmodus...
-	@cd ui && npm run dev &
-
-.PHONY: ui_down
-ui_down:
-	@echo 🛑 Stoppe Vite-UI...
-	@bash -c 'pgrep -f "vite" | xargs kill 2>/dev/null || true'
-	@bash -c 'pgrep -f "node.*vite" | xargs kill 2>/dev/null || true'
-	@echo ✅ Vite-UI gestoppt
-
-# 🔄 Kombinierte Kommandos
-.PHONY: up
-up: ui_up server_up
-	@echo 🎉 Alle Services erfolgreich gestartet! 🚀
-
-.PHONY: down
-down: server_down ui_down
-	@echo 🛑 Alle Services gestoppt
-
-# 🧹 Cleanup
-.PHONY: clean
-clean:
-	@echo 🧹 Räume temporäre Dateien auf...
-	@rm -rf server/__pycache__
-	@rm -rf ui/dist
-	@rm -rf ui/node_modules
-	@echo ✅ Aufräumen abgeschlossen!
-
-# 🧪 Test Commands
-.PHONY: test test-unit test-integration test-e2e test-all test-coverage test-mutation test-clean
-
-# 🧪 Run all tests (Mauscribe)
-test:
-	@echo 🧪 Führe Mauscribe Tests aus...
-	python -m pytest tests/ -v
-	@echo 🎉 Tests abgeschlossen!
-
-# 🔬 Run unit tests only
-test-unit: test-install
-	@echo 🔬 Führe Unit Tests aus...
-	pytest tests/unit/ -v --cov=server --cov-report=html
-	@echo ✅ Unit Tests abgeschlossen!
-
-# 🔗 Run integration tests only
-test-integration: test-install
-	@echo 🔗 Führe Integration Tests aus...
-	pytest tests/integration/ -v
-	@echo ✅ Integration Tests abgeschlossen!
-
-# 🌐 Run E2E tests only
-test-e2e: test-install
-	@echo 🌐 Führe End-to-End Tests aus...
-	pytest tests/e2e/ -v
-	@echo ✅ E2E Tests abgeschlossen!
-
-# 📊 Run tests with coverage report
-test-coverage: test-install
-	@echo 📊 Führe Tests mit Coverage-Report aus...
-	pytest tests/ -v --cov=server --cov-report=html --cov-report=xml --cov-fail-under=70
-	@echo 📈 Coverage-Report erstellt!
-
-# 🧬 Run mutation testing
-test-mutation: test-install
-	@echo 🧬 Führe Mutation Testing aus...
-	mutmut run --paths-to-mutate=server/
-	@echo 🧬 Mutation Testing abgeschlossen!
-
-# ⚡ Run performance tests
-test-performance: test-install
-	@echo ⚡ Führe Performance Tests aus...
-	pytest tests/ -v --benchmark-only
-	@echo ⚡ Performance Tests abgeschlossen!
-
-# 🔒 Run security tests
-test-security: test-install
-	@echo 🔒 Führe Security Tests aus...
-	pytest tests/ -v -m security
-	@echo 🔒 Security Tests abgeschlossen!
-
-# 🚀 Run tests in parallel
-test-parallel: test-install
-	@echo 🚀 Führe Tests parallel aus...
-	pytest tests/ -v -n auto
-	@echo 🚀 Parallele Tests abgeschlossen!
-
-# 🧹 Clean test artifacts
-test-clean:
-	@echo 🧹 Räume Test-Artefakte auf...
-	rm -rf htmlcov/
-	rm -rf .coverage
-	rm -rf .pytest_cache/
-	rm -rf .mutmut-cache/
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-	@echo ✅ Test-Aufräumen abgeschlossen!
-
-# ⚡ Quick test run (unit tests only, no coverage)
-test-quick: test-install
-	@echo ⚡ Schneller Test-Lauf (nur Unit Tests)...
-	pytest tests/unit/ -v --tb=short
-	@echo ⚡ Schneller Test abgeschlossen!
-
-# 🎯 Test specific module
-test-module: test-install
-	@if [ -z "$(MODULE)" ]; then \
-		echo ❌ Fehler: MODULE Parameter fehlt; \
-		echo 💡 Verwendung: make test-module MODULE=server.api; \
-		exit 1; \
-	fi
-	@echo 🎯 Teste spezifisches Modul: $(MODULE)
-	pytest tests/ -v -k "$(MODULE)" --cov=$(MODULE) --cov-report=html
-	@echo ✅ Modul-Test abgeschlossen!
-
-# 📊 Show test coverage
-coverage: test-coverage
-	@echo 📊 Öffne Coverage-Report...
-	@if command -v open >/dev/null 2>&1; then \
-		open htmlcov/index.html; \
-	elif command -v xdg-open >/dev/null 2>&1; then \
-		xdg-open htmlcov/index.html; \
-	else \
-		echo 📊 Coverage-Report verfügbar unter: htmlcov/index.html; \
-	fi
-
-# 📚 Test help
-test-help:
-	@echo 📚 Verfügbare Test-Kommandos:
-	@echo
-	@echo 🧪 Vollständige Tests:
-	@echo   test-all        - 🧪 Alle Tests mit Coverage
-	@echo   test-coverage   - 📊 Tests mit Coverage-Report
-	@echo   test-mutation   - 🧬 Mutation Testing
-	@echo   test-performance- ⚡ Performance Tests
-	@echo   test-security   - 🔒 Security Tests
-	@echo   test-parallel   - 🚀 Tests parallel ausführen
-	@echo
-	@echo 🔬 Spezifische Tests:
-	@echo   test-unit       - 🔬 Nur Unit Tests
-	@echo   test-integration- 🔗 Nur Integration Tests
-	@echo   test-e2e        - 🌐 Nur E2E Tests
-	@echo   test-module     - 🎯 Spezifisches Modul testen
-	@echo
-	@echo ⚡ Schnelle Tests:
-	@echo   test-quick      - ⚡ Schneller Test-Lauf (Unit only)
-	@echo
-	@echo 🧹 Wartung:
-	@echo   test-clean      - 🧹 Test-Artefakte aufräumen
-	@echo   coverage        - 📊 Coverage-Report im Browser öffnen
-	@echo
-	@echo 💡 Beispiel: make test-module MODULE=server.api
-
-# 📝 Git Commands
-.PHONY: commit
-commit: pre-commit
-	@echo 📝 Git Status:
-	@git status --short
-	@echo
-	@echo 💾 Committing changes...
-	@git add .
-ifeq ($(OS),Windows_NT)
-	@if "$(MSG)"=="" ( \
-		set /p message="Commit message: " && git commit -m "!message!" --no-verify \
+# Setup virtual environment
+setup: ## Create virtual environment if not present
+	@echo "Setting up development environment..."
+	@if not exist "$(VENV_DIR)" ( \
+		echo "Creating virtual environment..." & \
+		$(PYTHON) -m venv $(VENV_DIR) & \
+		echo "Virtual environment created" \
 	) else ( \
-		git commit -m "$(MSG)" --no-verify \
+		echo "Virtual environment already exists" \
 	)
-else
-	@if [ -z "$(MSG)" ]; then \
-		read -p "Commit message: " message; git commit -m "$$message" --no-verify; \
-	else \
-		git commit -m "$(MSG)" --no-verify; \
-	fi
-endif
-	@echo ✅ Commit erfolgreich!
+	@echo "Detected OS: $(DETECTED_OS)"
 
-# 🔒 Pre-Commit Hook
-.PHONY: pre-commit
-pre-commit:
-	@echo 🔒 Pre-Commit Checks werden ausgeführt...
-	@echo 🧪 Führe Tests aus...
-	@$(MAKE) test
-	@echo 🔍 Prüfe Code-Format...
-	@$(MAKE) lint
-	@echo ✅ Pre-Commit Checks erfolgreich!
-	@echo
-
-# 🔍 Linting und Code-Qualität (Mauscribe)
-.PHONY: lint
-lint:
-	@echo 🔍 Prüfe Mauscribe Code-Qualität...
-	@echo 🧪 Führe Linting aus...
-	flake8 src/ tests/ || echo ⚠️  Linting mit Warnungen abgeschlossen
-	@echo 🔍 Prüfe Code-Format...
-	black --check src/ tests/ || echo ⚠️  Format-Check mit Warnungen abgeschlossen
-	@echo 🔍 Prüfe Imports...
-	isort --check-only src/ tests/ || echo ⚠️  Import-Check mit Warnungen abgeschlossen
-	@echo 🔍 Prüfe Typen...
-	mypy src/ --ignore-missing-imports || echo ⚠️  Typ-Check mit Warnungen abgeschlossen
-	@echo ✅ Linting-Checks abgeschlossen!
-
-# 🚀 Fast Commit (ohne Pre-Commit Checks)
-.PHONY: fcommit
-fcommit:
-	@echo 🚀 Schneller Commit ohne Pre-Commit Checks...
-	@echo 📝 Git Status:
-	@git status --short
-	@echo
-	@echo 💾 Committing changes...
-	@git add .
-ifeq ($(OS),Windows_NT)
-	@if "$(MSG)"=="" ( \
-		set /p message="Commit message: " && git commit -m "!message!" --no-verify \
+# Install development dependencies
+install-dev: setup ## Install all development dependencies
+	@echo "Installing dependencies for $(DETECTED_OS)..."
+	@$(PYTHON_VENV) -m pip install --upgrade pip
+	@$(PIP) install -e .
+	@if "$(DETECTED_OS)"=="windows" ( \
+		echo "Installing Windows-specific packages..." & \
+		$(PIP) install -e ".[windows]" \
 	) else ( \
-		git commit -m "$(MSG)" --no-verify \
+		echo "Installing Linux-specific packages..." & \
+		$(PIP) install -e ".[linux]" \
 	)
-else
-	@if [ -z "$(MSG)" ]; then \
-		read -p "Commit message: " message; git commit -m "$$message" --no-verify; \
-	else \
-		git commit -m "$(MSG)" --no-verify; \
-	fi
-endif
-	@echo ✅ Schneller Commit erfolgreich!
+	@$(PIP) install -e ".[dev]"
+	@echo "All dependencies installed successfully"
 
-.PHONY: push
-push:
-	@echo 📤 Pushe Änderungen zum Remote-Repository...
-	@echo 🔍 Git Push wird ausgeführt...
-	@git push
-	@echo ✅ Push erfolgreich abgeschlossen!
-	@echo
-	@echo 🔍 Pipeline-Monitor startet automatisch...
-	@python pipeline_monitor.py
+# Install Windows-specific dependencies
+install-windows: setup ## Install Windows-specific dependencies
+	@echo "Installing Windows-specific packages..."
+	@$(PIP) install -e ".[windows]"
+	@echo "Windows dependencies installed"
 
-.PHONY: monitor
-monitor:
-	@echo 🔍 Pipeline-Monitor startet...
-	@python pipeline_monitor.py
+# Install Linux-specific dependencies  
+install-linux: setup ## Install Linux-specific dependencies
+	@echo "Installing Linux-specific packages..."
+	@$(PIP) install -e ".[linux]"
+	@echo "Linux dependencies installed"
 
-.PHONY: push-and-monitor
-push-and-monitor: push
-	@echo
-	@echo 🔍 Pipeline-Monitor startet in 3 Sekunden...
-ifeq ($(OS),Windows_NT)
-	@timeout /t 3 /nobreak >nul
-else
-	@sleep 3
-endif
-	@$(MAKE) monitor
+# Run static code analysis and checks
+check: ## Run all static code analysis (linting, type checking, formatting)
+	@echo "Running static code analysis..."
+	@echo "Running Black formatter check..."
+	@$(PYTHON_VENV) -m black --check --diff src/ main.py
+	@echo "Running isort import sorting check..."
+	@$(PYTHON_VENV) -m isort --check-only --diff src/ main.py
+	@echo "Running Flake8 linting..."
+	@$(PYTHON_VENV) -m flake8 src/ main.py
+	@echo "Running MyPy type checking..."
+	@$(PYTHON_VENV) -m mypy src/ main.py
+	@echo "Running pre-commit hooks..."
+	@$(PYTHON_VENV) -m pre_commit run --all-files
+	@echo "All static checks passed"
 
-.PHONY: git
-git: commit push
-	@echo 🎉 Commit und Push erfolgreich abgeschlossen! 🚀
+# Run all tests
+tests: ## Run all dynamic tests
+	@echo "Running test suite..."
+	@$(PYTHON_VENV) -m pytest tests/ -v --tb=short --cov=src --cov-report=html --cov-report=term-missing
+	@echo "All tests completed"
 
-# 🔄 Pull Request Management
-.PHONY: pr
-pr: git
-	@echo 🔄 Erstelle Pull Request...
-	@echo 📋 Branch-Typ wird erkannt...
-ifeq ($(OS),Windows_NT)
-	@echo 🔄 Erstelle Pull Request für Windows...
-	@echo ⚠️  Windows PR-Erstellung wird noch nicht unterstützt
-	@echo 💡 Verwende 'make pr-draft' oder erstelle PR manuell
-	@echo 📋 Branch: $(shell git branch --show-current)
-	@echo 📝 PR-Typ: feature (für develop)
-	@echo ✅ Commit und Push erfolgreich - PR manuell erstellen
+# Run tests with coverage report
+tests-coverage: ## Run tests with detailed coverage report
+	@echo "Running tests with coverage..."
+	@$(PYTHON_VENV) -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing --cov-report=xml
+	@echo "Coverage report generated in htmlcov/index.html"
 
-else
-	@current_branch=$$(git branch --show-current) && \
-	if [ "$$current_branch" = "main" ] || [ "$$current_branch" = "develop" ]; then \
-		echo ❌ Kann keinen PR von $$current_branch Branch erstellen; \
-		exit 1; \
-	fi && \
-	if [[ "$$current_branch" == feature* ]]; then \
-		pr_type="feat" && base_branch="develop"; \
-	elif [[ "$$current_branch" == bugfix* ]]; then \
-		pr_type="fix" && base_branch="main"; \
-	elif [[ "$$current_branch" == hotfix* ]]; then \
-		pr_type="hotfix" && base_branch="main"; \
-	else \
-		pr_type="update" && base_branch="develop"; \
-	fi && \
-	echo 📝 PR-Typ: $$pr_type für $$base_branch && \
-	echo 🔄 Erstelle PR über GitHub CLI... && \
-	gh pr create --base $$base_branch --title "$$pr_type: $$current_branch" --body "Automated PR from $$current_branch branch" || echo ⚠️  GitHub CLI nicht verfügbar - PR manuell erstellen && \
-	echo ✅ Pull Request erstellt!
-endif
+# Validate everything (checks + tests)
+validate: check tests ## Run complete validation (checks + tests)
+	@echo "All validations passed!"
 
-.PHONY: pr-draft
-pr-draft: git
-	@echo 🔄 Erstelle Draft Pull Request...
-ifeq ($(OS),Windows_NT)
-	@echo 🔄 Erstelle Draft Pull Request für Windows...
-	@echo ⚠️  Windows PR-Erstellung wird noch nicht unterstützt
-	@echo 💡 Verwende 'make pr-draft' oder erstelle Draft PR manuell
-	@echo 📋 Branch: $(shell git branch --show-current)
-	@echo 📝 PR-Typ: feature (für develop)
-	@echo ✅ Commit und Push erfolgreich - Draft PR manuell erstellen
+# Auto-fix code issues where possible
+fix: ## Auto-fix code issues (formatting, imports, etc.)
+	@echo "Auto-fixing code issues..."
+	@echo "Running Black formatter..."
+	@$(PYTHON_VENV) -m black src/ main.py
+	@echo "Running isort import sorting..."
+	@$(PYTHON_VENV) -m isort src/ main.py
+	@echo "Running pre-commit auto-fix..."
+	@$(PYTHON_VENV) -m pre_commit run --all-files
+	@echo "Auto-fix completed"
 
-else
-	@current_branch=$$(git branch --show-current) && \
-	if [ "$$current_branch" = "main" ] || [ "$$current_branch" = "develop" ]; then \
-		echo ❌ Kann keinen PR von $$current_branch Branch erstellen; \
-		exit 1; \
-	fi && \
-	if [[ "$$current_branch" == feature* ]]; then \
-		pr_type="feat" && base_branch="develop"; \
-	elif [[ "$$current_branch" == bugfix* ]]; then \
-		pr_type="fix" && base_branch="main"; \
-	elif [[ "$$current_branch" == hotfix* ]]; then \
-		pr_type="hotfix" && base_branch="main"; \
-	else \
-		pr_type="update" && base_branch="develop"; \
-	fi && \
-	echo 📝 Draft PR-Typ: $$pr_type für $$base_branch && \
-	echo 🔄 Erstelle Draft PR über GitHub CLI... && \
-	gh pr create --base $$base_branch --title "$$pr_type: $$current_branch (Draft)" --body "Draft PR from $$current_branch branch" --draft || echo ⚠️  GitHub CLI nicht verfügbar - Draft PR manuell erstellen && \
-	echo ✅ Draft Pull Request erstellt!
-endif
+# Run the application
+run: ## Run the Mauscribe application
+	@echo "Starting Mauscribe..."
+	@$(PYTHON_VENV) python main.py
 
-.PHONY: pr-merge
-pr-merge: pr
-	@echo 🔄 Merge Pull Request...
-	@echo ⚠️  Warte auf Pipeline-Erfolg...
-	@echo 🔍 Prüfe Pipeline-Status...
-	@python pipeline_monitor.py --timeout 300 || echo ⚠️  Pipeline-Überwachung fehlgeschlagen
-	@echo 🔄 Merge PR über GitHub CLI...
-	@gh pr merge --merge || echo ⚠️  GitHub CLI nicht verfügbar - PR manuell mergen
-	@echo ✅ Pull Request erfolgreich gemergt!
+# Run application in development mode
+run-dev: ## Run application in development mode with debug output
+	@echo "Starting Mauscribe in development mode..."
+	@set DEBUG=1 && $(PYTHON_VENV) python main.py
 
-# 🚀 Release Management
-.PHONY: release
-release:
-	@if [ -z "$(VERSION)" ]; then \
-		echo "❌ Version angeben! Beispiel: make release VERSION=1.0.0"; \
-		exit 1; \
-	fi
-	@echo 🚀 Erstelle Release $(VERSION)...
-	@python scripts/create_release.py $(VERSION)
-	@echo ✅ Release $(VERSION) erfolgreich erstellt!
+# Clean up generated files
+clean: ## Clean up generated files and caches
+	@echo "Cleaning up..."
+	@if exist "__pycache__" rmdir /s /q __pycache__
+	@if exist "src\__pycache__" rmdir /s /q src\__pycache__
+	@if exist "build" rmdir /s /q build
+	@if exist "dist" rmdir /s /q dist
+	@if exist ".coverage" del .coverage
+	@if exist "htmlcov" rmdir /s /q htmlcov
+	@if exist ".pytest_cache" rmdir /s /q .pytest_cache
+	@if exist ".mypy_cache" rmdir /s /q .mypy_cache
+	@if exist "$(VENV_DIR)" rmdir /s /q $(VENV_DIR)
+	@echo "Cleanup completed"
 
-.PHONY: release-patch
-release-patch:
-	@echo 🔧 Erstelle Patch-Release...
-	@python scripts/create_release.py --type patch --no-build
-	@echo ✅ Patch-Release erfolgreich erstellt!
+# Quick development cycle
+dev: fix check tests ## Quick development cycle (fix + check + test)
+	@echo "Development cycle completed!"
 
-.PHONY: release-minor
-release-minor:
-	@echo ✨ Erstelle Minor-Release...
-	@python scripts/create_release.py --type minor --no-build
-	@echo ✅ Minor-Release erfolgreich erstellt!
-
-.PHONY: release-major
-release-major:
-	@echo 🎉 Erstelle Major-Release...
-	@python scripts/create_release.py --type major --no-build
-	@echo ✅ Major-Release erfolgreich erstellt!
+# Show project status
+status: ## Show project status and environment info
+	@echo "Mauscribe Project Status"
+	@echo "========================"
+	@echo "OS: $(DETECTED_OS)"
+	@echo "Python: $(PYTHON)"
+	@echo "Virtual Env: $(if exist '$(VENV_DIR)',Present,Missing)"
+	@echo "Dependencies: $(if exist '$(VENV_DIR)/pyvenv.cfg',Installed,Not installed)"
+	@echo "Project Files: Available"

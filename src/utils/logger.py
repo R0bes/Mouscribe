@@ -1,22 +1,36 @@
-# src/logger.py - Custom Logger for Mauscribe
+# src/utils/logger.py - Simple Logger for Mauscribe
 """
-Custom logger implementation for Mauscribe with optional emoji support.
-Provides a wrapper around Python's standard logging with enhanced emoji functionality.
+Simple logger implementation for Mauscribe.
+Provides console and file logging with clean, minimal configuration.
 """
-
 import logging
 import warnings
+from pathlib import Path
 from typing import Optional
+
+from pydantic import Field, BaseModel
+from pydantic_settings import BaseSettings
+from .settings import ModuleSettings
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+
+class LoggingSettings(ModuleSettings):
+    enabled: bool = Field(default=True, description="Enable logging")
+    console_level: str = Field(default="INFO", description="Console log level")
+    file_level: str = Field(default="DEBUG", description="File log level")
+    file_enabled: bool = Field(default=True, description="Enable file logging")
+    filename: str = Field(default="mauscribe.log", description="Log filename")
+    suppress_external_logs: bool = Field(default=True, description="Suppress external library logs")
+    model_config = { "env_prefix": "MAUSCRIBE_LOGGING_" }
+
 # Global flag to prevent multiple initializations
 _logging_initialized = False
 
 
-def setup_logging(config=None):
+def setup_logging() -> None:
     """Setup logging configuration for Mauscribe.
 
     Args:
@@ -26,12 +40,14 @@ def setup_logging(config=None):
 
     if _logging_initialized:
         return
+    
+    settings = LoggingSettings()
 
     # Get logging settings from config or use defaults
-    if config and hasattr(config, "logging_enabled") and config.logging_enabled:
+    if settings and hasattr(settings, "logging") and settings.logging.enabled:
         # Parse log levels from config
-        console_level_str = config.logging_console_level if hasattr(config, "logging_console_level") else "INFO"
-        file_level_str = config.logging_file_level if hasattr(config, "logging_file_level") else "DEBUG"
+        console_level_str = settings.logging.console_level
+        file_level_str = settings.logging.file_level
 
         # Convert string levels to logging constants
         level_map = {
@@ -46,11 +62,9 @@ def setup_logging(config=None):
         file_level = level_map.get(file_level_str.upper(), logging.DEBUG)
 
         # Check if file logging is enabled
-        file_enabled = config.logging_file_enabled if hasattr(config, "logging_file_enabled") else True
-        log_filename = config.logging_filename if hasattr(config, "logging_filename") else "mauscribe.log"
-
-        # Check if external log suppression is enabled
-        suppress_external = config.logging_suppress_external if hasattr(config, "logging_suppress_external") else True
+        file_enabled = settings.logging.file_enabled
+        log_filename = settings.logging.filename
+        suppress_external = settings.logging.suppress_external_logs
     else:
         # Default values if no config or logging disabled
         console_level = logging.INFO
@@ -73,11 +87,15 @@ def setup_logging(config=None):
     # Setup file handler only if enabled
     file_handler = None
     if file_enabled:
+        # Ensure log directory exists
+        log_path = Path(log_filename)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        
         file_handler = logging.FileHandler(log_filename, encoding="utf-8")
         file_handler.setLevel(file_level)
         file_handler.setFormatter(formatter)
 
-    # Setup root logger - but don't add handlers to avoid duplication
+    # Setup root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
 
@@ -89,157 +107,41 @@ def setup_logging(config=None):
 
     # Suppress verbose logging from external libraries if enabled
     if suppress_external:
-        logging.getLogger("comtypes").setLevel(logging.WARNING)
-        logging.getLogger("pycaw").setLevel(logging.WARNING)
-        logging.getLogger("pynput").setLevel(logging.WARNING)
-        logging.getLogger("faster_whisper").setLevel(logging.WARNING)
-        logging.getLogger("urllib3").setLevel(logging.WARNING)
-        logging.getLogger("PIL").setLevel(logging.WARNING)
+        external_loggers = [
+            "comtypes", "pycaw", "pynput", "faster_whisper", 
+            "urllib3", "PIL", "pystray", "PIL.Image"
+        ]
+        for logger_name in external_loggers:
+            logging.getLogger(logger_name).setLevel(logging.WARNING)
 
     _logging_initialized = True
 
 
-class MauscribeLogger:
-    """Custom logger for Mauscribe with optional emoji support."""
-
-    def __init__(self, name: str, config=None):
-        """Initialize the Mauscribe logger.
-
-        Args:
-            name: Logger name (usually __name__)
-            config: Optional Config object for emoji settings
-        """
-        self.logger = logging.getLogger(name)
-
-        # Get emoji mode from config or use default
-        if config and hasattr(config, "logging_emoji_enabled"):
-            self._emoji_mode = config.logging_emoji_enabled
-        else:
-            self._emoji_mode = True  # Default to emoji mode
-
-    def set_emoji_mode(self, enabled: bool) -> None:
-        """Enable or disable emoji mode.
-
-        Args:
-            enabled: True to enable emojis, False to disable
-        """
-        self._emoji_mode = enabled
-
-    def _format_message(self, emoji: str, message: str) -> str:
-        """Format message with optional emoji.
-
-        Args:
-            emoji: Emoji to prepend to message
-            message: The log message
-
-        Returns:
-            Formatted message with or without emoji
-        """
-        if self._emoji_mode and emoji:
-            return f"{emoji} {message}"
-        return message
-
-    def debug(self, message: str, emoji: str = "") -> None:
-        """Log debug message with optional emoji.
-
-        Args:
-            message: Debug message to log
-            emoji: Optional emoji to prepend
-        """
-        self.logger.debug(self._format_message(emoji, message))
-
-    def info(self, message: str, emoji: str = "") -> None:
-        """Log info message with optional emoji.
-
-        Args:
-            message: Info message to log
-            emoji: Optional emoji to prepend
-        """
-        self.logger.info(self._format_message(emoji, message))
-
-    def warning(self, message: str, emoji: str = "") -> None:
-        """Log warning message with optional emoji.
-
-        Args:
-            message: Warning message to log
-            emoji: Optional emoji to prepend
-        """
-        self.logger.warning(self._format_message(emoji, message))
-
-    def error(self, message: str, emoji: str = "") -> None:
-        """Log error message with optional emoji.
-
-        Args:
-            message: Error message to log
-            emoji: Optional emoji to prepend
-        """
-        self.logger.error(self._format_message(emoji, message))
-
-    def critical(self, message: str, emoji: str = "") -> None:
-        """Log critical message with optional emoji.
-
-        Args:
-            message: Critical message to log
-            emoji: Optional emoji to prepend
-        """
-        self.logger.critical(self._format_message(emoji, message))
-
-    def exception(self, message: str, emoji: str = "") -> None:
-        """Log exception message with optional emoji.
-
-        Args:
-            message: Exception message to log
-            emoji: Optional emoji to prepend
-        """
-        self.logger.exception(self._format_message(emoji, message))
-
-    def is_enabled_for(self, level: int) -> bool:
-        """Check if logger is enabled for the given level.
-
-        Args:
-            level: Logging level to check
-
-        Returns:
-            True if logger is enabled for the level
-        """
-        return self.logger.isEnabledFor(level)
-
-    def get_effective_level(self) -> int:
-        """Get the effective level of the logger.
-
-        Returns:
-            Effective logging level
-        """
-        return self.logger.getEffectiveLevel()
-
-
-def get_logger(name: str, config=None) -> MauscribeLogger:
-    """Get a MauscribeLogger instance for the given name.
+def get_logger(name: str, config=None) -> logging.Logger:
+    """Get a logger instance for the given name.
 
     Args:
-        name: Logger name (usually __name__)
+        name: Logger name (usually __name__ or class name)
         config: Optional Config object for logger settings
 
     Returns:
-        MauscribeLogger instance
+        logging.Logger instance
     """
-    return MauscribeLogger(name, config)
+    return logging.getLogger(name)
 
 
-# Convenience function for quick emoji logging
-def log_with_emoji(level: str, message: str, emoji: str = "", logger_name: Optional[str] = None) -> None:
-    """Quick logging function with emoji support.
+# Convenience function for quick logging
+def log_message(level: str, message: str, logger_name: Optional[str] = None) -> None:
+    """Quick logging function.
 
     Args:
         level: Log level ('debug', 'info', 'warning', 'error', 'critical')
         message: Message to log
-        emoji: Optional emoji to prepend
         logger_name: Optional logger name (uses 'mauscribe' if not specified)
     """
     if logger_name is None:
         logger_name = "mauscribe"
 
     logger = get_logger(logger_name)
-
     level_method = getattr(logger, level.lower(), logger.info)
-    level_method(message, emoji)
+    level_method(message)

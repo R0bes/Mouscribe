@@ -2,16 +2,37 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Literal
 
 import numpy as np
+from pydantic import Field
 import sounddevice as sd
 
-from ..utils.config import Config
-from ..utils.logger import get_logger
+from ..utils import get_logger
+from ..utils.settings import ModuleSettings
 
 
-class AudioRecorder:
+class RecorderSettings(ModuleSettings):
+    """Audio recording settings."""
+    sample_rate: int = Field(default=16000, ge=8000, le=48000, description="Sample rate in Hz")
+    channels: int = Field(default=1, ge=1, le=2, description="Number of audio channels")
+    chunk_size: int = Field(default=1024, ge=512, le=8192, description="Audio chunk size")
+    format: Literal["wav", "mp3", "flac"] = Field(default="wav", description="Audio format")
+    audio_device: int = Field(default=1, ge=0, description="Audio device index")
+    auto_select_device: bool = Field(default=True, description="Auto-select best audio device")
+    test_device_on_startup: bool = Field(default=True, description="Test audio device on startup")
+
+    class Config:
+        env_file = "settings.toml"
+        env_file_encoding = "utf-8"
+        extra = "ignore"
+        validate_assignment = True
+        use_enum_values = True
+        env_prefix = "MAUSCRIBE_AUDIO_"
+    
+
+
+class Recorder:
     """
     Einfacher und robuster Audio-Recorder für Mauscribe.
 
@@ -22,16 +43,18 @@ class AudioRecorder:
     - Robuste Fehlerbehandlung
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self) -> None:
         """Initialisiere den Audio-Recorder."""
         self.logger = get_logger(self.__class__.__name__)
+
+        self.settings = RecorderSettings()
 
         # Debug-Logging für Initialisierung
         self.logger.debug("AudioRecorder-Initialisierung gestartet")
 
-        self.sample_rate_hz = config.audio_sample_rate
-        self.num_channels = config.audio_channels
-        self.device_id = config.audio_device
+        self.sample_rate_hz = self.settings.sample_rate
+        self.num_channels = self.settings.channels
+        self.device_id = self.settings.audio_device
 
         # Interne Zustände
         self._stream: sd.InputStream | None = None
@@ -264,6 +287,7 @@ class AudioRecorder:
     def is_recording(self) -> bool:
         """Prüfe, ob gerade aufgenommen wird."""
         return self._active
+
 
     def get_current_device(self) -> dict[str, Any] | None:
         """Gib Informationen über das aktuelle Audio-Gerät zurück."""

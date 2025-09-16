@@ -3,13 +3,22 @@
 Custom dictionary management for Mauscribe application.
 Allows users to add their own words to be considered correct during spell checking.
 """
-
 import json
 from pathlib import Path
 from typing import Optional
 
-from .logger import get_logger
+from pydantic import Field
 
+from .logger import get_logger
+from .settings import Settings
+
+class DictionarySettings(Settings):
+    """Dictionary settings."""
+    enabled: bool = Field(default=True, description="Enable dictionary")
+    auto_add_unknown: bool = Field(default=False, description="Auto-add unknown words")
+    path: str = Field(default="", description="Dictionary path")
+    max_words: int = Field(default=1000, ge=100, le=10000, description="Maximum words in dictionary")
+    model_config = { "env_prefix": "MAUSCRIBE_DICT_", }
 
 class CustomDict:
     """

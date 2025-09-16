@@ -23,6 +23,66 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Text Processing :: Linguistic",
 ]
+dependencies = [
+    # Core dependencies for all platforms
+    "faster-whisper>=0.10.0",
+    "numpy>=1.21.0",
+    "sounddevice>=0.4.0",
+    "soundfile>=0.12.0",
+    "webrtcvad>=2.0.10",
+    "pillow>=9.0.0",
+    "pyautogui>=0.9.54",
+    "pynput>=1.7.6",
+    "pyperclip>=1.8.2",
+    "pystray>=0.19.4",
+    "pyspellchecker>=0.7.2",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+    "tomli>=2.0.0; python_version < '3.11'",
+    "tomli-w>=1.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "pydub>=0.25.1",
+]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+    "types-requests>=2.31.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-html>=3.2.0",
+    "pytest-mock>=3.10.0",
+    "pytest-xdist>=3.5.0",
+    "ipython>=8.0.0",
+    "pre-commit>=3.0.0",
+    "build>=1.0.0",
+    "pyinstaller>=5.0.0",
+    "wheel>=0.40.0",
+]
+# Windows-specific dependencies
+windows = [
+    "comtypes>=1.2.0",
+    "pycaw>=20230407",
+    "pywin32>=223",
+    "winotify>=1.1.0",
+    "win10toast>=0.9",
+]
+# Linux-specific dependencies
+linux = [
+    "pyaudio>=0.2.11; sys_platform == 'linux'",
+]
+# All dependencies for easy installation
+all = [
+    "mauscribe[windows,linux,dev]",
+]
+
+[project.scripts]
+mauscribe = "src.ui.cli:cli"
 
 [project.urls]
 Homepage = "https://github.com/R0bes/Mauscribe"
@@ -33,6 +93,13 @@ Documentation = "https://github.com/R0bes/Mauscribe#readme"
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-dir]
+"" = "."
 
 [tool.mypy]
 python_version = "3.11"

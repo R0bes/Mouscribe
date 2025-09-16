@@ -2,32 +2,45 @@
 Database module for Mauscribe audio recordings and transcriptions.
 Provides storage and retrieval of audio data for training purposes.
 """
-
 import json
 import os
 import sqlite3
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional, Literal
 
 import numpy as np
+from pydantic import Field
 
-from .config import Config
+from .settings import Settings
 from .logger import get_logger
 
 
+class DatabaseSettings(Settings):
+    """Database settings."""
+    enabled: bool = Field(default=True, description="Enable database")
+    data_directory: str = Field(default="", description="Data directory path")
+    audio_format: Literal["wav", "mp3", "flac"] = Field(default="wav", description="Audio format for storage")
+    auto_save_recordings: bool = Field(default=True, description="Auto-save recordings")
+    auto_save_transcriptions: bool = Field(default=True, description="Auto-save transcriptions")
+    mark_as_training_data: bool = Field(default=True, description="Mark data as training data")
+    retention_days: int = Field(default=30, ge=1, le=365, description="Data retention in days")
+    max_size_mb: int = Field(default=1000, ge=100, le=10000, description="Maximum database size in MB")
+    compress_audio: bool = Field(default=False, description="Compress audio files")
+    backup_before_cleanup: bool = Field(default=True, description="Backup before cleanup")
+    model_config = { "env_prefix": "MAUSCRIBE_DB_" }
+    
 class AudioDatabase:
     """Database manager for audio recordings and transcriptions."""
 
-    def __init__(self, config: Optional[Config] = None) -> None:
+    def __init__(self) -> None:
         """Initialize the audio database."""
         self.logger = get_logger(self.__class__.__name__)
-        self.config = config or Config()
+        self.config = DatabaseSettings()
 
         # Database path
-        if self.config.database_data_directory:
-            data_dir = Path(self.config.database_data_directory)
+        if self.config.data_directory:
+            data_dir = Path(self.config.data_directory)
         else:
             # Use absolute path from current working directory
             data_dir = Path.cwd() / "data"

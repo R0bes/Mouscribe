@@ -1,0 +1,72 @@
+[app]
+app_name = "Mauscribe"
+version = "1.0.0"
+
+[audio]
+sample_rate = 16000
+channels = 1
+chunk_size = 1024
+format = "wav"
+audio_device = 1
+auto_select_device = true
+test_device_on_startup = true
+
+[system]
+volume_reduction_factor = 0.8
+min_volume_percent = 10
+volume_controller_enabled = true
+
+[transcription]
+language = "de"
+whisper_model = "base"
+compute_type = "float32"
+compute_device = "cpu"
+
+[logging]
+enabled = true
+console_level = "INFO"
+file_level = "DEBUG"
+file_enabled = true
+filename = "mauscribe.log"
+suppress_external_logs = true
+
+[dictionary]
+enabled = true
+auto_add_unknown = false
+path = ""
+max_words = 1000
+
+[notifications]
+enabled = true
+duration = 3000
+sound = true
+toast = true
+show_info = false
+show_success = false
+show_warning = true
+show_error = true
+show_recording = false
+show_transcription = true
+show_paste = true
+show_spell_check = true
+auto_insert_enabled = false
+
+[database]
+enabled = true
+data_directory = ""
+audio_format = "wav"
+auto_save_recordings = true
+auto_save_transcriptions = true
+mark_as_training_data = true
+retention_days = 30
+max_size_mb = 1000
+compress_audio = false
+backup_before_cleanup = true
+
+[input.primary]
+name = "x2"
+type = "click"
+
+[input.secondary]
+name = "x1"
+type = "click"
