@@ -20,6 +20,7 @@ class MenuItem(Enum):
     SEPARATOR = "---"
     VOLUME_CONTROLLER_TOGGLE = "🔊 Lautstärke-Kontrolle"
     VOLUME_STEPS_SUBMENU = "📊 Lautstärke-Schritte"
+    HOTWORD_TOGGLE = "🎯 Hot Word Detection"
     EXIT = "Exit"
 
 
@@ -48,6 +49,7 @@ class SysTray:
             MenuItem.VOLUME_SETTINGS.value: self._show_volume_settings,
             MenuItem.SEPARATOR.value: None,  # Separator item
             MenuItem.VOLUME_CONTROLLER_TOGGLE.value: self._toggle_volume_controller,
+            MenuItem.HOTWORD_TOGGLE.value: self._toggle_hotword_detection,
             MenuItem.VOLUME_STEPS_SUBMENU.value: self._create_volume_steps_submenu,
             MenuItem.EXIT.value: self.app_instance.stop,
         }
@@ -368,6 +370,23 @@ class SysTray:
                 
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Speichern der Volume-Faktor Einstellung: {e}")
+
+    def _toggle_hotword_detection(self) -> None:
+        """Toggle Hot Word Detection on/off."""
+        try:
+            if not hasattr(self.app_instance, 'hotword_detector'):
+                self.logger.error("❌ Hot Word Detector nicht verfügbar")
+                return
+
+            # Toggle Hot Word Detection
+            is_active = self.app_instance.toggle_hotword_detection()
+            
+            # Update menu text (simplified - full refresh would be complex)
+            status = "Aktiviert" if is_active else "Deaktiviert"
+            self.logger.info(f"🎯 Hot Word Detection {status}")
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Umschalten der Hot Word Detection: {e}")
 
     def update_recording_state(self, is_recording: bool) -> None:
         """Update the recording state and refresh the icon.

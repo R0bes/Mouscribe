@@ -16,6 +16,7 @@ import pyperclip
 
 from .audio.recorder import Recorder
 from .audio.volumizer import Volumizer
+from .audio.hotword_detector import HotWordDetector
 from .utils.controlls import ControllsManager
 from .audio.transcriptor import Transcriptor
 from .ui.notifications import Toaster
@@ -54,6 +55,9 @@ class MauscribeApp:
         self.transcriptor = Transcriptor()
         self.volume_controller = Volumizer()
         self.overlay_manager = MouseOverlayManager()
+        
+        # Initialize Hot Word Detector
+        self.hotword_detector = HotWordDetector(self._on_wake_word_detected)
         # Initialize toaster with notification settings
         notification_enabled = self.config.notifications.get("enabled", True)
         notification_sound = self.config.notifications.get("sound", True)
@@ -79,6 +83,10 @@ class MauscribeApp:
         
         # Start controls manager
         self.controlls.start()
+        
+        # Start Hot Word Detection if enabled
+        self._start_hotword_detection()
+        
         self.logger.info("✅ Alle Komponenten initialisiert")
 
 
@@ -104,6 +112,55 @@ class MauscribeApp:
         """Handle secondary button action."""
         self.logger.info("🎮 Secondary button pressed - paste text")
         self._paste_text()
+
+    def _on_wake_word_detected(self, wake_word: str) -> None:
+        """Handle wake word detection."""
+        self.logger.info(f"🎯 Wake Word erkannt: '{wake_word}'")
+        
+        # Zeige Benachrichtigung
+        self.toaster.show_info("🎯 Wake Word erkannt", f"'{wake_word}' - Starte Aufnahme...")
+        
+        # Starte automatisch die Aufnahme
+        if not self._is_recording:
+            self.start_recording()
+        else:
+            self.logger.info("⚠️ Aufnahme läuft bereits - ignoriere Wake Word")
+
+    def _start_hotword_detection(self) -> None:
+        """Starte Hot Word Detection falls aktiviert."""
+        try:
+            if self.hotword_detector.start_listening():
+                self.logger.info("✅ Hot Word Detection gestartet")
+            else:
+                self.logger.info("🔇 Hot Word Detection deaktiviert oder nicht verfügbar")
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Starten der Hot Word Detection: {e}")
+
+    def toggle_hotword_detection(self) -> bool:
+        """Schalte Hot Word Detection ein/aus."""
+        try:
+            if self.hotword_detector.is_active():
+                self.hotword_detector.stop_listening()
+                self.logger.info("🔇 Hot Word Detection deaktiviert")
+                self.toaster.show_info("Hot Word Detection", "Deaktiviert")
+                return False
+            else:
+                if self.hotword_detector.start_listening():
+                    self.logger.info("🎯 Hot Word Detection aktiviert")
+                    self.toaster.show_info("Hot Word Detection", "Aktiviert")
+                    return True
+                else:
+                    self.logger.warning("⚠️ Hot Word Detection konnte nicht gestartet werden")
+                    self.toaster.show_warning("Hot Word Detection", "Konnte nicht gestartet werden")
+                    return False
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Umschalten der Hot Word Detection: {e}")
+            self.toaster.show_error("Hot Word Detection", f"Fehler: {e}")
+            return False
+
+    def get_hotword_status(self) -> dict[str, Any]:
+        """Gib Status der Hot Word Detection zurück."""
+        return self.hotword_detector.get_stats()
 
     def _safe_write_text(self, text: str) -> bool:
         """Safely write text to current cursor position."""
@@ -418,6 +475,14 @@ class MauscribeApp:
         if self._is_recording:
             self.logger.info("🛑 Stoppe aktive Aufnahme vor dem Shutdown...")
             self.stop_recording()
+
+        # Stop Hot Word Detection
+        try:
+            self.logger.info("🔄 Beende Hot Word Detection...")
+            self.hotword_detector.cleanup()
+            self.logger.info("✅ Hot Word Detection erfolgreich beendet")
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Beenden der Hot Word Detection: {e}")
 
         # Stop input handling
         try:

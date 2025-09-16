@@ -70,3 +70,12 @@ type = "click"
 [input.secondary]
 name = "x1"
 type = "click"
+
+[hotword]
+enabled = false
+wake_words = ["hey mauscribe", "mauscribe", "hey mouse"]
+sensitivity = 0.5
+timeout_seconds = 30
+continuous_listening = true
+auto_start_recording = true
+fallback_to_click = true
