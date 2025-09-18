@@ -12,7 +12,7 @@ auto_select_device = true
 test_device_on_startup = true
 
 [system]
-volume_reduction_factor = 0.8
+volume_reduction_factor = 0.6
 min_volume_percent = 10
 volume_controller_enabled = true
 
@@ -63,6 +63,36 @@ max_size_mb = 1000
 compress_audio = false
 backup_before_cleanup = true
 
+[hotword]
+enabled = true
+start_words = [ "start",]
+stop_words = [ "stopp",]
+sensitivity = 0.5
+timeout_seconds = 30
+continuous_listening = true
+auto_start_recording = true
+fallback_to_click = true
+
+[ui]
+icon_path = "icon.png"
+icon_type = "system_tray"
+fallback_icon = "mauscribe_fallback_icon.svg"
+
+[input]
+enabled = true
+
+[hotword.computer_agent]
+enabled = false
+wake_word = "computer"
+attention_timeout = 5.0
+recording_timeout = 5.0
+sample_rate = 16000
+buffer_duration = 6.0
+normal_analysis_duration = 2.0
+normal_analysis_interval = 1.0
+attention_analysis_duration = 3.0
+attention_analysis_interval = 2.0
+
 [input.primary]
 name = "x2"
 type = "click"
@@ -70,12 +100,3 @@ type = "click"
 [input.secondary]
 name = "x1"
 type = "click"
-
-[hotword]
-enabled = false
-wake_words = ["hey mauscribe", "mauscribe", "hey mouse"]
-sensitivity = 0.5
-timeout_seconds = 30
-continuous_listening = true
-auto_start_recording = true
-fallback_to_click = true

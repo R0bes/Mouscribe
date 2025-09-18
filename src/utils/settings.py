@@ -40,6 +40,15 @@ class Settings(ModuleSettings):
     # Database settings
     database: Dict[str, Any] = Field(default_factory=dict, description="Database settings")
     
+    # UI settings
+    ui: Dict[str, Any] = Field(default_factory=dict, description="UI settings including icons")
+    
+    # Hot Word settings
+    hotword: Dict[str, Any] = Field(default_factory=dict, description="Hot Word Detection settings")
+    
+    # Input settings
+    input: Dict[str, Any] = Field(default_factory=dict, description="Input control settings")
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # Load from TOML file if it exists
@@ -66,6 +75,9 @@ class Settings(ModuleSettings):
                 
             if "database" in config:
                 self.database = config["database"]
+                
+            if "ui" in config:
+                self.ui = config["ui"]
                 
         except Exception as e:
             # Use defaults if TOML loading fails
@@ -149,6 +161,11 @@ class Settings(ModuleSettings):
                 "max_size_mb": 1000,
                 "compress_audio": False,
                 "backup_before_cleanup": True
+            },
+            "ui": {
+                "icon_path": "systray.ico2",
+                "icon_type": "system_tray",
+                "fallback_icon": "mauscribe_icon3.ico"
             }
         }
         
@@ -158,3 +175,41 @@ class Settings(ModuleSettings):
             print(f"✅ Standard-Konfiguration erstellt: {config_path}")
         except Exception as e:
             print(f"❌ Fehler beim Erstellen der Standard-Konfiguration: {e}")
+    
+    def get_icon_path(self, icon_type: str = "system_tray") -> str:
+        """Get the full path to an icon file with validation and fallback.
+        
+        Args:
+            icon_type: Type of icon to get (e.g., "system_tray")
+            
+        Returns:
+            Full path to the icon file
+            
+        Raises:
+            FileNotFoundError: If neither configured nor fallback icon exists
+        """
+        from pathlib import Path
+        
+        # Get icons directory path
+        icons_dir = Path(__file__).parent.parent / "ui" / "icons"
+        
+        # Get configured icon path
+        icon_filename = self.ui.get("icon_path", "systray.ico2")
+        icon_path = icons_dir / icon_filename
+        
+        # Check if configured icon exists
+        if icon_path.exists():
+            return str(icon_path)
+        
+        # Try fallback icon
+        fallback_filename = self.ui.get("fallback_icon", "mauscribe_icon3.ico")
+        fallback_path = icons_dir / fallback_filename
+        
+        if fallback_path.exists():
+            return str(fallback_path)
+        
+        # If neither exists, raise error
+        raise FileNotFoundError(
+            f"Kein Icon gefunden. Konfiguriert: {icon_path}, "
+            f"Fallback: {fallback_path}. Verfügbare Icons: {list(icons_dir.glob('*'))}"
+        )

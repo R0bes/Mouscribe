@@ -17,6 +17,7 @@ import pyperclip
 from .audio.recorder import Recorder
 from .audio.volumizer import Volumizer
 from .audio.hotword_detector import HotWordDetector
+from .audio.computer_agent import ComputerAgent
 from .utils.controlls import ControllsManager
 from .audio.transcriptor import Transcriptor
 from .ui.notifications import Toaster
@@ -56,8 +57,18 @@ class MauscribeApp:
         self.volume_controller = Volumizer()
         self.overlay_manager = MouseOverlayManager()
         
-        # Initialize Hot Word Detector
-        self.hotword_detector = HotWordDetector(self._on_wake_word_detected)
+        # Initialize Hot Word Detector (alte Version)
+        self.hotword_detector = HotWordDetector(
+            self._on_start_word_detected, 
+            self._on_stop_word_detected
+        )
+        
+        # Initialize Computer Agent (neue Version)
+        self.computer_agent = ComputerAgent(
+            self.config.hotword.get('computer_agent', {}),
+            recorder=self.recorder,
+            transcriptor=self.transcriptor
+        )
         # Initialize toaster with notification settings
         notification_enabled = self.config.notifications.get("enabled", True)
         notification_sound = self.config.notifications.get("sound", True)
@@ -71,7 +82,8 @@ class MauscribeApp:
         self.controlls = ControllsManager(
             config=self.config,
             primary_callback=self.on_primary_action,
-            secondary_callback=self.on_secondary_action
+            secondary_callback=self.on_secondary_action,
+            insert_callback=self.on_insert_action
         )   
         
 
@@ -81,11 +93,17 @@ class MauscribeApp:
         # Initialize database
         self.audio_database = AudioDatabase()
         
-        # Start controls manager
-        self.controlls.start()
+        # Start controls manager if enabled
+        if self.config.input.get('enabled', True):
+            self.controlls.start()
+        else:
+            self.logger.info("🔇 Input-Steuerung deaktiviert")
         
         # Start Hot Word Detection if enabled
         self._start_hotword_detection()
+        
+        # Start Computer Agent if enabled
+        self._start_computer_agent()
         
         self.logger.info("✅ Alle Komponenten initialisiert")
 
@@ -113,28 +131,67 @@ class MauscribeApp:
         self.logger.info("🎮 Secondary button pressed - paste text")
         self._paste_text()
 
-    def _on_wake_word_detected(self, wake_word: str) -> None:
-        """Handle wake word detection."""
-        self.logger.info(f"🎯 Wake Word erkannt: '{wake_word}'")
+    def on_insert_action(self) -> None:
+        """Handle insert combination action (left mouse + primary key)."""
+        self.logger.info("🎮 Insert combination pressed (left + primary) - paste text")
+        self._paste_text()
+
+    def _on_start_word_detected(self, start_word: str) -> None:
+        """Handle start word detection."""
+        self.logger.info(f"🎯 Start Word erkannt: '{start_word}'")
         
         # Zeige Benachrichtigung
-        self.toaster.show_info("🎯 Wake Word erkannt", f"'{wake_word}' - Starte Aufnahme...")
+        self.toaster.show_info("🎯 Start Word erkannt", f"'{start_word}' - Starte Aufnahme...")
         
         # Starte automatisch die Aufnahme
         if not self._is_recording:
             self.start_recording()
         else:
-            self.logger.info("⚠️ Aufnahme läuft bereits - ignoriere Wake Word")
+            self.logger.info("⚠️ Aufnahme läuft bereits - ignoriere Start Word")
+
+    def _on_stop_word_detected(self, stop_word: str) -> None:
+        """Handle stop word detection."""
+        self.logger.info(f"🛑 Stop Word erkannt: '{stop_word}'")
+        
+        # Zeige Benachrichtigung
+        self.toaster.show_info("🛑 Stop Word erkannt", f"'{stop_word}' - Stoppe Aufnahme...")
+        
+        # Stoppe automatisch die Aufnahme
+        if self._is_recording:
+            self.stop_recording()
+        else:
+            self.logger.info("⚠️ Keine aktive Aufnahme - ignoriere Stop Word")
 
     def _start_hotword_detection(self) -> None:
         """Starte Hot Word Detection falls aktiviert."""
         try:
+            # Prüfe ob Input-Steuerung aktiviert ist
+            if not self.config.input.get('enabled', True):
+                self.logger.info("🔇 Input-Steuerung deaktiviert")
+                return
+                
             if self.hotword_detector.start_listening():
                 self.logger.info("✅ Hot Word Detection gestartet")
             else:
                 self.logger.info("🔇 Hot Word Detection deaktiviert oder nicht verfügbar")
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Starten der Hot Word Detection: {e}")
+    
+    def _start_computer_agent(self) -> None:
+        """Starte Computer Agent falls aktiviert."""
+        try:
+            # Prüfe ob Computer Agent aktiviert ist
+            computer_agent_config = self.config.hotword.get('computer_agent', {})
+            if not computer_agent_config.get('enabled', False):
+                self.logger.info("🔇 Computer Agent deaktiviert")
+                return
+                
+            if self.computer_agent.start():
+                self.logger.info("✅ Computer Agent gestartet")
+            else:
+                self.logger.info("🔇 Computer Agent konnte nicht gestartet werden")
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Starten des Computer Agents: {e}")
 
     def toggle_hotword_detection(self) -> bool:
         """Schalte Hot Word Detection ein/aus."""
@@ -161,6 +218,32 @@ class MauscribeApp:
     def get_hotword_status(self) -> dict[str, Any]:
         """Gib Status der Hot Word Detection zurück."""
         return self.hotword_detector.get_stats()
+    
+    def toggle_computer_agent(self) -> bool:
+        """Schalte Computer Agent ein/aus."""
+        try:
+            if self.computer_agent.is_recording:
+                self.computer_agent.stop()
+                self.logger.info("🔇 Computer Agent deaktiviert")
+                self.toaster.show_info("Computer Agent", "Deaktiviert")
+                return False
+            else:
+                if self.computer_agent.start():
+                    self.logger.info("🎯 Computer Agent aktiviert")
+                    self.toaster.show_info("Computer Agent", "Aktiviert")
+                    return True
+                else:
+                    self.logger.warning("⚠️ Computer Agent konnte nicht gestartet werden")
+                    self.toaster.show_warning("Computer Agent", "Konnte nicht gestartet werden")
+                    return False
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Umschalten des Computer Agents: {e}")
+            self.toaster.show_error("Computer Agent", f"Fehler: {e}")
+            return False
+    
+    def get_computer_agent_status(self) -> dict[str, Any]:
+        """Gib Status des Computer Agents zurück."""
+        return self.computer_agent.get_status()
 
     def _safe_write_text(self, text: str) -> bool:
         """Safely write text to current cursor position."""
@@ -444,6 +527,7 @@ class MauscribeApp:
         self.logger.info("🎯 Mauscribe Steuerung:")
         self.logger.info(f"\t🐭 {self.config.primary_name} (press): Aufnahme starten/stoppen")
         self.logger.info(f"\t🐭 {self.config.secondary_name} (hold): Text einfügen")
+        self.logger.info(f"\t🐭 Linke Maus + {self.config.primary_name}: Text einfügen")
         self.logger.info("🎮 Bereit für Eingaben!")
 
         while not self.shutdown_event.is_set():
@@ -483,6 +567,14 @@ class MauscribeApp:
             self.logger.info("✅ Hot Word Detection erfolgreich beendet")
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Beenden der Hot Word Detection: {e}")
+        
+        # Stop Computer Agent
+        try:
+            self.logger.info("🔄 Beende Computer Agent...")
+            self.computer_agent.stop()
+            self.logger.info("✅ Computer Agent erfolgreich beendet")
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Beenden des Computer Agents: {e}")
 
         # Stop input handling
         try:

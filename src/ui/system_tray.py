@@ -55,30 +55,49 @@ class SysTray:
         }
 
     def create_icon(self) -> Image.Image:
-        """Load icon from icons directory for the system tray."""
-        # Get the project root directory (two levels up from this file)
-        project_root = Path(__file__).parent.parent.parent
-        #icon_path = project_root / "icons" / "mauscribe_icon.ico"
-        icon_path = project_root / "src" / "ui" / "icons" / "mauscribe_variants" / "variant_1.ico"
-        
-        if not icon_path.exists():
-            raise FileNotFoundError(f"Icon nicht gefunden: {icon_path}")
-        
-        # Load the icon and resize to appropriate size for system tray
-        icon = Image.open(icon_path)
-        # Convert to RGBA if needed and resize to 64x64
-        if icon.mode != 'RGBA':
-            icon = icon.convert('RGBA')
-        icon = icon.resize((64, 64), Image.Resampling.LANCZOS)
-        
-        # Add recording indicator if recording
-        if self.is_recording:
-            from PIL import ImageDraw
-            draw = ImageDraw.Draw(icon)
-            # Add red dot in top-right corner
-            draw.ellipse([50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1)
-        
-        return icon
+        """Load icon from icons directory for the system tray using configuration."""
+        try:
+            # Use configuration to get icon path with fallback
+            icon_path = self.config.get_icon_path("system_tray")
+            
+            # Load the icon and resize to appropriate size for system tray
+            icon = Image.open(icon_path)
+            # Convert to RGBA if needed and resize to 64x64
+            if icon.mode != 'RGBA':
+                icon = icon.convert('RGBA')
+            icon = icon.resize((64, 64), Image.Resampling.LANCZOS)
+            
+            # Add recording indicator if recording
+            if self.is_recording:
+                from PIL import ImageDraw
+                draw = ImageDraw.Draw(icon)
+                # Add red dot in top-right corner
+                draw.ellipse([50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1)
+            
+            return icon
+            
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Laden des konfigurierten Icons: {e}")
+            # Fallback to hardcoded icon if configuration fails
+            project_root = Path(__file__).parent.parent.parent
+            fallback_path = project_root / "src" / "ui" / "icons" / "systray.ico2"
+            
+            if not fallback_path.exists():
+                raise FileNotFoundError(f"Weder konfiguriertes noch Fallback-Icon gefunden: {fallback_path}")
+            
+            self.logger.warning(f"⚠️  Verwende Fallback-Icon: {fallback_path}")
+            icon = Image.open(fallback_path)
+            if icon.mode != 'RGBA':
+                icon = icon.convert('RGBA')
+            icon = icon.resize((64, 64), Image.Resampling.LANCZOS)
+            
+            # Add recording indicator if recording
+            if self.is_recording:
+                from PIL import ImageDraw
+                draw = ImageDraw.Draw(icon)
+                draw.ellipse([50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1)
+            
+            return icon
 
     def setup(self) -> None:
         """Initialize the system tray icon and menu."""
@@ -149,7 +168,8 @@ class SysTray:
             
             hotkey_info = f"🎮 Mauscribe Hotkeys:\n\n"
             hotkey_info += f"🐭 {primary_key} (Klick): Aufnahme starten/stoppen\n"
-            hotkey_info += f"🐭 {secondary_key} (Klick): Text einfügen\n\n"
+            hotkey_info += f"🐭 {secondary_key} (Klick): Text einfügen\n"
+            hotkey_info += f"🐭 Linke Maus + {primary_key}: Text einfügen\n\n"
             hotkey_info += f"🔊 Lautstärke-Reduktion: {volume_factor:.1f} (z.B. 80% → {80*volume_factor:.0f}%)\n\n"
             hotkey_info += f"Status: {'🔴 Aufnahme aktiv' if self.is_recording else '⚪ Bereit'}"
             

@@ -15,9 +15,14 @@ from src.audio.hotword_detector import HotWordDetector
 from src.utils import get_logger, setup_logging
 
 
-def test_wake_word_callback(wake_word: str) -> None:
-    """Test callback für Wake Word Erkennung."""
-    print(f"🎯 WAKE WORD ERKANNT: '{wake_word}'")
+def test_start_word_callback(start_word: str) -> None:
+    """Test callback für Start Word Erkennung."""
+    print(f"🎯 START WORD ERKANNT: '{start_word}'")
+    print(f"⏰ Zeit: {time.strftime('%H:%M:%S')}")
+
+def test_stop_word_callback(stop_word: str) -> None:
+    """Test callback für Stop Word Erkennung."""
+    print(f"🛑 STOP WORD ERKANNT: '{stop_word}'")
     print(f"⏰ Zeit: {time.strftime('%H:%M:%S')}")
 
 
@@ -33,12 +38,13 @@ def main():
     try:
         # Hot Word Detector initialisieren
         print("🔧 Initialisiere Hot Word Detector...")
-        detector = HotWordDetector(test_wake_word_callback)
+        detector = HotWordDetector(test_start_word_callback, test_stop_word_callback)
         
         # Einstellungen anzeigen
         stats = detector.get_stats()
         print(f"📊 Konfiguration:")
-        print(f"   - Wake Words: {stats['wake_words']}")
+        print(f"   - Start Words: {stats['start_words']}")
+        print(f"   - Stop Words: {stats['stop_words']}")
         print(f"   - Sensitivität: {stats['sensitivity']}")
         print(f"   - Timeout: {stats['timeout_seconds']}s")
         print(f"   - Kontinuierlich: {stats['continuous_listening']}")
@@ -47,8 +53,11 @@ def main():
         print("\n🎯 Starte Hot Word Detection...")
         if detector.start_listening():
             print("✅ Hot Word Detection läuft!")
-            print("\n💡 Sprich eines der Wake Words:")
-            for word in stats['wake_words']:
+            print("\n💡 Sprich eines der Start Words:")
+            for word in stats['start_words']:
+                print(f"   - '{word}'")
+            print("\n💡 Sprich eines der Stop Words:")
+            for word in stats['stop_words']:
                 print(f"   - '{word}'")
             print("\n⏹️  Drücke Ctrl+C zum Beenden")
             

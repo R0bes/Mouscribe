@@ -12,17 +12,19 @@ from .settings import Settings
 class ControllsManager:
     """Simplified controls manager with primary and secondary callbacks."""
 
-    def __init__(self, config: Settings, primary_callback: Callable, secondary_callback: Callable):
+    def __init__(self, config: Settings, primary_callback: Callable, secondary_callback: Callable, insert_callback: Callable = None):
         """Initialize the controls manager.
         
         Args:
             config: Settings instance with button configuration
             primary_callback: Function to call when primary button is pressed
             secondary_callback: Function to call when secondary button is pressed
+            insert_callback: Function to call when left mouse + primary key combination is pressed
         """
         self.config = config
         self.primary_callback = primary_callback
         self.secondary_callback = secondary_callback
+        self.insert_callback = insert_callback
         self.logger = get_logger(self.__class__.__name__)
         
         # Get button names from config
@@ -33,9 +35,15 @@ class ControllsManager:
         self._mouse_listener: Optional[mouse.Listener] = None
         self._active = False
         
+        # State tracking for combination keys
+        self._left_mouse_pressed = False
+        self._primary_pressed_while_left_held = False
+        
         self.logger.info(f"🎮 Simple Controls Manager initialized:")
         self.logger.info(f"   Primary button: {self.primary_button}")
         self.logger.info(f"   Secondary button: {self.secondary_button}")
+        if self.insert_callback:
+            self.logger.info(f"   Insert combination: left + {self.primary_button}")
 
     def start(self) -> None:
         """Start input listeners."""
@@ -70,11 +78,39 @@ class ControllsManager:
     def _on_mouse_click(self, x: int, y: int, button: mouse.Button, pressed: bool) -> None:
         """Handle mouse click events."""
         try:
-            # Only handle button release (click complete)
-            if not pressed:
-                button_name = self._get_mouse_button_name(button)
-                if button_name:
-                    self._handle_button_click(button_name)
+            button_name = self._get_mouse_button_name(button)
+            if not button_name:
+                return
+                
+            # Handle left mouse button state for combination
+            if button_name == "left":
+                self._left_mouse_pressed = pressed
+                if not pressed:  # Left mouse released
+                    self._primary_pressed_while_left_held = False
+                return
+            
+            # Handle primary button with combination logic
+            if button_name == self.primary_button:
+                if pressed:  # Primary button pressed
+                    if self._left_mouse_pressed and self.insert_callback:
+                        # Left mouse is held + primary pressed = insert combination
+                        self._primary_pressed_while_left_held = True
+                        self.logger.debug(f"🎮 Insert combination triggered: left + {self.primary_button}")
+                        self.insert_callback()
+                        return
+                else:  # Primary button released
+                    if not self._primary_pressed_while_left_held:
+                        # Normal primary button click
+                        self.logger.debug(f"🎮 Primary button ({self.primary_button}) clicked")
+                        self.primary_callback()
+                    self._primary_pressed_while_left_held = False
+                return
+            
+            # Handle secondary button (only on release)
+            if button_name == self.secondary_button and not pressed:
+                self.logger.debug(f"🎮 Secondary button ({self.secondary_button}) clicked")
+                self.secondary_callback()
+                
         except Exception as e:
             self.logger.error(f"❌ Mouse click handler error: {e}")
 
@@ -89,19 +125,6 @@ class ControllsManager:
         }
         return button_map.get(button)
 
-    def _handle_button_click(self, button_name: str) -> None:
-        """Handle button click and call appropriate callback."""
-        try:
-            if button_name == self.primary_button:
-                self.logger.debug(f"🎮 Primary button ({button_name}) clicked")
-                self.primary_callback()
-            elif button_name == self.secondary_button:
-                self.logger.debug(f"🎮 Secondary button ({button_name}) clicked")
-                self.secondary_callback()
-            else:
-                self.logger.debug(f"🎮 Other button ({button_name}) clicked - ignored")
-        except Exception as e:
-            self.logger.error(f"❌ Button callback error: {e}")
 
     def is_active(self) -> bool:
         """Check if controls manager is active."""
