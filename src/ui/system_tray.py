@@ -502,6 +502,20 @@ class SysTray:
                 # Reload the config
                 from ..utils.settings import Settings
                 self.app_instance.config = Settings()
+                
+                # Reinitialize toaster with new settings
+                if hasattr(self.app_instance, 'toaster'):
+                    notification_enabled = self.app_instance.config.notifications.get("enabled", True)
+                    notification_sound = self.app_instance.config.notifications.get("sound", True)
+                    notification_duration = self.app_instance.config.notifications.get("duration", 5000)
+                    
+                    from ..ui.notifications import Toaster
+                    self.app_instance.toaster = Toaster(
+                        enable_sound=notification_sound,
+                        default_duration=notification_duration,
+                        enabled=notification_enabled,
+                        notification_settings=self.app_instance.config.notifications
+                    )
 
             # Show notification
             status_text = "aktiviert" if new_state else "deaktiviert"
