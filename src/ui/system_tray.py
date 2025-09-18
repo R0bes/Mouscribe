@@ -21,6 +21,7 @@ class MenuItem(Enum):
     VOLUME_CONTROLLER_TOGGLE = "🔊 Lautstärke-Kontrolle"
     VOLUME_STEPS_SUBMENU = "📊 Lautstärke-Schritte"
     HOTWORD_TOGGLE = "🎯 Hot Word Detection"
+    NOTIFICATIONS_TOGGLE = "🔔 Benachrichtigungen"
     EXIT = "Exit"
 
 
@@ -50,6 +51,7 @@ class SysTray:
             MenuItem.SEPARATOR.value: None,  # Separator item
             MenuItem.VOLUME_CONTROLLER_TOGGLE.value: self._toggle_volume_controller,
             MenuItem.HOTWORD_TOGGLE.value: self._toggle_hotword_detection,
+            MenuItem.NOTIFICATIONS_TOGGLE.value: self._toggle_notifications,
             MenuItem.VOLUME_STEPS_SUBMENU.value: self._create_volume_steps_submenu,
             MenuItem.EXIT.value: self.app_instance.stop,
         }
@@ -116,6 +118,15 @@ class SysTray:
                             self._get_volume_controller_menu_text(),
                             self._toggle_volume_controller,
                             checked=lambda item: self._is_volume_controller_enabled()
+                        )
+                    )
+                elif item_name == MenuItem.NOTIFICATIONS_TOGGLE.value:
+                    # Create checkbox-style menu item for notifications toggle
+                    menu_items.append(
+                        pystray.MenuItem(
+                            self._get_notifications_menu_text(),
+                            self._toggle_notifications,
+                            checked=lambda item: self._is_notifications_enabled()
                         )
                     )
                 elif item_name == MenuItem.VOLUME_STEPS_SUBMENU.value:
@@ -455,3 +466,72 @@ class SysTray:
         except Exception as e:
             self.logger.error(f"❌ System Tray nicht verfügbar: {e}")
             return False
+
+    def _is_notifications_enabled(self) -> bool:
+        """Check if notifications are currently enabled."""
+        try:
+            if hasattr(self.app_instance, 'config') and hasattr(self.app_instance.config, 'notifications'):
+                return self.app_instance.config.notifications.get('enabled', True)
+            return True  # Default to enabled
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Prüfen des Notification Status: {e}")
+            return True
+
+    def _get_notifications_menu_text(self) -> str:
+        """Get the menu text for notifications toggle."""
+        enabled = self._is_notifications_enabled()
+        status = "✅" if enabled else "❌"
+        return f"{status} 🔔 Benachrichtigungen"
+
+    def _toggle_notifications(self, icon=None, item=None) -> None:
+        """Toggle notifications on/off."""
+        try:
+            if not hasattr(self.app_instance, 'config'):
+                self.logger.error("❌ Config nicht verfügbar")
+                return
+
+            # Get current state
+            current_state = self._is_notifications_enabled()
+            new_state = not current_state
+
+            # Save to TOML file first
+            self._save_notifications_setting(new_state)
+            
+            # Reload settings to apply changes
+            if hasattr(self.app_instance, 'config'):
+                # Reload the config
+                from ..utils.settings import Settings
+                self.app_instance.config = Settings()
+
+            # Show notification
+            status_text = "aktiviert" if new_state else "deaktiviert"
+            if hasattr(self.app_instance, 'toaster'):
+                self.app_instance.toaster.show_info(
+                    f"🔔 Benachrichtigungen {status_text}",
+                    f"Notifications sind jetzt {status_text}"
+                )
+
+            self.logger.info(f"✅ Benachrichtigungen {status_text}")
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Umschalten der Benachrichtigungen: {e}")
+
+    def _save_notifications_setting(self, enabled: bool) -> None:
+        """Save notifications setting to TOML file."""
+        try:
+            import toml
+            # Read current config
+            with open("settings.toml", "r", encoding="utf-8") as f:
+                config = toml.load(f)
+            
+            # Update the setting
+            if "notifications" not in config:
+                config["notifications"] = {}
+            config["notifications"]["enabled"] = enabled
+            
+            # Write back to file
+            with open("settings.toml", "w", encoding="utf-8") as f:
+                toml.dump(config, f)
+                
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Speichern der Notification Einstellung: {e}")
