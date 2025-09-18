@@ -37,7 +37,7 @@ path = ""
 max_words = 1000
 
 [notifications]
-enabled = true
+enabled = false
 duration = 3000
 sound = true
 toast = true

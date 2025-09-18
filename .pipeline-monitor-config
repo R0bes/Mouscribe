@@ -12,6 +12,6 @@ show_job_details = true
 open_browser_on_failure = false
 
 [github]
-token_source = auto
-repo_owner = R0bes
-repo_name = Mouscribe
+token_source = "auto"
+repo_owner = "R0bes"
+repo_name = "Mouscribe"
