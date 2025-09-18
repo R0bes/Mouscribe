@@ -11,36 +11,36 @@ from pathlib import Path
 
 def run_command(cmd, description):
     """Führt einen Befehl aus und zeigt den Status"""
-    print(f"🔧 {description}...")
+    print(f"{description}...")
     try:
         result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
-        print(f"✅ {description} erfolgreich")
+        print(f"{description} erfolgreich")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ {description} fehlgeschlagen:")
+        print(f"{description} fehlgeschlagen:")
         print(f"   Fehler: {e.stderr}")
         return False
 
 def main():
     """Hauptfunktion für den Build-Prozess"""
-    print("🚀 Starte Mauscribe Build-Prozess...")
+    print("Starte Mauscribe Build-Prozess...")
     
     # Prüfe ob PyInstaller installiert ist
     try:
         import PyInstaller
-        print(f"✅ PyInstaller {PyInstaller.__version__} gefunden")
+        print(f"PyInstaller {PyInstaller.__version__} gefunden")
     except ImportError:
-        print("❌ PyInstaller nicht gefunden. Installiere es...")
+        print("PyInstaller nicht gefunden. Installiere es...")
         if not run_command("pip install pyinstaller", "PyInstaller Installation"):
             return False
     
     # Lösche alte Build-Ordner
     if os.path.exists("build"):
-        print("🧹 Lösche alten build/ Ordner...")
+        print("Loesche alten build/ Ordner...")
         shutil.rmtree("build")
     
     if os.path.exists("dist"):
-        print("🧹 Lösche alten dist/ Ordner...")
+        print("Loesche alten dist/ Ordner...")
         shutil.rmtree("dist")
     
     # PyInstaller Kommando
@@ -89,23 +89,24 @@ def main():
     exe_path = "dist/Mauscribe.exe"
     if os.path.exists(exe_path):
         size_mb = os.path.getsize(exe_path) / (1024 * 1024)
-        print(f"✅ Executable erfolgreich erstellt: {exe_path}")
-        print(f"📊 Größe: {size_mb:.1f} MB")
+        print(f"Executable erfolgreich erstellt: {exe_path}")
+        print(f"Groesse: {size_mb:.1f} MB")
         
         # Teste das Executable kurz
-        print("🧪 Teste Executable...")
+        print("Teste Executable...")
         try:
-            result = subprocess.run([exe_path, "--help"], 
-                                  capture_output=True, text=True, timeout=10)
-            print("✅ Executable startet erfolgreich")
+            # Teste ohne Argumente, da Windows sich über --help beschwert
+            result = subprocess.run([exe_path], 
+                                  capture_output=True, text=True, timeout=5)
+            print("Executable startet erfolgreich")
         except subprocess.TimeoutExpired:
-            print("✅ Executable läuft (Timeout erwartet)")
+            print("Executable laeuft (Timeout erwartet)")
         except Exception as e:
-            print(f"⚠️ Executable-Test: {e}")
+            print(f"Executable-Test: {e}")
         
         return True
     else:
-        print("❌ Executable wurde nicht erstellt")
+        print("Executable wurde nicht erstellt")
         return False
 
 if __name__ == "__main__":
