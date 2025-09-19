@@ -15,11 +15,8 @@ from ..utils import Settings, get_logger
 
 class MenuItem(Enum):
     """System tray menu items."""
-    HOTKEYS = "Hotkeys"
-    VOLUME_SETTINGS = "Lautstärke-Einstellungen"
+    WHISPER_MODEL_SUBMENU = "🎤 Whisper-Modell"
     SEPARATOR = "---"
-    VOLUME_CONTROLLER_TOGGLE = "🔊 Lautstärke-Kontrolle"
-    VOLUME_STEPS_SUBMENU = "📊 Lautstärke-Schritte"
     HOTWORD_TOGGLE = "🎯 Hot Word Detection"
     NOTIFICATIONS_TOGGLE = "🔔 Benachrichtigungen"
     EXIT = "Exit"
@@ -46,13 +43,10 @@ class SysTray:
         
         # Menu definitions - centralized configuration
         self.menu_definitions = {
-            MenuItem.HOTKEYS.value: self._show_hotkeys_info,
-            MenuItem.VOLUME_SETTINGS.value: self._show_volume_settings,
+            MenuItem.WHISPER_MODEL_SUBMENU.value: self._create_whisper_model_submenu,
             MenuItem.SEPARATOR.value: None,  # Separator item
-            MenuItem.VOLUME_CONTROLLER_TOGGLE.value: self._toggle_volume_controller,
             MenuItem.HOTWORD_TOGGLE.value: self._toggle_hotword_detection,
             MenuItem.NOTIFICATIONS_TOGGLE.value: self._toggle_notifications,
-            MenuItem.VOLUME_STEPS_SUBMENU.value: self._create_volume_steps_submenu,
             MenuItem.EXIT.value: self.app_instance.stop,
         }
 
@@ -111,15 +105,6 @@ class SysTray:
             for item_name in self.menu_definitions.keys():
                 if item_name == MenuItem.SEPARATOR.value:
                     menu_items.append(pystray.Menu.SEPARATOR)
-                elif item_name == MenuItem.VOLUME_CONTROLLER_TOGGLE.value:
-                    # Create checkbox-style menu item for volume controller toggle
-                    menu_items.append(
-                        pystray.MenuItem(
-                            self._get_volume_controller_menu_text(),
-                            self._toggle_volume_controller,
-                            checked=lambda item: self._is_volume_controller_enabled()
-                        )
-                    )
                 elif item_name == MenuItem.NOTIFICATIONS_TOGGLE.value:
                     # Create checkbox-style menu item for notifications toggle
                     menu_items.append(
@@ -129,12 +114,12 @@ class SysTray:
                             checked=lambda item: self._is_notifications_enabled()
                         )
                     )
-                elif item_name == MenuItem.VOLUME_STEPS_SUBMENU.value:
-                    # Create submenu for volume steps
-                    submenu_items = self._create_volume_steps_submenu()
+                elif item_name == MenuItem.WHISPER_MODEL_SUBMENU.value:
+                    # Create submenu for whisper model selection
+                    submenu_items = self._create_whisper_model_submenu()
                     menu_items.append(
                         pystray.MenuItem(
-                            MenuItem.VOLUME_STEPS_SUBMENU.value,
+                            MenuItem.WHISPER_MODEL_SUBMENU.value,
                             pystray.Menu(*submenu_items)
                         )
                     )
@@ -166,127 +151,8 @@ class SysTray:
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Verarbeiten des Menü-Klicks: {e}")
 
-    def _show_hotkeys_info(self) -> None:
-        """Show hotkey information in a notification."""
-        try:
-            primary_key = self.config.primary_name
-            secondary_key = self.config.secondary_name
-            
-            # Get volume reduction factor from app instance
-            volume_factor = 0.6  # Default
-            if hasattr(self.app_instance, 'volume_controller') and hasattr(self.app_instance.volume_controller, 'settings'):
-                volume_factor = self.app_instance.volume_controller.settings.volume_reduction_factor
-            
-            hotkey_info = f"🎮 Mauscribe Hotkeys:\n\n"
-            hotkey_info += f"🐭 {primary_key} (Klick): Aufnahme starten/stoppen\n"
-            hotkey_info += f"🐭 {secondary_key} (Klick): Text einfügen\n"
-            hotkey_info += f"🐭 Linke Maus + {primary_key}: Text einfügen\n\n"
-            hotkey_info += f"🔊 Lautstärke-Reduktion: {volume_factor:.1f} (z.B. 80% → {80*volume_factor:.0f}%)\n\n"
-            hotkey_info += f"Status: {'🔴 Aufnahme aktiv' if self.is_recording else '⚪ Bereit'}"
-            
-            # Show notification using the app's toaster
-            if hasattr(self.app_instance, 'toaster'):
-                self.app_instance.toaster.show_info(hotkey_info, "Mauscribe Hotkeys")
-            else:
-                self.logger.info(f"Hotkey-Info: {hotkey_info}")
-                
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Anzeigen der Hotkey-Info: {e}")
 
-    def _show_volume_settings(self) -> None:
-        """Show volume settings information and options."""
-        try:
-            # Get current volume reduction factor
-            volume_factor = 0.6  # Default
-            if hasattr(self.app_instance, 'volume_controller') and hasattr(self.app_instance.volume_controller, 'settings'):
-                volume_factor = self.app_instance.volume_controller.settings.volume_reduction_factor
-            
-            volume_info = f"🔊 Lautstärke-Einstellungen:\n\n"
-            volume_info += f"Aktueller Reduktions-Faktor: {volume_factor:.1f}\n\n"
-            volume_info += f"Beispiele:\n"
-            volume_info += f"• 80% → {80*volume_factor:.0f}%\n"
-            volume_info += f"• 60% → {60*volume_factor:.0f}%\n"
-            volume_info += f"• 40% → {40*volume_factor:.0f}%\n\n"
-            volume_info += f"💡 Änderung in settings.toml unter [system]\n"
-            volume_info += f"   volume_reduction_factor = {volume_factor:.1f}"
-            
-            # Show notification using the app's toaster
-            if hasattr(self.app_instance, 'toaster'):
-                self.app_instance.toaster.show_info(volume_info, "Lautstärke-Einstellungen")
-            else:
-                self.logger.info(f"Volume-Info: {volume_info}")
-                
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Anzeigen der Lautstärke-Info: {e}")
 
-    def _is_volume_controller_enabled(self) -> bool:
-        """Check if volume controller is currently enabled."""
-        try:
-            if hasattr(self.app_instance, 'volume_controller') and hasattr(self.app_instance.volume_controller, 'settings'):
-                return self.app_instance.volume_controller.settings.volume_controller_enabled
-            return True  # Default to enabled
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Prüfen des Volume Controller Status: {e}")
-            return True
-
-    def _get_volume_controller_menu_text(self) -> str:
-        """Get the menu text for volume controller toggle."""
-        enabled = self._is_volume_controller_enabled()
-        status = "✅" if enabled else "❌"
-        return f"{status} 🔊 Lautstärke-Kontrolle"
-
-    def _toggle_volume_controller(self, icon=None, item=None) -> None:
-        """Toggle volume controller on/off."""
-        try:
-            if not hasattr(self.app_instance, 'volume_controller'):
-                self.logger.error("❌ Volume Controller nicht verfügbar")
-                return
-
-            # Get current state
-            current_state = self._is_volume_controller_enabled()
-            new_state = not current_state
-
-            # Save to TOML file first
-            self._save_volume_controller_setting(new_state)
-            
-            # Reload settings to apply changes
-            self.app_instance.volume_controller.reload_settings()
-
-            # Show notification
-            status_text = "aktiviert" if new_state else "deaktiviert"
-            if hasattr(self.app_instance, 'toaster'):
-                self.app_instance.toaster.show_info(
-                    f"🔊 Lautstärke-Kontrolle {status_text}",
-                    f"Volume Controller ist jetzt {status_text}"
-                )
-
-            # Note: Menu refresh is complex with pystray, so we just show notification
-            # The menu will show correct state on next application restart
-
-            self.logger.info(f"✅ Volume Controller {status_text}")
-
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Umschalten des Volume Controllers: {e}")
-
-    def _save_volume_controller_setting(self, enabled: bool) -> None:
-        """Save volume controller setting to TOML file."""
-        try:
-            import toml
-            # Read current config
-            with open("settings.toml", "r", encoding="utf-8") as f:
-                config = toml.load(f)
-            
-            # Update the setting
-            if "system" not in config:
-                config["system"] = {}
-            config["system"]["volume_controller_enabled"] = enabled
-            
-            # Write back to file
-            with open("settings.toml", "w", encoding="utf-8") as f:
-                toml.dump(config, f)
-                
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Speichern der Volume Controller Einstellung: {e}")
 
     def _refresh_menu(self) -> None:
         """Refresh the system tray menu to show updated state."""
@@ -304,103 +170,7 @@ class SysTray:
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Aktualisieren des Menüs: {e}")
 
-    def _create_volume_steps_submenu(self) -> list:
-        """Create submenu items for volume steps (0%, 20%, 40%, 60%, 80%, 100%)."""
-        try:
-            current_factor = self._get_current_volume_factor()
-            submenu_items = []
-            
-            # Define volume steps in 20% increments
-            volume_steps = [
-                (0.0, "0% (Aus)"),
-                (0.2, "20%"),
-                (0.4, "40%"),
-                (0.6, "60%"),
-                (0.8, "80%"),
-                (1.0, "100% (Voll)")
-            ]
-            
-            for factor, label in volume_steps:
-                # Create callback for this volume step
-                def create_step_callback(step_factor):
-                    return lambda icon, item: self._set_volume_factor(step_factor)
-                
-                # Check if this is the current setting
-                is_current = abs(factor - current_factor) < 0.01
-                status_icon = "✅" if is_current else "⚪"
-                
-                submenu_items.append(
-                    pystray.MenuItem(
-                        f"{status_icon} {label}",
-                        create_step_callback(factor),
-                        checked=lambda item, f=factor: abs(f - current_factor) < 0.01
-                    )
-                )
-            
-            return submenu_items
-            
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Erstellen des Volume-Submenüs: {e}")
-            return []
 
-    def _get_current_volume_factor(self) -> float:
-        """Get current volume reduction factor."""
-        try:
-            if hasattr(self.app_instance, 'volume_controller') and hasattr(self.app_instance.volume_controller, 'settings'):
-                return self.app_instance.volume_controller.settings.volume_reduction_factor
-            return 0.8  # Default
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Abrufen des aktuellen Volume-Faktors: {e}")
-            return 0.8
-
-    def _set_volume_factor(self, factor: float) -> None:
-        """Set volume reduction factor."""
-        try:
-            if not hasattr(self.app_instance, 'volume_controller'):
-                self.logger.error("❌ Volume Controller nicht verfügbar")
-                return
-
-            # Save to TOML file first
-            self._save_volume_factor_setting(factor)
-            
-            # Reload settings to apply changes
-            self.app_instance.volume_controller.reload_settings()
-
-            # Show notification
-            percentage = int(factor * 100)
-            if hasattr(self.app_instance, 'toaster'):
-                self.app_instance.toaster.show_info(
-                    f"🔊 Lautstärke-Schritt geändert",
-                    f"Volume Controller auf {percentage}% gesetzt"
-                )
-
-            # Note: Menu refresh is complex with pystray, so we just show notification
-            # The menu will show correct state on next application restart
-
-            self.logger.info(f"✅ Volume Controller auf {percentage}% gesetzt")
-
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Setzen des Volume-Faktors: {e}")
-
-    def _save_volume_factor_setting(self, factor: float) -> None:
-        """Save volume factor setting to TOML file."""
-        try:
-            import toml
-            # Read current config
-            with open("settings.toml", "r", encoding="utf-8") as f:
-                config = toml.load(f)
-            
-            # Update the setting
-            if "system" not in config:
-                config["system"] = {}
-            config["system"]["volume_reduction_factor"] = factor
-            
-            # Write back to file
-            with open("settings.toml", "w", encoding="utf-8") as f:
-                toml.dump(config, f)
-                
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Speichern der Volume-Faktor Einstellung: {e}")
 
     def _toggle_hotword_detection(self) -> None:
         """Toggle Hot Word Detection on/off."""
@@ -549,3 +319,87 @@ class SysTray:
                 
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Speichern der Notification Einstellung: {e}")
+
+    def _create_whisper_model_submenu(self) -> list:
+        """Create submenu for whisper model selection."""
+        try:
+            # Available whisper models
+            models = [
+                ("tiny", "Tiny (39 MB) - Schnellste"),
+                ("base", "Base (74 MB) - Ausgewogen"),
+                ("small", "Small (244 MB) - Gut"),
+                ("medium", "Medium (769 MB) - Sehr gut"),
+                ("large", "Large (1550 MB) - Beste Qualität")
+            ]
+            
+            # Get current model
+            current_model = self.config.transcription.get('whisper_model', 'base')
+            
+            submenu_items = []
+            for model_id, model_desc in models:
+                # Create callback for this model
+                def create_model_callback(model):
+                    return lambda icon, item: self._set_whisper_model(model)
+                
+                # Create menu item with checkmark for current model
+                menu_item = pystray.MenuItem(
+                    f"{'✅' if model_id == current_model else '  '} {model_desc}",
+                    create_model_callback(model_id),
+                    checked=lambda item, m=model_id: m == current_model
+                )
+                submenu_items.append(menu_item)
+            
+            return submenu_items
+            
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Erstellen des Whisper-Modell Submenus: {e}")
+            return []
+
+    def _set_whisper_model(self, model: str) -> None:
+        """Set whisper model."""
+        try:
+            # Save to TOML file first
+            self._save_whisper_model_setting(model)
+            
+            # Reload settings to apply changes
+            self.app_instance.config = Settings()
+            
+            # Reinitialize transcriptor with new model
+            if hasattr(self.app_instance, 'transcriptor'):
+                from ..audio.transcriptor import Transcriptor
+                self.app_instance.transcriptor = Transcriptor(
+                    model_size=model,
+                    language=self.app_instance.config.transcription.get('language', 'de')
+                )
+
+            # Show notification
+            if hasattr(self.app_instance, 'toaster'):
+                self.app_instance.toaster.show_info(
+                    f"🎤 Whisper-Modell geändert",
+                    f"Neues Modell: {model}"
+                )
+
+            self.logger.info(f"✅ Whisper-Modell auf {model} gesetzt")
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Setzen des Whisper-Modells: {e}")
+
+    def _save_whisper_model_setting(self, model: str) -> None:
+        """Save whisper model setting to TOML file."""
+        try:
+            import toml
+            # Read current config
+            with open("settings.toml", "r", encoding="utf-8") as f:
+                config = toml.load(f)
+            
+            # Update the setting
+            if "transcription" not in config:
+                config["transcription"] = {}
+            config["transcription"]["whisper_model"] = model
+            
+            # Write back to file
+            with open("settings.toml", "w", encoding="utf-8") as f:
+                toml.dump(config, f)
+                
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Speichern der Whisper-Modell Einstellung: {e}")

@@ -12,13 +12,13 @@ auto_select_device = true
 test_device_on_startup = true
 
 [system]
-volume_reduction_factor = 0.6
+volume_reduction_factor = 1.0
 min_volume_percent = 10
-volume_controller_enabled = true
+volume_controller_enabled = false
 
 [transcription]
 language = "de"
-whisper_model = "base"
+whisper_model = "medium"
 compute_type = "float32"
 compute_device = "cpu"
 
@@ -40,9 +40,9 @@ max_words = 1000
 enabled = false
 duration = 3000
 sound = true
-toast = true
+toast = false
 show_info = false
-show_success = false
+show_success = true
 show_warning = true
 show_error = true
 show_recording = false
@@ -64,7 +64,7 @@ compress_audio = false
 backup_before_cleanup = true
 
 [hotword]
-enabled = true
+enabled = false
 start_words = [ "start",]
 stop_words = [ "stopp",]
 sensitivity = 0.5
@@ -98,5 +98,5 @@ name = "x2"
 type = "click"
 
 [input.secondary]
-name = "x1"
-type = "click"
+name = "left"
+type = "hold"

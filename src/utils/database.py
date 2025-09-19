@@ -37,10 +37,28 @@ class AudioDatabase:
         """Initialize the audio database."""
         self.logger = get_logger(self.__class__.__name__)
         self.config = DatabaseSettings()
+        
+        # Fallback für Dictionary-Konfiguration
+        if isinstance(self.config, dict):
+            self.logger.warning("⚠️ Config ist Dictionary - verwende Fallback-Werte")
+            self.config = {
+                'enabled': self.config.get('enabled', True),
+                'data_directory': self.config.get('data_directory', ''),
+                'audio_format': self.config.get('audio_format', 'wav'),
+                'auto_save_recordings': self.config.get('auto_save_recordings', True),
+                'auto_save_transcriptions': self.config.get('auto_save_transcriptions', True),
+                'mark_as_training_data': self.config.get('mark_as_training_data', True),
+                'retention_days': self.config.get('retention_days', 30),
+                'max_size_mb': self.config.get('max_size_mb', 1000),
+                'compress_audio': self.config.get('compress_audio', False),
+                'backup_before_cleanup': self.config.get('backup_before_cleanup', True)
+            }
 
         # Database path
-        if self.config.data_directory:
+        if hasattr(self.config, 'data_directory') and self.config.data_directory:
             data_dir = Path(self.config.data_directory)
+        elif isinstance(self.config, dict) and self.config.get('data_directory'):
+            data_dir = Path(self.config['data_directory'])
         else:
             # Use absolute path from current working directory
             data_dir = Path.cwd() / "data"
@@ -139,8 +157,10 @@ class AudioDatabase:
             filename = f"recording_{timestamp}.{audio_format}"
 
             # Ensure audio directory exists
-            if self.config.database_data_directory:
-                audio_dir = Path(self.config.database_data_directory) / "audio"
+            if hasattr(self.config, 'data_directory') and self.config.data_directory:
+                audio_dir = Path(self.config.data_directory) / "audio"
+            elif isinstance(self.config, dict) and self.config.get('data_directory'):
+                audio_dir = Path(self.config['data_directory']) / "audio"
             else:
                 # Use absolute path from current working directory
                 audio_dir = Path.cwd() / "data" / "audio"

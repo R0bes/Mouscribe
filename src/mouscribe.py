@@ -54,7 +54,15 @@ class MauscribeApp:
         self.systray = SysTray(self.config, self)
         self.recorder = Recorder()
         self.transcriptor = Transcriptor()
-        self.volume_controller = Volumizer()
+        # Initialize volume controller with settings
+        volume_reduction_factor = self.config.system.get('volume_reduction_factor', 0.6)
+        min_volume_percent = self.config.system.get('min_volume_percent', 10)
+        volume_controller_enabled = self.config.system.get('volume_controller_enabled', True)
+        self.volume_controller = Volumizer(
+            reduction_factor=volume_reduction_factor,
+            min_volume=min_volume_percent,
+            enabled=volume_controller_enabled
+        )
         self.overlay_manager = MouseOverlayManager()
         
         # Initialize Hot Word Detector (alte Version)
@@ -64,10 +72,12 @@ class MauscribeApp:
         )
         
         # Initialize Computer Agent (neue Version)
+        computer_agent_config = self.config.hotword.get('computer_agent', {})
         self.computer_agent = ComputerAgent(
-            self.config.hotword.get('computer_agent', {}),
-            recorder=self.recorder,
-            transcriptor=self.transcriptor
+            sample_rate=computer_agent_config.get('sample_rate', 16000),
+            channels=1,
+            buffer_duration=computer_agent_config.get('buffer_duration', 6.0),
+            chunk_size=1024
         )
         # Initialize toaster with notification settings
         notification_enabled = self.config.notifications.get("enabled", True)
@@ -119,22 +129,30 @@ class MauscribeApp:
         self._setup_signal_handlers()
 
     def on_primary_action(self) -> None:
-        """Handle primary button action."""
-        self.logger.info("🎮 Primary button pressed - toggle recording")
+        """Handle primary button action (x2 button) - toggle recording."""
+        self.logger.info("🎮 X2-Taste gedrückt - Aufnahme starten/stoppen")
         if not self._is_recording:
             self.start_recording()
         else:
             self.stop_recording()
 
     def on_secondary_action(self) -> None:
-        """Handle secondary button action."""
-        self.logger.info("🎮 Secondary button pressed - paste text")
-        self._paste_text()
+        """Handle secondary button action (left mouse) - no action."""
+        # Linke Maustaste alleine macht nichts - wird nur für Kombination verwendet
+        pass
 
     def on_insert_action(self) -> None:
-        """Handle insert combination action (left mouse + primary key)."""
-        self.logger.info("🎮 Insert combination pressed (left + primary) - paste text")
-        self._paste_text()
+        """Handle insert combination action (left mouse held + x2 button) - stop recording and paste text."""
+        self.logger.info("🎮 Kombination gedrückt (linke Maustaste + X2-Taste) - Aufnahme stoppen und Text einfügen")
+        if self._is_recording:
+            self.stop_recording()
+            # Warte kurz, damit die Aufnahme verarbeitet wird
+            import time
+            time.sleep(0.5)
+            self._paste_text()
+        else:
+            self.logger.info("⚠️ Keine aktive Aufnahme - nur Text einfügen")
+            self._paste_text()
 
     def _on_start_word_detected(self, start_word: str) -> None:
         """Handle start word detection."""
@@ -165,6 +183,11 @@ class MauscribeApp:
     def _start_hotword_detection(self) -> None:
         """Starte Hot Word Detection falls aktiviert."""
         try:
+            # Prüfe ob Hotword Detection aktiviert ist
+            if not self.config.hotword.get('enabled', False):
+                self.logger.info("🔇 Hotword Detection deaktiviert")
+                return
+                
             # Prüfe ob Input-Steuerung aktiviert ist
             if not self.config.input.get('enabled', True):
                 self.logger.info("🔇 Input-Steuerung deaktiviert")
@@ -372,7 +395,7 @@ class MauscribeApp:
                         f"🔍 Audio data: shape={audio_data.shape}, dtype={audio_data.dtype}, duration={duration}s"
                     )
                     self.logger.debug(f"🔍 Sample rate: {self.recorder.sample_rate_hz}, channels: {self.recorder.num_channels}")
-                    self.logger.debug(f"🔍 Audio format: {self.config.audio.format}")
+                    self.logger.debug(f"🔍 Audio format: {self.config.audio.get('format', 'wav')}")
 
                     recording_id = self.audio_database.save_audio_recording(
                         audio_data=audio_data,

@@ -24,9 +24,11 @@ class ModuleSettings(BaseSettings):
 class Settings(ModuleSettings):
     """Main settings class for Mauscribe - only loads what it needs."""
     
-    # Primary and secondary button names
+    # Primary and secondary button names and types
     primary_name: str = Field(default="x2", description="Primary button name")
+    primary_type: str = Field(default="click", description="Primary button type")
     secondary_name: str = Field(default="x1", description="Secondary button name")
+    secondary_type: str = Field(default="click", description="Secondary button type")
     
     # Notifications settings
     notifications: Dict[str, Any] = Field(default_factory=lambda: {"show_all": True}, description="Notification settings")
@@ -49,6 +51,9 @@ class Settings(ModuleSettings):
     # Input settings
     input: Dict[str, Any] = Field(default_factory=dict, description="Input control settings")
     
+    # System settings
+    system: Dict[str, Any] = Field(default_factory=dict, description="System settings including volume control")
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # Load from TOML file if it exists
@@ -61,8 +66,10 @@ class Settings(ModuleSettings):
             if "input" in config:
                 if "primary" in config["input"]:
                     self.primary_name = config["input"]["primary"].get("name", "x2")
+                    self.primary_type = config["input"]["primary"].get("type", "click")
                 if "secondary" in config["input"]:
                     self.secondary_name = config["input"]["secondary"].get("name", "x1")
+                    self.secondary_type = config["input"]["secondary"].get("type", "click")
             
             if "notifications" in config:
                 self.notifications = config["notifications"]
@@ -78,6 +85,9 @@ class Settings(ModuleSettings):
                 
             if "ui" in config:
                 self.ui = config["ui"]
+                
+            if "system" in config:
+                self.system = config["system"]
                 
         except Exception as e:
             # Use defaults if TOML loading fails

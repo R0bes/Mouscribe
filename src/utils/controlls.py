@@ -27,9 +27,11 @@ class ControllsManager:
         self.insert_callback = insert_callback
         self.logger = get_logger(self.__class__.__name__)
         
-        # Get button names from config
+        # Get button names and types from config
         self.primary_button = self.config.primary_name
+        self.primary_type = self.config.primary_type
         self.secondary_button = self.config.secondary_name
+        self.secondary_type = self.config.secondary_type
         
         # Mouse listener
         self._mouse_listener: Optional[mouse.Listener] = None
@@ -40,10 +42,8 @@ class ControllsManager:
         self._primary_pressed_while_left_held = False
         
         self.logger.info(f"🎮 Simple Controls Manager initialized:")
-        self.logger.info(f"   Primary button: {self.primary_button}")
-        self.logger.info(f"   Secondary button: {self.secondary_button}")
-        if self.insert_callback:
-            self.logger.info(f"   Insert combination: left + {self.primary_button}")
+        self.logger.info(f"   {self.primary_button} ({self.primary_type}): Aufnahme starten/stoppen")
+        self.logger.info(f"   {self.secondary_button} ({self.secondary_type}) + {self.primary_button} ({self.primary_type}): Aufnahme stoppen und Text einfügen")
 
     def start(self) -> None:
         """Start input listeners."""
@@ -95,21 +95,33 @@ class ControllsManager:
                     if self._left_mouse_pressed and self.insert_callback:
                         # Left mouse is held + primary pressed = insert combination
                         self._primary_pressed_while_left_held = True
-                        self.logger.debug(f"🎮 Insert combination triggered: left + {self.primary_button}")
+                        self.logger.debug(f"🎮 Kombination ausgelöst: {self.secondary_button} ({self.secondary_type}) + {self.primary_button} ({self.primary_type})")
                         self.insert_callback()
                         return
                 else:  # Primary button released
                     if not self._primary_pressed_while_left_held:
-                        # Normal primary button click
-                        self.logger.debug(f"🎮 Primary button ({self.primary_button}) clicked")
-                        self.primary_callback()
+                        # Normal primary button action based on type
+                        if self.primary_type == "click":
+                            self.logger.debug(f"🎮 {self.primary_button} ({self.primary_type}) geklickt")
+                            self.primary_callback()
+                        elif self.primary_type == "hold" and not pressed:
+                            # For hold type, trigger on release
+                            self.logger.debug(f"🎮 {self.primary_button} ({self.primary_type}) losgelassen")
+                            self.primary_callback()
                     self._primary_pressed_while_left_held = False
                 return
             
-            # Handle secondary button (only on release)
-            if button_name == self.secondary_button and not pressed:
-                self.logger.debug(f"🎮 Secondary button ({self.secondary_button}) clicked")
-                self.secondary_callback()
+            # Handle secondary button based on type
+            if button_name == self.secondary_button:
+                if self.secondary_type == "click" and not pressed:
+                    # Click type: trigger on release
+                    self.logger.debug(f"🎮 {self.secondary_button} ({self.secondary_type}) geklickt (keine Aktion)")
+                    self.secondary_callback()
+                elif self.secondary_type == "hold" and pressed:
+                    # Hold type: trigger on press (for combination detection)
+                    self.logger.debug(f"🎮 {self.secondary_button} ({self.secondary_type}) gedrückt (für Kombination)")
+                    # Secondary button is mainly used for combination detection
+                    # The actual action happens in the combination logic above
                 
         except Exception as e:
             self.logger.error(f"❌ Mouse click handler error: {e}")

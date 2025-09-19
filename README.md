@@ -73,22 +73,17 @@ whisper_model = "base"  # tiny, base, small, medium, large
    ```
 
 2. **Audio aufnehmen**:
-   - **Primärer Button** (X2): Einfacher Klick startet Aufnahme
-   - **Sekundärer Button** (X1): Langer Druck (1.5s) für erweiterte Funktionen
+   - **X2-Button**: Einfacher Klick startet/stoppt Aufnahme (Toggle)
 
-3. **Aufnahme beenden**:
-   - Erneut auf den primären Button klicken
-   - Automatische Beendigung nach 30 Sekunden
-
-4. **Text einfügen**:
+3. **Text einfügen**:
+   - **Linke Maustaste gedrückt halten + X2-Button**: Stoppt Aufnahme und fügt Text ein
    - Transkribierter Text wird automatisch in die Zwischenablage kopiert
-   - Text wird automatisch in das aktive Fenster eingefügt
 
-### Erweiterte Funktionen
+### System Tray Funktionen
 
-- **Doppelklick**: Schnelle Wiederholung der letzten Aufnahme
-- **Langer Druck**: Öffnet Konfigurationsmenü
-- **System Tray**: Rechtsklick für Einstellungen und Status
+- **Whisper-Modell auswählen**: Verschiedene Modelle für bessere Qualität
+- **Hotword Detection**: Ein/Aus-Schalter für Sprachsteuerung
+- **Benachrichtigungen**: Ein/Aus-Schalter für System-Benachrichtigungen
 
 ## ⚙️ Konfiguration
 
@@ -109,7 +104,7 @@ auto_select_device = true # Automatische Geräteauswahl
 ```toml
 [transcription]
 language = "de"          # Sprache (de, en, auto)
-whisper_model = "base"   # Whisper-Modell (tiny, base, small, medium, large)
+whisper_model = "medium" # Whisper-Modell (tiny, base, small, medium, large) - medium für bessere deutsche Umlaute
 compute_type = "float32" # Berechnungstyp (float32, float16, int8)
 ```
 
@@ -117,11 +112,16 @@ compute_type = "float32" # Berechnungstyp (float32, float16, int8)
 
 ```toml
 [system]
-volume_reduction_factor = 0.15  # Lautstärkereduktion während Aufnahme
-min_volume_percent = 5          # Minimale Lautstärke in Prozent
+volume_reduction_factor = 1.0   # Lautstärkereduktion (1.0 = deaktiviert)
+min_volume_percent = 10         # Minimale Lautstärke in Prozent
 
-[behavior]
-debounce_time = 0.5             # Entprellzeit für Mausklicks
+[input.primary]
+name = "x2"                     # Primärer Button (X2)
+type = "click"                  # Button-Typ
+
+[input.secondary]
+name = "left"                   # Sekundärer Button (linke Maustaste)
+type = "hold"                   # Button-Typ für Kombination
 ```
 
 ### Benachrichtigungen
