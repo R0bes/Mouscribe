@@ -8,23 +8,25 @@ import warnings
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
-from .settings import ModuleSettings
+
+# ModuleSettings removed - using BaseSettings directly
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
-class LoggingSettings(ModuleSettings):
+class LoggingSettings(BaseSettings):
     enabled: bool = Field(default=True, description="Enable logging")
     console_level: str = Field(default="INFO", description="Console log level")
     file_level: str = Field(default="DEBUG", description="File log level")
     file_enabled: bool = Field(default=True, description="Enable file logging")
     filename: str = Field(default="mauscribe.log", description="Log filename")
     suppress_external_logs: bool = Field(default=True, description="Suppress external library logs")
-    model_config = { "env_prefix": "MAUSCRIBE_LOGGING_" }
+    model_config = {"env_prefix": "MAUSCRIBE_LOGGING_"}
+
 
 # Global flag to prevent multiple initializations
 _logging_initialized = False
@@ -40,7 +42,7 @@ def setup_logging() -> None:
 
     if _logging_initialized:
         return
-    
+
     settings = LoggingSettings()
 
     # Get logging settings from config or use defaults
@@ -90,7 +92,7 @@ def setup_logging() -> None:
         # Ensure log directory exists
         log_path = Path(log_filename)
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         file_handler = logging.FileHandler(log_filename, encoding="utf-8")
         file_handler.setLevel(file_level)
         file_handler.setFormatter(formatter)
@@ -107,10 +109,7 @@ def setup_logging() -> None:
 
     # Suppress verbose logging from external libraries if enabled
     if suppress_external:
-        external_loggers = [
-            "comtypes", "pycaw", "pynput", "faster_whisper", 
-            "urllib3", "PIL", "pystray", "PIL.Image"
-        ]
+        external_loggers = ["comtypes", "pycaw", "pynput", "faster_whisper", "urllib3", "PIL", "pystray", "PIL.Image"]
         for logger_name in external_loggers:
             logging.getLogger(logger_name).setLevel(logging.WARNING)
 

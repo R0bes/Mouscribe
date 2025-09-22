@@ -1,97 +1,16 @@
-[app]
-app_name = "Mauscribe"
-version = "1.0.0"
-
-[audio]
-sample_rate = 16000
-channels = 1
-chunk_size = 1024
-format = "wav"
-audio_device = 1
-auto_select_device = true
-test_device_on_startup = true
+[transcription]
+model = "small"
+language = "de"
 
 [system]
-volume_reduction_factor = 1.0
-min_volume_percent = 10
-volume_controller_enabled = false
-
-[transcription]
-language = "de"
-whisper_model = "medium"
-compute_type = "float32"
-compute_device = "cpu"
-
-[logging]
-enabled = true
-console_level = "INFO"
-file_level = "DEBUG"
-file_enabled = true
-filename = "mauscribe.log"
-suppress_external_logs = true
-
-[dictionary]
-enabled = true
-auto_add_unknown = false
-path = ""
-max_words = 1000
+volume_reduction_factor = 0.4
 
 [notifications]
-enabled = false
-duration = 3000
 sound = true
-toast = false
-show_info = false
-show_success = true
-show_warning = true
-show_error = true
-show_recording = false
-show_transcription = true
-show_paste = true
-show_spell_check = true
-auto_insert_enabled = false
-
-[database]
-enabled = true
-data_directory = ""
-audio_format = "wav"
-auto_save_recordings = true
-auto_save_transcriptions = true
-mark_as_training_data = true
-retention_days = 30
-max_size_mb = 1000
-compress_audio = false
-backup_before_cleanup = true
-
-[hotword]
-enabled = false
-start_words = [ "start",]
-stop_words = [ "stopp",]
-sensitivity = 0.5
-timeout_seconds = 30
-continuous_listening = true
-auto_start_recording = true
-fallback_to_click = true
+toast = true
 
 [ui]
-icon_path = "icon.png"
-icon_type = "system_tray"
-fallback_icon = "mauscribe_fallback_icon.svg"
-
-[input]
-enabled = true
-
-[hotword.computer_agent]
-enabled = false
-wake_word = "computer"
-attention_timeout = 5.0
-recording_timeout = 5.0
-sample_rate = 16000
-buffer_duration = 6.0
-normal_analysis_duration = 2.0
-normal_analysis_interval = 1.0
-attention_analysis_duration = 3.0
-attention_analysis_interval = 2.0
+icon_path = "icons/icon.png"
 
 [input.primary]
 name = "x2"

@@ -7,29 +7,57 @@ import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Literal
+from typing import Any, Literal, Optional
 
 import numpy as np
 from pydantic import Field
 
-from .settings import Settings
 from .logger import get_logger
+from .settings import Settings
 
 
-class DatabaseSettings(Settings):
+class DatabaseSettings:
     """Database settings."""
-    enabled: bool = Field(default=True, description="Enable database")
-    data_directory: str = Field(default="", description="Data directory path")
-    audio_format: Literal["wav", "mp3", "flac"] = Field(default="wav", description="Audio format for storage")
-    auto_save_recordings: bool = Field(default=True, description="Auto-save recordings")
-    auto_save_transcriptions: bool = Field(default=True, description="Auto-save transcriptions")
-    mark_as_training_data: bool = Field(default=True, description="Mark data as training data")
-    retention_days: int = Field(default=30, ge=1, le=365, description="Data retention in days")
-    max_size_mb: int = Field(default=1000, ge=100, le=10000, description="Maximum database size in MB")
-    compress_audio: bool = Field(default=False, description="Compress audio files")
-    backup_before_cleanup: bool = Field(default=True, description="Backup before cleanup")
-    model_config = { "env_prefix": "MAUSCRIBE_DB_" }
-    
+
+    def __init__(self):
+        # Database settings only
+        self.enabled: bool = True
+        self.data_directory: str = ""
+        self.audio_format: str = "wav"
+        self.auto_save_recordings: bool = True
+        self.auto_save_transcriptions: bool = True
+        self.mark_as_training_data: bool = True
+        self.retention_days: int = 30
+        self.max_size_mb: int = 1000
+        self.compress_audio: bool = False
+        self.backup_before_cleanup: bool = True
+
+        # Load from TOML file if it exists
+        try:
+            import toml
+
+            with open("settings.toml", encoding="utf-8") as f:
+                config = toml.load(f)
+
+            # Load database settings
+            if "database" in config:
+                db_config = config["database"]
+                self.enabled = db_config.get("enabled", True)
+                self.data_directory = db_config.get("data_directory", "")
+                self.audio_format = db_config.get("audio_format", "wav")
+                self.auto_save_recordings = db_config.get("auto_save_recordings", True)
+                self.auto_save_transcriptions = db_config.get("auto_save_transcriptions", True)
+                self.mark_as_training_data = db_config.get("mark_as_training_data", True)
+                self.retention_days = db_config.get("retention_days", 30)
+                self.max_size_mb = db_config.get("max_size_mb", 1000)
+                self.compress_audio = db_config.get("compress_audio", False)
+                self.backup_before_cleanup = db_config.get("backup_before_cleanup", True)
+
+        except Exception as e:
+            # Use defaults if TOML loading fails
+            pass
+
+
 class AudioDatabase:
     """Database manager for audio recordings and transcriptions."""
 
@@ -37,28 +65,28 @@ class AudioDatabase:
         """Initialize the audio database."""
         self.logger = get_logger(self.__class__.__name__)
         self.config = DatabaseSettings()
-        
+
         # Fallback für Dictionary-Konfiguration
         if isinstance(self.config, dict):
             self.logger.warning("⚠️ Config ist Dictionary - verwende Fallback-Werte")
             self.config = {
-                'enabled': self.config.get('enabled', True),
-                'data_directory': self.config.get('data_directory', ''),
-                'audio_format': self.config.get('audio_format', 'wav'),
-                'auto_save_recordings': self.config.get('auto_save_recordings', True),
-                'auto_save_transcriptions': self.config.get('auto_save_transcriptions', True),
-                'mark_as_training_data': self.config.get('mark_as_training_data', True),
-                'retention_days': self.config.get('retention_days', 30),
-                'max_size_mb': self.config.get('max_size_mb', 1000),
-                'compress_audio': self.config.get('compress_audio', False),
-                'backup_before_cleanup': self.config.get('backup_before_cleanup', True)
+                "enabled": self.config.get("enabled", True),
+                "data_directory": self.config.get("data_directory", ""),
+                "audio_format": self.config.get("audio_format", "wav"),
+                "auto_save_recordings": self.config.get("auto_save_recordings", True),
+                "auto_save_transcriptions": self.config.get("auto_save_transcriptions", True),
+                "mark_as_training_data": self.config.get("mark_as_training_data", True),
+                "retention_days": self.config.get("retention_days", 30),
+                "max_size_mb": self.config.get("max_size_mb", 1000),
+                "compress_audio": self.config.get("compress_audio", False),
+                "backup_before_cleanup": self.config.get("backup_before_cleanup", True),
             }
 
         # Database path
-        if hasattr(self.config, 'data_directory') and self.config.data_directory:
+        if hasattr(self.config, "data_directory") and self.config.data_directory:
             data_dir = Path(self.config.data_directory)
-        elif isinstance(self.config, dict) and self.config.get('data_directory'):
-            data_dir = Path(self.config['data_directory'])
+        elif isinstance(self.config, dict) and self.config.get("data_directory"):
+            data_dir = Path(self.config["data_directory"])
         else:
             # Use absolute path from current working directory
             data_dir = Path.cwd() / "data"
@@ -157,10 +185,10 @@ class AudioDatabase:
             filename = f"recording_{timestamp}.{audio_format}"
 
             # Ensure audio directory exists
-            if hasattr(self.config, 'data_directory') and self.config.data_directory:
+            if hasattr(self.config, "data_directory") and self.config.data_directory:
                 audio_dir = Path(self.config.data_directory) / "audio"
-            elif isinstance(self.config, dict) and self.config.get('data_directory'):
-                audio_dir = Path(self.config['data_directory']) / "audio"
+            elif isinstance(self.config, dict) and self.config.get("data_directory"):
+                audio_dir = Path(self.config["data_directory"]) / "audio"
             else:
                 # Use absolute path from current working directory
                 audio_dir = Path.cwd() / "data" / "audio"

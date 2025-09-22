@@ -5,15 +5,16 @@ import time
 from typing import Any, Literal
 
 import numpy as np
-from pydantic import Field
 import sounddevice as sd
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 from ..utils import get_logger
-from ..utils.settings import ModuleSettings
 
 
-class RecorderSettings(ModuleSettings):
+class RecorderSettings(BaseSettings):
     """Audio recording settings."""
+
     sample_rate: int = Field(default=16000, ge=8000, le=48000, description="Sample rate in Hz")
     channels: int = Field(default=1, ge=1, le=2, description="Number of audio channels")
     chunk_size: int = Field(default=1024, ge=512, le=8192, description="Audio chunk size")
@@ -29,7 +30,6 @@ class RecorderSettings(ModuleSettings):
         validate_assignment = True
         use_enum_values = True
         env_prefix = "MAUSCRIBE_AUDIO_"
-    
 
 
 class Recorder:
@@ -287,7 +287,6 @@ class Recorder:
     def is_recording(self) -> bool:
         """Prüfe, ob gerade aufgenommen wird."""
         return self._active
-
 
     def get_current_device(self) -> dict[str, Any] | None:
         """Gib Informationen über das aktuelle Audio-Gerät zurück."""

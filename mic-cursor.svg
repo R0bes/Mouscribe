@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <style>
+      .mic { fill: currentColor; }
+    </style>
+  </defs>
+  <!-- Mic capsule (rounded rect) -->
+  <rect class="mic" x="44" y="16" width="40" height="64" rx="20" ry="20"/>
+  <!-- Stem -->
+  <rect class="mic" x="60" y="80" width="8" height="16" rx="4" ry="4"/>
+  <!-- Stand: U-shape -->
+  <path class="mic" d="M32 68 a32 32 0 1 0 64 0 h-8 a24 24 0 1 1 -48 0 h-8z"/>
+  <!-- Base -->
+  <rect class="mic" x="44" y="104" width="40" height="8" rx="4" ry="4"/>
+</svg>

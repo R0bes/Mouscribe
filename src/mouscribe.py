@@ -11,27 +11,33 @@ from typing import Any, Literal, Optional
 
 import numpy as np
 import pyautogui
-from pydantic import Field
 import pyperclip
+from pydantic import Field
 
-from .audio.recorder import Recorder
-from .audio.volumizer import Volumizer
-from .audio.hotword_detector import HotWordDetector
 from .audio.computer_agent import ComputerAgent
-from .utils.controlls import ControllsManager
+from .audio.hotword_detector import HotWordDetector
+from .audio.multi_transcriptor import MultiTranscriptor
+from .audio.recorder import Recorder
 from .audio.transcriptor import Transcriptor
+from .audio.volumizer import Volumizer
 from .ui.notifications import Toaster
 from .ui.system_tray import SysTray
-from .utils import Settings, AudioDatabase, get_logger, setup_logging
-from .ui.widgets import MouseOverlayManager, TextWidget, RecordingWidget, WidgetConfig
+from .ui.widgets import MouseOverlayManager, RecordingWidget, TextWidget, WidgetConfig
+from .utils import AudioDatabase, Settings, get_logger, setup_logging
+from .utils.controlls import ControllsManager
+from .utils.input_system import InputSystem, create_insert_command, create_recording_command
+
+# TranscriptionWidgetManager import removed - widgets disabled
+
 
 class AppSettings(Settings):
     """Application metadata settings."""
+
     app_name: str = Field(default="Mauscribe", description="Application name")
     version: str = Field(default="1.0.0", description="Application version")
     name: str = Field(default="x2", description="Key/Button name")
     type: str = Field(default="click", description="Input type")
-    model_config = { "env_prefix": "MAUSCRIBE_APP_" }
+    model_config = {"env_prefix": "MAUSCRIBE_APP_"}
 
 
 class MauscribeApp:
@@ -46,82 +52,96 @@ class MauscribeApp:
         setup_logging()
 
         # Create logger instance
-        self.logger = get_logger(self.__class__.__name__, self.config)  
+        self.logger = get_logger(self.__class__.__name__, self.config)
         self.logger.info("🚀 Starte Mauscribe...")
 
         self.logger.info("🔧 Initialisiere Komponenten...")
 
         self.systray = SysTray(self.config, self)
         self.recorder = Recorder()
-        self.transcriptor = Transcriptor()
-        # Initialize volume controller with settings
-        volume_reduction_factor = self.config.system.get('volume_reduction_factor', 0.6)
-        min_volume_percent = self.config.system.get('min_volume_percent', 10)
-        volume_controller_enabled = self.config.system.get('volume_controller_enabled', True)
-        self.volume_controller = Volumizer(
-            reduction_factor=volume_reduction_factor,
-            min_volume=min_volume_percent,
-            enabled=volume_controller_enabled
+        # Initialize transcriptor with simplified settings
+        self.transcriptor = MultiTranscriptor(
+            model=self.config.model, language=self.config.language, auto_detect_language=self.config.auto_detect_language
         )
+        # Initialize volume controller with simplified settings
+        volume_reduction_factor = float(self.config.volume_reduction_factor)
+        self.volume_controller = Volumizer(reduction_factor=volume_reduction_factor, min_volume=10, enabled=True)
         self.overlay_manager = MouseOverlayManager()
-        
+
         # Initialize Hot Word Detector (alte Version)
-        self.hotword_detector = HotWordDetector(
-            self._on_start_word_detected, 
-            self._on_stop_word_detected
-        )
-        
+        self.hotword_detector = HotWordDetector(self._on_start_word_detected, self._on_stop_word_detected)
+
         # Initialize Computer Agent (neue Version)
-        computer_agent_config = self.config.hotword.get('computer_agent', {})
+        computer_agent_config = self.config.hotword.get("computer_agent", {})
         self.computer_agent = ComputerAgent(
-            sample_rate=computer_agent_config.get('sample_rate', 16000),
+            sample_rate=computer_agent_config.get("sample_rate", 16000),
             channels=1,
-            buffer_duration=computer_agent_config.get('buffer_duration', 6.0),
-            chunk_size=1024
+            buffer_duration=computer_agent_config.get("buffer_duration", 6.0),
+            chunk_size=1024,
         )
         # Initialize toaster with notification settings
-        notification_enabled = self.config.notifications.get("enabled", True)
-        notification_sound = self.config.notifications.get("sound", True)
-        notification_duration = self.config.notifications.get("duration", 5000)
+        # Load notification settings directly from TOML to ensure correct values
+        # Initialize simplified notification system
         self.toaster = Toaster(
-            enable_sound=notification_sound,
-            default_duration=notification_duration,
-            enabled=notification_enabled,
-            notification_settings=self.config.notifications
+            enable_sound=self.config.sound,
+            default_duration=1000,  # Changed from 3000 to 1000 (1 second)
+            enabled=True,
+            notification_settings={"toast": self.config.toast},
         )
+
+        self.logger.info("🔊 Notification-System initialisiert:")
+        self.logger.info(f"   - Sound: {self.config.sound}")
+        self.logger.info(f"   - Toast: {self.config.toast}")
+        # Initialize new input system
+        self.input_system = InputSystem()
+
+        # Add commands
+        self.input_system.add_command(create_recording_command(self.on_primary_action))
+        self.input_system.add_command(create_insert_command(self.on_insert_action))
+
+        # Transcription widgets disabled - using only beautiful toast notifications
+
+        # Keep old controls for compatibility
         self.controlls = ControllsManager(
             config=self.config,
             primary_callback=self.on_primary_action,
             secondary_callback=self.on_secondary_action,
-            insert_callback=self.on_insert_action
-        )   
-        
+            insert_callback=self.on_insert_action,
+        )
 
         self.overlay_manager.register_widget("recording", TextWidget("Test"), "left", 0.5)
 
-
         # Initialize database
         self.audio_database = AudioDatabase()
-        
+
         # Start controls manager if enabled
-        if self.config.input.get('enabled', True):
+        if self.config.input.get("enabled", True):
             self.controlls.start()
+            # Start new input system
+            self.input_system.start()
         else:
             self.logger.info("🔇 Input-Steuerung deaktiviert")
-        
+
         # Start Hot Word Detection if enabled
         self._start_hotword_detection()
-        
+
         # Start Computer Agent if enabled
         self._start_computer_agent()
-        
-        self.logger.info("✅ Alle Komponenten initialisiert")
 
+        self.logger.info("✅ Alle Komponenten initialisiert")
 
         # Initialize recording state variables
         self._is_recording = False
         self._last_recording_timestamp: float = 0.0
+        self._last_paste_time = 0  # Debounce für Text-Einfügen
         self._last_recording_stop_timestamp: float = 0.0
+
+        # Initialize double-click enter functionality
+        self._double_click_window_active = False
+        self._double_click_window_start_time: float = 0.0
+        self._last_secondary_action_position: tuple[int, int] = (0, 0)
+        self._double_click_window_duration = 3.0  # 3 seconds window
+        self._double_click_max_distance = 50  # pixels
 
         self.shutdown_event = threading.Event()
 
@@ -137,9 +157,11 @@ class MauscribeApp:
             self.stop_recording()
 
     def on_secondary_action(self) -> None:
-        """Handle secondary button action (left mouse) - no action."""
-        # Linke Maustaste alleine macht nichts - wird nur für Kombination verwendet
-        pass
+        """Handle secondary button action (left mouse) - handle double-click enter."""
+        self.logger.info("🎮 Linke Maustaste gedrückt - prüfe Doppelklick-Enter-Modus")
+
+        # Prüfe ob Doppelklick-Enter-Modus aktiv ist
+        self._handle_double_click_enter()
 
     def on_insert_action(self) -> None:
         """Handle insert combination action (left mouse held + x2 button) - stop recording and paste text."""
@@ -148,19 +170,69 @@ class MauscribeApp:
             self.stop_recording()
             # Warte kurz, damit die Aufnahme verarbeitet wird
             import time
+
             time.sleep(0.5)
             self._paste_text()
         else:
             self.logger.info("⚠️ Keine aktive Aufnahme - nur Text einfügen")
             self._paste_text()
 
+    def _check_double_click_window(self) -> None:
+        """Check if double-click window is active and handle double-clicks."""
+        if not self._double_click_window_active:
+            return
+
+        # Check if window has expired
+        current_time = time.time()
+        if current_time - self._double_click_window_start_time > self._double_click_window_duration:
+            self.logger.info("⏰ Doppelklick-Fenster abgelaufen")
+            self._double_click_window_active = False
+            self.toaster.show_info("Doppelklick-Fenster", "Abgelaufen")
+            return
+
+        # Check for mouse clicks in the vicinity
+        try:
+            # Check if left mouse button is pressed
+            if pyautogui.mouseDown(button="left"):
+                current_pos = pyautogui.position()
+                distance = (
+                    (current_pos.x - self._last_secondary_action_position[0]) ** 2
+                    + (current_pos.y - self._last_secondary_action_position[1]) ** 2
+                ) ** 0.5
+
+                if distance <= self._double_click_max_distance:
+                    # Wait for mouse release
+                    while pyautogui.mouseDown(button="left"):
+                        time.sleep(0.01)
+
+                    # Check for second click within short time
+                    time.sleep(0.1)  # Small delay to detect double-click
+                    if pyautogui.mouseDown(button="left"):
+                        # Second click detected - simulate Enter
+                        self.logger.info("⌨️ Doppelklick erkannt - simuliere Enter-Druck...")
+                        pyautogui.press("enter")
+                        self.logger.info("✅ Enter-Druck simuliert")
+                        self.toaster.show_success("Enter gedrückt", "Doppelklick erkannt")
+
+                        # Deactivate window
+                        self._double_click_window_active = False
+
+                        # Wait for second click to finish
+                        while pyautogui.mouseDown(button="left"):
+                            time.sleep(0.01)
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler bei Doppelklick-Überprüfung: {e}")
+
+    # Widget copy method removed - widgets disabled
+
     def _on_start_word_detected(self, start_word: str) -> None:
         """Handle start word detection."""
         self.logger.info(f"🎯 Start Word erkannt: '{start_word}'")
-        
+
         # Zeige Benachrichtigung
         self.toaster.show_info("🎯 Start Word erkannt", f"'{start_word}' - Starte Aufnahme...")
-        
+
         # Starte automatisch die Aufnahme
         if not self._is_recording:
             self.start_recording()
@@ -170,10 +242,10 @@ class MauscribeApp:
     def _on_stop_word_detected(self, stop_word: str) -> None:
         """Handle stop word detection."""
         self.logger.info(f"🛑 Stop Word erkannt: '{stop_word}'")
-        
+
         # Zeige Benachrichtigung
         self.toaster.show_info("🛑 Stop Word erkannt", f"'{stop_word}' - Stoppe Aufnahme...")
-        
+
         # Stoppe automatisch die Aufnahme
         if self._is_recording:
             self.stop_recording()
@@ -184,31 +256,31 @@ class MauscribeApp:
         """Starte Hot Word Detection falls aktiviert."""
         try:
             # Prüfe ob Hotword Detection aktiviert ist
-            if not self.config.hotword.get('enabled', False):
+            if not self.config.hotword.get("enabled", False):
                 self.logger.info("🔇 Hotword Detection deaktiviert")
                 return
-                
+
             # Prüfe ob Input-Steuerung aktiviert ist
-            if not self.config.input.get('enabled', True):
+            if not self.config.input.get("enabled", True):
                 self.logger.info("🔇 Input-Steuerung deaktiviert")
                 return
-                
+
             if self.hotword_detector.start_listening():
                 self.logger.info("✅ Hot Word Detection gestartet")
             else:
                 self.logger.info("🔇 Hot Word Detection deaktiviert oder nicht verfügbar")
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Starten der Hot Word Detection: {e}")
-    
+
     def _start_computer_agent(self) -> None:
         """Starte Computer Agent falls aktiviert."""
         try:
             # Prüfe ob Computer Agent aktiviert ist
-            computer_agent_config = self.config.hotword.get('computer_agent', {})
-            if not computer_agent_config.get('enabled', False):
+            computer_agent_config = self.config.hotword.get("computer_agent", {})
+            if not computer_agent_config.get("enabled", False):
                 self.logger.info("🔇 Computer Agent deaktiviert")
                 return
-                
+
             if self.computer_agent.start():
                 self.logger.info("✅ Computer Agent gestartet")
             else:
@@ -241,7 +313,7 @@ class MauscribeApp:
     def get_hotword_status(self) -> dict[str, Any]:
         """Gib Status der Hot Word Detection zurück."""
         return self.hotword_detector.get_stats()
-    
+
     def toggle_computer_agent(self) -> bool:
         """Schalte Computer Agent ein/aus."""
         try:
@@ -263,7 +335,7 @@ class MauscribeApp:
             self.logger.error(f"❌ Fehler beim Umschalten des Computer Agents: {e}")
             self.toaster.show_error("Computer Agent", f"Fehler: {e}")
             return False
-    
+
     def get_computer_agent_status(self) -> dict[str, Any]:
         """Gib Status des Computer Agents zurück."""
         return self.computer_agent.get_status()
@@ -281,6 +353,15 @@ class MauscribeApp:
     def _paste_text(self, _: bool = False) -> None:
         """Paste transcribed text to current cursor position."""
         try:
+            # Debounce: Verhindere doppeltes Einfügen innerhalb von 1 Sekunde
+            import time
+
+            current_time = time.time()
+            if current_time - self._last_paste_time < 1.0:
+                self.logger.warning("⚠️ Text-Einfügen ignoriert (Debounce)")
+                return
+            self._last_paste_time = current_time
+
             self.logger.info("📋 Versuche Text aus Zwischenablage zu lesen...")
             text = pyperclip.paste()
 
@@ -291,6 +372,10 @@ class MauscribeApp:
                 # Verwende sichere Text-Eingabe
                 if self._safe_write_text(text):
                     self.logger.info(f"✅ Text erfolgreich eingefügt: {text[:50]}...")
+
+                    # Aktiviere Doppelklick-Enter-Modus für 3 Sekunden
+                    self._activate_double_click_enter_mode()
+
                     self.toaster.show_info("📋 Text eingefügt", f"'{text[:50]}...'")
                 else:
                     self.logger.error("❌ Text konnte nicht eingefügt werden")
@@ -312,8 +397,43 @@ class MauscribeApp:
                 self.logger.info("✅ Text mit Fallback-Methode eingefügt")
                 self.toaster.show_info("📋 Text eingefügt", "Text (Fallback)")
             except Exception as fallback_error:
-                self.logger.error(f"❌ Fallback-Methode fehlgeschlagen: {fallback_error}")
-                self.toaster.show_error(f"Text konnte nicht eingefügt werden: {e}", "Text einfügen")
+                self.logger.error(f"❌ Fallback-Einfüge-Methode fehlgeschlagen: {fallback_error}")
+                self.toaster.show_error("Text konnte nicht eingefügt werden", "Kritischer Fehler")
+
+    def _activate_double_click_enter_mode(self) -> None:
+        """Aktiviere Doppelklick-Enter-Modus für 3 Sekunden."""
+        import time
+
+        self._double_click_window_active = True
+        self._double_click_window_start_time = time.time()
+        self.logger.info("🖱️ Doppelklick-Enter-Modus aktiviert (3 Sekunden)")
+
+        # Deaktiviere nach 3 Sekunden automatisch
+        def deactivate():
+            time.sleep(3.0)
+            if self._double_click_window_active:
+                self._double_click_window_active = False
+                self.logger.info("🖱️ Doppelklick-Enter-Modus deaktiviert")
+
+        import threading
+
+        threading.Thread(target=deactivate, daemon=True).start()
+
+    def _handle_double_click_enter(self) -> None:
+        """Behandle Doppelklick für Enter-Drücken."""
+        if self._double_click_window_active:
+            import time
+
+            current_time = time.time()
+            if current_time - self._double_click_window_start_time <= 3.0:
+                self.logger.info("⏎ Doppelklick erkannt - drücke Enter...")
+                pyautogui.press("enter")
+                self._double_click_window_active = False
+                self.logger.info("🖱️ Doppelklick-Enter-Modus deaktiviert")
+            else:
+                self.logger.warning("⚠️ Doppelklick zu spät - Enter-Modus bereits abgelaufen")
+        else:
+            self.logger.debug("🖱️ Doppelklick ignoriert - Enter-Modus nicht aktiv")
 
     def start_recording(self) -> None:
         """Start voice recording and transcription."""
@@ -378,17 +498,99 @@ class MauscribeApp:
             duration = len(audio_data) / self.recorder.sample_rate_hz
             self.logger.info(f"🔊 Audio verarbeitet: {len(audio_data):,} Samples, {duration:.2f}s")
 
-            self.logger.info("🎯 Starte Sprach-zu-Text Transkription...")
-            raw_text = self.transcriptor.transcribe_raw(audio_data)
+            self.logger.info("🎯 Starte Sprach-zu-Text Transkription im Hintergrund...")
 
-            self.toaster.show_success("✨ Transkription abgeschlossen", f"'{raw_text[:50]}...' ({duration:.1f}s)", force_show=True)
+            # Starte Transkription in separatem Thread
+            import threading
 
+            transcription_thread = threading.Thread(target=self._transcribe_in_background, args=(audio_data,), daemon=True)
+            transcription_thread.start()
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Verarbeiten der Aufnahme: {e}")
+            self.toaster.show_error(f"Fehler beim Verarbeiten: {e}", "Aufnahme")
+        finally:
+            # Reset recording state
+            self._is_recording = False
+            self.systray.update_recording_state(False)
+
+    def _transcribe_in_background(self, audio_data: bytes) -> None:
+        """Transkription in separatem Hintergrundthread."""
+        try:
+            self.logger.info("🎯 Starte Transkription im Hintergrund...")
+
+            # Verwende Multi-Transcriptor für bessere Ergebnisse
+            results = self.transcriptor.transcribe_parallel(audio_data)
+
+            if results:
+                # Wähle bestes Ergebnis
+                best_result = results[0]  # Erste ist das beste
+                raw_text = best_result.text
+                confidence = best_result.confidence
+
+                self.logger.info(f"🏆 Bestes Ergebnis: {best_result.model} ({best_result.language}) - '{raw_text}'")
+
+                # Kopiere Text immer in Zwischenablage
+                self.logger.info("📋 Kopiere Text in Zwischenablage...")
+                try:
+                    pyperclip.copy(raw_text)
+                    self.logger.info("✅ Text erfolgreich in Zwischenablage kopiert!")
+                    self.logger.info(f"🎤 Transkribiert: '{raw_text}'")
+                except Exception as clipboard_error:
+                    self.logger.error(f"❌ Fehler beim Kopieren in Zwischenablage: {clipboard_error}")
+
+                # Hole Mausposition
+                import pyautogui
+
+                mouse_x, mouse_y = pyautogui.position()
+
+                # Zeige Widget und Notification über Hauptthread (thread-safe)
+                self._schedule_transcription_display(raw_text, confidence, mouse_x, mouse_y, len(audio_data))
+
+                # Speichere auch in Datenbank (im Hintergrund)
+                self._save_recording_to_database(audio_data, raw_text)
+            else:
+                self.logger.warning("⚠️ Keine Transkription erfolgreich")
+                raw_text = ""
+                self.toaster.show_warning("❌ Keine Sprache erkannt", "Transkription")
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler bei Hintergrund-Transkription: {e}")
+            self.toaster.show_error(f"Transkriptionsfehler: {e}", "Transkription")
+
+    def _schedule_transcription_display(
+        self, raw_text: str, confidence: float, mouse_x: int, mouse_y: int, audio_data_length: int
+    ) -> None:
+        """Plane Transkription-Anzeige über Hauptthread."""
+        try:
+            # Direkter Aufruf - nur Toast-Benachrichtigungen (keine Widgets)
+            self._show_transcription_result(raw_text, confidence, mouse_x, mouse_y, audio_data_length)
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Planen der Transkription-Anzeige: {e}")
+
+    def _show_transcription_result(
+        self, raw_text: str, confidence: float, mouse_x: int, mouse_y: int, audio_data_length: int
+    ) -> None:
+        """Zeige Transkription-Ergebnis über Hauptthread."""
+        try:
+            # Zeige nur schöne Toast-Benachrichtigung (keine hässlichen Widgets)
+            duration = audio_data_length / self.recorder.sample_rate_hz
+            self.toaster.transcription_complete(raw_text, duration)
+            self.logger.info(f"✨ Schöne Toast-Benachrichtigung für Transkription ({confidence:.2f})")
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Anzeigen der Transkription: {e}")
+
+    def _save_recording_to_database(self, audio_data: bytes, raw_text: str = "") -> None:
+        """Speichere Aufnahme in Datenbank."""
+        try:
             # Save audio recording to database if enabled
             recording_id = None
+            duration = len(audio_data) / self.recorder.sample_rate_hz  # Calculate duration
             self.logger.debug(
                 f"🔍 Database config: enabled={self.config.database.get('enabled', False)}, auto_save={self.config.database.get('auto_save_recordings', False)}"
             )
-            if self.config.database.get('enabled', False) and self.config.database.get('auto_save_recordings', False):
+            if self.config.database.get("enabled", False) and self.config.database.get("auto_save_recordings", False):
                 try:
                     self.logger.info("💾 Speichere Audio-Aufnahme in Datenbank...")
                     self.logger.debug(
@@ -402,7 +604,7 @@ class MauscribeApp:
                         sample_rate=self.recorder.sample_rate_hz,
                         channels=self.recorder.num_channels,
                         duration=duration,
-                        audio_format=self.config.database.get('audio_format', 'wav'),
+                        audio_format=self.config.database.get("audio_format", "wav"),
                     )
                     self.logger.info(f"✅ Audio-Aufnahme gespeichert (ID: {recording_id})")
                 except Exception as e:
@@ -418,17 +620,21 @@ class MauscribeApp:
 
                 # Save transcription to database if enabled
                 transcription_id = None
-                if self.config.database.get('enabled', False) and self.config.database.get('auto_save_transcriptions', False) and recording_id:
+                if (
+                    self.config.database.get("enabled", False)
+                    and self.config.database.get("auto_save_transcriptions", False)
+                    and recording_id
+                ):
                     try:
                         transcription_id = self.audio_database.save_transcription(
                             audio_recording_id=recording_id,
                             raw_text=raw_text,
-                            language=self.config.transcription.get('language', 'de'),
+                            language=self.config.transcription.get("language", "de"),
                         )
                         self.logger.info(f"✅ Transkription in Datenbank gespeichert (ID: {transcription_id})")
 
                         # Mark as training data if enabled
-                        if self.config.database.get('mark_as_training_data', False):
+                        if self.config.database.get("mark_as_training_data", False):
                             self.audio_database.save_training_data(
                                 transcription_id=transcription_id,
                                 is_valid_for_training=True,
@@ -441,7 +647,9 @@ class MauscribeApp:
 
                 # Show transcription complete notification
                 notification_duration = len(audio_data) / self.recorder.sample_rate_hz
-                self.toaster.show_success("✨ Transkription abgeschlossen", f"'{raw_text[:50]}...' ({notification_duration:.1f}s)", force_show=True)
+                self.toaster.show_success(
+                    "✨ Transkription abgeschlossen", f"'{raw_text[:50]}...' ({notification_duration:.1f}s)", force_show=True
+                )
 
                 # Sofort rohe Transkription in Clipboard kopieren
                 self.logger.info("📋 Kopiere Text in Zwischenablage...")
@@ -549,11 +757,16 @@ class MauscribeApp:
 
         self.logger.info("🎯 Mauscribe Steuerung:")
         self.logger.info(f"\t🐭 {self.config.primary_name} (press): Aufnahme starten/stoppen")
-        self.logger.info(f"\t🐭 {self.config.secondary_name} (hold): Text einfügen")
-        self.logger.info(f"\t🐭 Linke Maus + {self.config.primary_name}: Text einfügen")
+        if self.config.secondary_name and self.config.secondary_type != "disabled":
+            self.logger.info(f"\t🐭 {self.config.secondary_name} (press): Doppelklick-Enter-Fenster aktivieren")
+            self.logger.info(f"\t🐭 {self.config.secondary_name} (hold) + {self.config.primary_name} (press): Text einfügen")
+        else:
+            self.logger.info("\t🐭 Sekundäre Eingabe deaktiviert")
         self.logger.info("🎮 Bereit für Eingaben!")
 
         while not self.shutdown_event.is_set():
+            # Check for double-click window
+            self._check_double_click_window()
             time.sleep(0.1)
         self.logger.info("🔄 Shutdown-Signal empfangen - beende System Tray...")
 
@@ -590,7 +803,7 @@ class MauscribeApp:
             self.logger.info("✅ Hot Word Detection erfolgreich beendet")
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Beenden der Hot Word Detection: {e}")
-        
+
         # Stop Computer Agent
         try:
             self.logger.info("🔄 Beende Computer Agent...")

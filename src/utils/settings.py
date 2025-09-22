@@ -1,225 +1,144 @@
-# src/utils/settings.py - Settings management for Mauscribe
 """
-Settings management for Mauscribe using Pydantic for validation and type safety.
-Each module can define its own settings class that only loads relevant fields.
+Vereinfachte Settings für Mauscribe.
 """
-from typing import Optional, Literal, Any, Dict
+import os
+from typing import Any, Dict
 
-from pydantic import Field
-from pydantic_settings import BaseSettings
-
-
-class ModuleSettings(BaseSettings):
-    """Base class for module-specific settings that loads from TOML."""
-    
-    model_config = {
-        "env_file": "settings.toml",
-        "env_file_encoding": "utf-8",
-        "extra": "ignore",  # Ignore extra fields from TOML file
-        "validate_assignment": True,
-        "use_enum_values": True
-    }
+from pydantic import BaseModel, Field
 
 
-class Settings(ModuleSettings):
-    """Main settings class for Mauscribe - only loads what it needs."""
-    
-    # Primary and secondary button names and types
+class Settings(BaseModel):
+    """Vereinfachte Anwendungseinstellungen."""
+
+    # Transcription settings
+    model: str = Field(default="small", description="Whisper model to use")
+    language: str = Field(default="de", description="Language for transcription")
+    auto_detect_language: bool = Field(default=True, description="Enable automatic language detection")
+
+    # System settings
+    volume_reduction_factor: float = Field(default=1.0, description="Volume reduction factor")
+
+    # Notifications settings
+    sound: bool = Field(default=True, description="Enable sound notifications")
+    toast: bool = Field(default=True, description="Enable toast notifications")
+
+    # Notifications settings (for compatibility with existing code)
+    notifications: dict[str, Any] = Field(
+        default_factory=lambda: {
+            "enabled": True,
+            "sound": True,
+            "toast": True,
+            "duration": 5000,
+            "auto_insert_enabled": False,
+        },
+        description="Notification settings",
+    )
+
+    # UI settings
+    icon_path: str = Field(default="icons/icon.png", description="Icon path")
+
+    # Input settings
     primary_name: str = Field(default="x2", description="Primary button name")
     primary_type: str = Field(default="click", description="Primary button type")
-    secondary_name: str = Field(default="x1", description="Secondary button name")
-    secondary_type: str = Field(default="click", description="Secondary button type")
-    
-    # Notifications settings
-    notifications: Dict[str, Any] = Field(default_factory=lambda: {"show_all": True}, description="Notification settings")
-    
-    # Audio settings
-    audio: Dict[str, Any] = Field(default_factory=dict, description="Audio settings")
-    
-    # Transcription settings
-    transcription: Dict[str, Any] = Field(default_factory=dict, description="Transcription settings")
-    
-    # Database settings
-    database: Dict[str, Any] = Field(default_factory=dict, description="Database settings")
-    
-    # UI settings
-    ui: Dict[str, Any] = Field(default_factory=dict, description="UI settings including icons")
-    
-    # Hot Word settings
-    hotword: Dict[str, Any] = Field(default_factory=dict, description="Hot Word Detection settings")
-    
-    # Input settings
-    input: Dict[str, Any] = Field(default_factory=dict, description="Input control settings")
-    
-    # System settings
-    system: Dict[str, Any] = Field(default_factory=dict, description="System settings including volume control")
-    
+    secondary_name: str = Field(default="left", description="Secondary button name")
+    secondary_type: str = Field(default="hold", description="Secondary button type")
+
+    # Hotword settings (for compatibility)
+    hotword: dict[str, Any] = Field(default_factory=dict, description="Hotword settings")
+
+    # Input settings (for compatibility)
+    input: dict[str, Any] = Field(default_factory=dict, description="Input settings")
+
+    # Database settings (for compatibility)
+    database: dict[str, Any] = Field(default_factory=dict, description="Database settings")
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         # Load from TOML file if it exists
         try:
             import toml
-            with open("settings.toml", "r", encoding="utf-8") as f:
+
+            with open("settings.toml", encoding="utf-8") as f:
                 config = toml.load(f)
-                
-            # Map TOML structure to our fields
-            if "input" in config:
-                if "primary" in config["input"]:
-                    self.primary_name = config["input"]["primary"].get("name", "x2")
-                    self.primary_type = config["input"]["primary"].get("type", "click")
-                if "secondary" in config["input"]:
-                    self.secondary_name = config["input"]["secondary"].get("name", "x1")
-                    self.secondary_type = config["input"]["secondary"].get("type", "click")
-            
-            if "notifications" in config:
-                self.notifications = config["notifications"]
-            
-            if "audio" in config:
-                self.audio = config["audio"]
-                
+
+            # Load transcription settings
             if "transcription" in config:
-                self.transcription = config["transcription"]
-                
-            if "database" in config:
-                self.database = config["database"]
-                
-            if "ui" in config:
-                self.ui = config["ui"]
-                
+                trans_config = config["transcription"]
+                if "model" in trans_config:
+                    self.model = str(trans_config["model"])
+                if "language" in trans_config:
+                    self.language = str(trans_config["language"])
+
+            # Load system settings
             if "system" in config:
-                self.system = config["system"]
-                
+                sys_config = config["system"]
+                if "volume_reduction_factor" in sys_config:
+                    try:
+                        self.volume_reduction_factor = float(sys_config["volume_reduction_factor"])
+                    except (ValueError, TypeError):
+                        self.volume_reduction_factor = 1.0  # Default fallback
+
+            # Load notification settings
+            if "notifications" in config:
+                notif_config = config["notifications"]
+                if "sound" in notif_config:
+                    self.sound = bool(notif_config["sound"])
+                if "toast" in notif_config:
+                    self.toast = bool(notif_config["toast"])
+
+                # Load notifications dict for compatibility
+                self.notifications.update(notif_config)
+
+            # Load UI settings
+            if "ui" in config:
+                ui_config = config["ui"]
+                if "icon_path" in ui_config:
+                    self.icon_path = str(ui_config["icon_path"])
+
+            # Load input settings
+            if "input" in config:
+                input_config = config["input"]
+                if "primary" in input_config:
+                    primary_config = input_config["primary"]
+                    if "name" in primary_config:
+                        self.primary_name = str(primary_config["name"])
+                    if "type" in primary_config:
+                        self.primary_type = str(primary_config["type"])
+                if "secondary" in input_config:
+                    secondary_config = input_config["secondary"]
+                    if "name" in secondary_config:
+                        self.secondary_name = str(secondary_config["name"])
+                    if "type" in secondary_config:
+                        self.secondary_type = str(secondary_config["type"])
+
         except Exception as e:
             # Use defaults if TOML loading fails
             pass
-    
-    @classmethod
-    def create_default_config(cls, config_path: str = "settings.toml") -> None:
-        """Create a default configuration file if it doesn't exist."""
-        import toml
-        from pathlib import Path
-        
-        if Path(config_path).exists():
-            return
-            
-        default_config = {
-            "app": {
-                "app_name": "Mauscribe",
-                "version": "1.0.0"
-            },
-            "input": {
-                "primary": {"name": "x2", "type": "click"},
-                "secondary": {"name": "x1", "type": "click"}
-            },
-            "audio": {
-                "sample_rate": 16000,
-                "channels": 1,
-                "chunk_size": 1024,
-                "format": "wav",
-                "audio_device": 1,
-                "auto_select_device": True,
-                "test_device_on_startup": True
-            },
-            "system": {
-                "volume_reduction_factor": 0.6,
-                "min_volume_percent": 10,
-                "volume_controller_enabled": True
-            },
-            "transcription": {
-                "language": "de",
-                "whisper_model": "base",
-                "compute_type": "float32",
-                "compute_device": "cpu"
-            },
-            "logging": {
-                "enabled": True,
-                "console_level": "INFO",
-                "file_level": "DEBUG",
-                "file_enabled": True,
-                "filename": "mauscribe.log",
-                "suppress_external_logs": True
-            },
-            "dictionary": {
-                "enabled": True,
-                "auto_add_unknown": False,
-                "path": "",
-                "max_words": 1000
-            },
-            "notifications": {
-                "enabled": True,
-                "duration": 5000,
-                "sound": True,
-                "toast": True,
-                "show_info": True,
-                "show_success": True,
-                "show_warning": True,
-                "show_error": True,
-                "show_recording": True,
-                "show_transcription": True,
-                "show_paste": True,
-                "show_spell_check": True,
-                "auto_insert_enabled": False
-            },
-            "database": {
-                "enabled": True,
-                "data_directory": "",
-                "audio_format": "wav",
-                "auto_save_recordings": True,
-                "auto_save_transcriptions": True,
-                "mark_as_training_data": True,
-                "retention_days": 30,
-                "max_size_mb": 1000,
-                "compress_audio": False,
-                "backup_before_cleanup": True
-            },
-            "ui": {
-                "icon_path": "systray.ico2",
-                "icon_type": "system_tray",
-                "fallback_icon": "mauscribe_icon3.ico"
-            }
-        }
-        
-        try:
-            with open(config_path, "w", encoding="utf-8") as f:
-                toml.dump(default_config, f)
-            print(f"✅ Standard-Konfiguration erstellt: {config_path}")
-        except Exception as e:
-            print(f"❌ Fehler beim Erstellen der Standard-Konfiguration: {e}")
-    
-    def get_icon_path(self, icon_type: str = "system_tray") -> str:
-        """Get the full path to an icon file with validation and fallback.
-        
-        Args:
-            icon_type: Type of icon to get (e.g., "system_tray")
-            
-        Returns:
-            Full path to the icon file
-            
-        Raises:
-            FileNotFoundError: If neither configured nor fallback icon exists
-        """
-        from pathlib import Path
-        
-        # Get icons directory path
-        icons_dir = Path(__file__).parent.parent / "ui" / "icons"
-        
-        # Get configured icon path
-        icon_filename = self.ui.get("icon_path", "systray.ico2")
-        icon_path = icons_dir / icon_filename
-        
-        # Check if configured icon exists
-        if icon_path.exists():
-            return str(icon_path)
-        
-        # Try fallback icon
-        fallback_filename = self.ui.get("fallback_icon", "mauscribe_icon3.ico")
-        fallback_path = icons_dir / fallback_filename
-        
-        if fallback_path.exists():
-            return str(fallback_path)
-        
-        # If neither exists, raise error
-        raise FileNotFoundError(
-            f"Kein Icon gefunden. Konfiguriert: {icon_path}, "
-            f"Fallback: {fallback_path}. Verfügbare Icons: {list(icons_dir.glob('*'))}"
-        )
+
+    def get_icon_path(self) -> str:
+        """Get absolute path to icon file."""
+        if os.path.isabs(self.icon_path):
+            return self.icon_path
+
+        # Try different possible locations
+        possible_paths = [
+            self.icon_path,
+            f"src/ui/{self.icon_path}",
+            f"src/ui/icons/{os.path.basename(self.icon_path)}",
+            "src/ui/icons/systemtray_icon.ico",
+        ]
+
+        for path in possible_paths:
+            if os.path.exists(path):
+                return os.path.abspath(path)
+
+        # Fallback to default
+        return os.path.abspath("src/ui/icons/systemtray_icon.ico")
+
+
+class AppSettings(Settings):
+    """Application metadata settings."""
+
+    app_name: str = Field(default="Mauscribe", description="Application name")
+    version: str = Field(default="1.0.0", description="Application version")
