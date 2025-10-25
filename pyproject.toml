@@ -1,6 +1,6 @@
 [project]
 name = "mauscribe"
-version = "1.0.6"
+version = "1.0.7"
 description = "Voice-to-Text Tool mit Push-to-Talk und automatischem Clipboard-Management"
 readme = "README.md"
 requires-python = ">=3.8"
