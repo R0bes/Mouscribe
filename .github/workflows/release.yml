@@ -35,7 +35,7 @@ jobs:
           echo "✅ Windows build completed"
 
       - name: 📤 Upload Windows artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mauscribe-windows
           path: dist/mauscribe.exe
@@ -64,7 +64,7 @@ jobs:
           echo "✅ Linux build completed"
 
       - name: 📤 Upload Linux artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mauscribe-linux
           path: dist/mauscribe
@@ -93,7 +93,7 @@ jobs:
           echo "✅ macOS build completed"
 
       - name: 📤 Upload macOS artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mauscribe-macos
           path: dist/mauscribe
@@ -155,7 +155,7 @@ jobs:
           prerelease: false
 
       - name: 📥 Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: dist/
 
