@@ -4,6 +4,13 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      skip_validation:
+        description: 'Skip validation (for testing)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -46,6 +53,44 @@ jobs:
           exit /b 1
         )
 
+    - name: Run Release Validation
+      if: ${{ !inputs.skip_validation }}
+      run: |
+        echo "🔍 Running release validation..."
+        python tools/validate_release.py --dist-path dist --verbose
+
+        # Check if validation passed
+        if exist "validation_report.json" (
+          echo "📊 Validation report generated"
+        ) else (
+          echo "❌ Validation report not found"
+          exit /b 1
+        )
+
+    - name: Run Integration Tests
+      if: ${{ !inputs.skip_validation }}
+      run: |
+        echo "🧪 Running integration tests..."
+        python -m pytest tests/integration/test_release.py -v --tb=short
+
+        # Check test results
+        if %ERRORLEVEL% NEQ 0 (
+          echo "❌ Integration tests failed"
+          exit /b 1
+        ) else (
+          echo "✅ Integration tests passed"
+        )
+
+    - name: Upload validation artifacts
+      if: ${{ !inputs.skip_validation }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: validation-reports-${{ github.ref_name }}
+        path: |
+          validation_report.json
+          validation_report.md
+        retention-days: 30
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -53,7 +98,16 @@ jobs:
         path: |
           dist/Mauscribe.exe
           dist/data/
+          dist/settings.toml
+          dist/src/
         retention-days: 30
+
+    - name: Manual Approval for Stable Release
+      if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref_name, '-') && !inputs.skip_validation
+      uses: hmarr/auto-approve-action@v3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        review-message: "✅ Release validation passed - Ready for distribution"
 
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')

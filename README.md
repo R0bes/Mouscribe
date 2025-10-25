@@ -19,6 +19,67 @@ Ein fortschrittliches Sprach-zu-Text-Tool, das Audio-Aufnahmen über Mausklicks 
 - **RAM**: Mindestens 4GB (8GB empfohlen)
 - **Speicherplatz**: 2GB für Anwendung + Modell-Downloads
 
+## 📦 Installation
+
+### Windows Installer (Empfohlen)
+
+Mauscribe bietet professionelle Windows-Installer mit konfigurierbarer Feature-Auswahl:
+
+#### MSI Installer (Empfohlen)
+- **Datei**: `Mauscribe-{version}.msi`
+- **Typ**: Windows Installer Package
+- **Features**: Professionelle Installation mit Feature-Auswahl
+- **Anforderungen**: Windows 7 oder höher
+
+#### Inno Setup Installer (Alternative)
+- **Datei**: `Mauscribe-{version}-Setup.exe`
+- **Typ**: Executable Installer
+- **Features**: Einfacher Installations-Assistent
+- **Anforderungen**: Windows 7 oder höher
+
+### Installation Features
+
+- **Core Application** (erforderlich): Grundlegende Mauscribe-Funktionalität
+- **Audio Database** (optional): Audio-Dateien speichern und verwalten
+- **Enhanced Mode** (optional): Erweiterte Transkriptions-Features
+- **Whisper Models** (optional): AI-Modelle für bessere Transkription (~1.5GB)
+- **Desktop Shortcuts** (optional): Desktop- und Startmenü-Verknüpfungen
+- **Start with Windows** (optional): Automatischer Start mit Windows
+
+### Systemanforderungen
+
+- **OS**: Windows 7 SP1 oder höher
+- **Architektur**: x64 oder x86
+- **RAM**: 2GB (4GB empfohlen)
+- **Speicherplatz**: 2GB frei
+- **Audio**: Mikrofon-Zugriff
+- **Netzwerk**: Internetverbindung (für Modell-Downloads)
+
+### Installation
+
+1. **Download** des gewünschten Installers von der [Release-Seite](https://github.com/R0bes/Mauscribe/releases)
+2. **Ausführen** als Administrator
+3. **Feature-Auswahl**: Gewünschte Features auswählen
+4. **Installation**: Installation abwarten
+5. **Konfiguration**: Post-Installation-Setup durchführen
+
+### Silent Installation
+
+```cmd
+# MSI
+msiexec /i Mauscribe-1.0.0.msi /quiet /norestart
+
+# Inno Setup
+Mauscribe-1.0.0-Setup.exe /SILENT
+```
+
+### Deinstallation
+
+- **Control Panel**: Programme und Features → Mauscribe → Deinstallieren
+- **Startmenü**: Mauscribe → Deinstallieren
+
+Weitere Details finden Sie in der [Installer-Dokumentation](docs/INSTALLER.md).
+
 ## 🚀 Release Management
 
 Mauscribe verwendet ein automatisiertes CI/CD-System mit GitHub Actions und benutzerdefinierten Python-Tools für Release-Management.

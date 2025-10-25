@@ -157,7 +157,7 @@ class ReleaseManager:
             else:
                 print(f"Failed to upload {file_path.name}: {response.status_code}")
 
-    def create_release(self, tag: str, upload_assets: bool = False) -> None:
+    def create_release(self, tag: str, upload_assets: bool = False, include_installers: bool = False) -> None:
         """Create GitHub release."""
         if not self.github_token:
             print("GITHUB_TOKEN environment variable not set")
@@ -170,6 +170,11 @@ class ReleaseManager:
 
         changelog = self.generate_changelog(latest_tag)
         release_notes = self.create_release_notes(tag, changelog)
+
+        # Add installer information if requested
+        if include_installers:
+            installer_info = self._get_installer_info(tag)
+            release_notes += f"\n\n## Installers\n\n{installer_info}"
 
         print(f"[INFO] Creating release for tag: {tag}")
         print("[INFO] Changelog preview:")
@@ -191,10 +196,75 @@ class ReleaseManager:
             if upload_assets:
                 asset_paths = self.config["release"]["asset_patterns"]
                 self.upload_assets(release_data["id"], asset_paths)
+
+            if include_installers:
+                self._upload_installers(tag, release_data["upload_url"])
         else:
             print(f"Failed to create release: {response.status_code}")
             print(response.text)
             sys.exit(1)
+
+    def _get_installer_info(self, tag: str) -> str:
+        """Get installer information for release notes."""
+        version = tag.lstrip("v")
+        installer_info = f"""
+### MSI Installer (Recommended)
+- **File**: `Mauscribe-{version}.msi`
+- **Type**: Windows Installer Package
+- **Features**: Professional installation with feature selection
+- **Requirements**: Windows 7 or later
+
+### Inno Setup Installer (Alternative)
+- **File**: `Mauscribe-{version}-Setup.exe`
+- **Type**: Executable Installer
+- **Features**: Simple installation wizard
+- **Requirements**: Windows 7 or later
+
+### Installation Features
+- **Core Application**: Essential Mauscribe functionality (required)
+- **Audio Database**: Store and manage recorded audio files (optional)
+- **Enhanced Mode**: Advanced transcription features (optional)
+- **Whisper Models**: AI-powered transcription models (optional, 1.5GB)
+- **Desktop Shortcuts**: Create desktop and start menu shortcuts (optional)
+- **Start with Windows**: Automatically start Mauscribe on boot (optional)
+
+### System Requirements
+- Windows 7 SP1 or later
+- 2GB free disk space
+- Microphone access
+- Internet connection (for model downloads)
+"""
+        return installer_info.strip()
+
+    def _upload_installers(self, tag: str, upload_url: str) -> None:
+        """Upload installer files to GitHub release."""
+        version = tag.lstrip("v")
+
+        installer_files = [
+            f"dist/Mauscribe-{version}.msi",
+            f"dist/Mauscribe-{version}-Setup.exe",
+            f"dist/installer-metadata-{version}.json",
+        ]
+
+        headers = {"Authorization": f"token {self.github_token}", "Accept": "application/vnd.github.v3+json"}
+
+        for installer_file in installer_files:
+            file_path = Path(installer_file)
+            if file_path.exists():
+                print(f"Uploading installer: {file_path.name}")
+
+                with open(file_path, "rb") as f:
+                    files = {"file": (file_path.name, f, "application/octet-stream")}
+                    params = {"name": file_path.name}
+
+                    response = requests.post(upload_url, headers=headers, files=files, params=params)
+
+                    if response.status_code == 201:
+                        print(f"✅ Uploaded: {file_path.name}")
+                    else:
+                        print(f"❌ Failed to upload {file_path.name}: {response.status_code}")
+            else:
+                print(f"⚠️ Installer not found: {installer_file}")
 
 
 def main():
@@ -202,12 +272,15 @@ def main():
     parser = argparse.ArgumentParser(description="Mauscribe Release Manager")
     parser.add_argument("--tag", required=True, help="Git tag for release")
     parser.add_argument("--upload", action="store_true", help="Upload assets")
+    parser.add_argument(
+        "--include-installers", action="store_true", help="Include installer information and upload installer files"
+    )
     parser.add_argument("--config", default="tools/release_config.toml", help="Config file path")
 
     args = parser.parse_args()
 
     manager = ReleaseManager(args.config)
-    manager.create_release(args.tag, args.upload)
+    manager.create_release(args.tag, args.upload, args.include_installers)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,248 @@
+name: Installer Build
+
+on:
+  workflow_run:
+    workflows: ["Build and Release"]
+    types: [completed]
+    branches: [main, v2-development]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build installer for'
+        required: true
+        default: '1.0.0'
+        type: string
+      skip_wix:
+        description: 'Skip WiX MSI build (use Inno Setup only)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-ci.txt
+        pip install -e .
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: mauscribe-build-${{ github.event.workflow_run.head_branch || github.ref_name }}
+        path: dist/
+
+    - name: Verify build artifacts
+      run: |
+        if exist "dist\Mauscribe.exe" (
+          echo "✅ Build artifacts found"
+          for %%A in ("dist\Mauscribe.exe") do echo "Size: %%~zA bytes"
+        ) else (
+          echo "❌ Build artifacts not found"
+          exit /b 1
+        )
+
+    - name: Extract version from tag
+      id: version
+      run: |
+        if "${{ github.event_name }}" == "workflow_dispatch" (
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        ) else (
+          # Extract version from workflow run
+          $tag = "${{ github.event.workflow_run.head_branch }}"
+          if ($tag -match "v(\d+\.\d+\.\d+)") {
+            echo "version=$($matches[1])" >> $GITHUB_OUTPUT
+          } else {
+            echo "version=1.0.0" >> $GITHUB_OUTPUT
+          }
+        )
+
+    - name: Build MSI with WiX Toolset
+      if: ${{ !github.event.inputs.skip_wix }}
+      run: |
+        echo "🔨 Building MSI with WiX Toolset..."
+        python installer/build_msi.py --version ${{ steps.version.outputs.version }} --output-dir dist --verbose
+
+        if exist "dist\Mauscribe-${{ steps.version.outputs.version }}.msi" (
+          echo "✅ MSI build successful"
+          for %%A in ("dist\Mauscribe-${{ steps.version.outputs.version }}.msi") do echo "MSI Size: %%~zA bytes"
+        ) else (
+          echo "❌ MSI build failed"
+          exit /b 1
+        )
+
+    - name: Build Inno Setup Installer
+      run: |
+        echo "🔨 Building Inno Setup installer..."
+
+        # Download Inno Setup if not present
+        if not exist "tools\innosetup" (
+          echo "Downloading Inno Setup..."
+          mkdir tools\innosetup
+          powershell -Command "Invoke-WebRequest -Uri 'https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe' -OutFile 'tools\innosetup\innosetup.exe'"
+        )
+
+        # Update version in .iss file
+        $issContent = Get-Content "installer\mauscribe.iss" -Raw
+        $issContent = $issContent -replace 'MyAppVersion "1\.0\.0"', "MyAppVersion `"${{ steps.version.outputs.version }}`""
+        $issContent = $issContent -replace 'OutputBaseFilename=Mauscribe-1\.0\.0-Setup', "OutputBaseFilename=Mauscribe-${{ steps.version.outputs.version }}-Setup"
+        Set-Content "installer\mauscribe.iss" -Value $issContent
+
+        # Build installer
+        if exist "tools\innosetup\innosetup.exe" (
+          tools\innosetup\innosetup.exe /S "installer\mauscribe.iss"
+        ) else (
+          # Try system-installed Inno Setup
+          iscc "installer\mauscribe.iss"
+        )
+
+        if exist "dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe" (
+          echo "✅ Inno Setup build successful"
+          for %%A in ("dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe") do echo "Setup Size: %%~zA bytes"
+        ) else (
+          echo "❌ Inno Setup build failed"
+          exit /b 1
+        )
+
+    - name: Validate installers
+      run: |
+        echo "🔍 Validating installers..."
+
+        # Check MSI
+        if exist "dist\Mauscribe-${{ steps.version.outputs.version }}.msi" (
+          echo "✅ MSI installer found"
+          $msiSize = (Get-Item "dist\Mauscribe-${{ steps.version.outputs.version }}.msi").Length
+          echo "MSI Size: $msiSize bytes"
+        )
+
+        # Check Inno Setup
+        if exist "dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe" (
+          echo "✅ Inno Setup installer found"
+          $setupSize = (Get-Item "dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe").Length
+          echo "Setup Size: $setupSize bytes"
+        )
+
+        # At least one installer should exist
+        if not exist "dist\Mauscribe-${{ steps.version.outputs.version }}.msi" -and not exist "dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe" (
+          echo "❌ No installers found"
+          exit /b 1
+        )
+
+    - name: Upload installer artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: mauscribe-installers-${{ steps.version.outputs.version }}
+        path: |
+          dist/Mauscribe-${{ steps.version.outputs.version }}.msi
+          dist/Mauscribe-${{ steps.version.outputs.version }}-Setup.exe
+          dist/installer-metadata-${{ steps.version.outputs.version }}.json
+        retention-days: 30
+
+    - name: Create Release with Installers
+      if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+      run: |
+        echo "📦 Creating release with installers..."
+
+        # Determine release tag
+        if "${{ github.event_name }}" == "workflow_dispatch" (
+          $releaseTag = "v${{ steps.version.outputs.version }}"
+        ) else (
+          $releaseTag = "${{ github.ref_name }}"
+        )
+
+        # Create release
+        python tools/release_manager.py --tag $releaseTag --upload --include-installers
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate Installation Instructions
+      run: |
+        echo "📝 Generating installation instructions..."
+        
+        $instructions = @"
+        # Mauscribe ${{ steps.version.outputs.version }} Installation
+        
+        ## Download Options
+        
+        ### MSI Installer (Recommended)
+        - **File**: Mauscribe-${{ steps.version.outputs.version }}.msi
+        - **Type**: Windows Installer Package
+        - **Features**: Professional installation with feature selection
+        - **Requirements**: Windows 7 or later
+        
+        ### Inno Setup Installer (Alternative)
+        - **File**: Mauscribe-${{ steps.version.outputs.version }}-Setup.exe
+        - **Type**: Executable Installer
+        - **Features**: Simple installation wizard
+        - **Requirements**: Windows 7 or later
+        
+        ## Installation Steps
+        
+        1. Download your preferred installer
+        2. Run the installer as Administrator
+        3. Follow the installation wizard
+        4. Select desired features:
+           - Core Application (required)
+           - Audio Database (optional)
+           - Enhanced Mode (optional)
+           - Whisper Models (optional, 1.5GB)
+           - Desktop Shortcuts (optional)
+           - Start with Windows (optional)
+        
+        ## System Requirements
+        
+        - Windows 7 SP1 or later
+        - 2GB free disk space
+        - Microphone access
+        - Internet connection (for model downloads)
+        
+        ## Troubleshooting
+        
+        If you encounter issues:
+        1. Run installer as Administrator
+        2. Disable antivirus temporarily
+        3. Check Windows Event Viewer for errors
+        4. Contact support at: https://github.com/R0bes/Mauscribe/issues
+        
+        ## Uninstallation
+        
+        Use Windows "Add or Remove Programs" or run the uninstaller from Start Menu.
+        "@
+
+        Set-Content "dist\INSTALLATION.md" -Value $instructions
+        echo "✅ Installation instructions generated"
+
+    - name: Upload installation instructions
+      uses: actions/upload-artifact@v4
+      with:
+        name: installation-instructions-${{ steps.version.outputs.version }}
+        path: dist/INSTALLATION.md
+        retention-days: 30
+
+    - name: Summary
+      run: |
+        echo "🎉 Installer build completed successfully!"
+        echo ""
+        echo "Version: ${{ steps.version.outputs.version }}"
+        echo ""
+        echo "Generated installers:"
+        if exist "dist\Mauscribe-${{ steps.version.outputs.version }}.msi" (
+          echo "  ✅ MSI: Mauscribe-${{ steps.version.outputs.version }}.msi"
+        )
+        if exist "dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe" (
+          echo "  ✅ Inno Setup: Mauscribe-${{ steps.version.outputs.version }}-Setup.exe"
+        )
+        echo ""
+        echo "Installers uploaded as artifacts and attached to release."

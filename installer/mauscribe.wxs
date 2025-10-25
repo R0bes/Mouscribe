@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*"
+           Name="Mauscribe"
+           Language="1033"
+           Version="1.0.0"
+           Manufacturer="Robs"
+           UpgradeCode="12345678-1234-1234-1234-123456789012">
+
+    <Package InstallerVersion="200"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Description="Mauscribe Voice-to-Text Application"
+             Comments="Mauscribe - Professional voice-to-text transcription tool"
+             Manufacturer="Robs"
+             InstallPrivileges="elevated" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Feature definitions -->
+    <Feature Id="CoreFeature"
+             Title="Core Application"
+             Description="Essential Mauscribe functionality"
+             Level="1"
+             Display="expand"
+             Absent="disallow">
+
+      <ComponentGroupRef Id="CoreComponents" />
+
+      <!-- Audio Database Feature -->
+      <Feature Id="AudioDatabaseFeature"
+               Title="Audio Database"
+               Description="Store and manage recorded audio files"
+               Level="1"
+               Display="expand">
+        <ComponentGroupRef Id="AudioDatabaseComponents" />
+      </Feature>
+
+      <!-- Enhanced Mode Feature -->
+      <Feature Id="EnhancedModeFeature"
+               Title="Enhanced Mode"
+               Description="Advanced features and better transcription quality"
+               Level="1"
+               Display="expand">
+        <ComponentGroupRef Id="EnhancedModeComponents" />
+      </Feature>
+
+      <!-- Whisper Models Feature -->
+      <Feature Id="WhisperModelsFeature"
+               Title="Whisper Models"
+               Description="Download AI models for improved transcription"
+               Level="1"
+               Display="expand">
+        <ComponentGroupRef Id="WhisperModelsComponents" />
+      </Feature>
+
+      <!-- Autostart Feature -->
+      <Feature Id="AutostartFeature"
+               Title="Start with Windows"
+               Description="Automatically start Mauscribe when Windows boots"
+               Level="1"
+               Display="expand">
+        <ComponentGroupRef Id="AutostartComponents" />
+      </Feature>
+
+      <!-- Desktop Shortcuts Feature -->
+      <Feature Id="DesktopShortcutsFeature"
+               Title="Desktop Shortcuts"
+               Description="Create desktop and start menu shortcuts"
+               Level="1"
+               Display="expand">
+        <ComponentGroupRef Id="DesktopShortcutsComponents" />
+      </Feature>
+
+      <!-- UI Icons Feature -->
+      <Feature Id="UIIconsFeature"
+               Title="UI Icons"
+               Description="Additional UI icons for interface elements"
+               Level="1"
+               Display="expand">
+        <ComponentGroupRef Id="UIIconsComponents" />
+      </Feature>
+    </Feature>
+
+    <!-- Directory structure -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="Mauscribe">
+          <!-- Core application files -->
+          <Component Id="MainExecutable" Guid="*">
+            <File Id="MauscribeExe"
+                  Name="Mauscribe.exe"
+                  Source="dist\Mauscribe.exe"
+                  KeyPath="yes" />
+          </Component>
+
+          <Component Id="SettingsFile" Guid="*">
+            <File Id="SettingsToml"
+                  Name="settings.toml"
+                  Source="dist\settings.toml" />
+          </Component>
+
+          <!-- Core icons -->
+          <Directory Id="IconsFolder" Name="icons">
+            <Component Id="MainIcon" Guid="*">
+              <File Id="MainIconFile"
+                    Name="icon.ico"
+                    Source="dist\src\ui\icons\icon.ico" />
+            </Component>
+
+            <Component Id="IdleIcon" Guid="*">
+              <File Id="IdleIconFile"
+                    Name="icon_idle.ico"
+                    Source="dist\src\ui\icons\icon_idle.ico" />
+            </Component>
+
+            <Component Id="RecordIcon" Guid="*">
+              <File Id="RecordIconFile"
+                    Name="icon_record.ico"
+                    Source="dist\src\ui\icons\icon_record.ico" />
+            </Component>
+
+            <!-- PNG icons -->
+            <Component Id="Icon16" Guid="*">
+              <File Id="Icon16File"
+                    Name="icon_16.png"
+                    Source="dist\src\ui\icons\icon_16.png" />
+            </Component>
+
+            <Component Id="Icon32" Guid="*">
+              <File Id="Icon32File"
+                    Name="icon_32.png"
+                    Source="dist\src\ui\icons\icon_32.png" />
+            </Component>
+
+            <Component Id="Icon64" Guid="*">
+              <File Id="Icon64File"
+                    Name="icon_64.png"
+                    Source="dist\src\ui\icons\icon_64.png" />
+            </Component>
+
+            <Component Id="Icon128" Guid="*">
+              <File Id="Icon128File"
+                    Name="icon_128.png"
+                    Source="dist\src\ui\icons\icon_128.png" />
+            </Component>
+
+            <Component Id="Icon256" Guid="*">
+              <File Id="Icon256File"
+                    Name="icon_256.png"
+                    Source="dist\src\ui\icons\icon_256.png" />
+            </Component>
+          </Directory>
+
+          <!-- Data directory -->
+          <Directory Id="DataFolder" Name="data">
+            <Directory Id="AudioFolder" Name="audio">
+              <!-- Audio files will be created by the application -->
+            </Directory>
+          </Directory>
+
+          <!-- UI icons directory -->
+          <Directory Id="UIIconsFolder" Name="ui_icons">
+            <!-- UI icons will be populated by UIIconsComponents -->
+          </Directory>
+        </Directory>
+      </Directory>
+
+      <!-- Start Menu -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ProgramMenuDir" Name="Mauscribe">
+          <Component Id="StartMenuShortcut" Guid="*">
+            <Shortcut Id="StartMenuShortcut"
+                      Directory="ProgramMenuDir"
+                      Name="Mauscribe"
+                      WorkingDirectory="INSTALLFOLDER"
+                      Icon="MainIconFile"
+                      IconIndex="0"
+                      Advertise="yes" />
+            <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
+            <RegistryValue Root="HKCU"
+                          Key="Software\Mauscribe"
+                          Name="installed"
+                          Type="integer"
+                          Value="1"
+                          KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+
+      <!-- Desktop -->
+      <Directory Id="DesktopFolder" Name="Desktop">
+        <Component Id="DesktopShortcut" Guid="*">
+          <Shortcut Id="DesktopShortcut"
+                    Directory="DesktopFolder"
+                    Name="Mauscribe"
+                    WorkingDirectory="INSTALLFOLDER"
+                    Icon="MainIconFile"
+                    IconIndex="0"
+                    Advertise="yes" />
+          <RegistryValue Root="HKCU"
+                        Key="Software\Mauscribe"
+                        Name="desktop_shortcut"
+                        Type="integer"
+                        Value="1"
+                        KeyPath="yes" />
+        </Component>
+      </Directory>
+    </Directory>
+
+    <!-- Component groups -->
+    <ComponentGroup Id="CoreComponents" Directory="INSTALLFOLDER">
+      <ComponentRef Id="MainExecutable" />
+      <ComponentRef Id="SettingsFile" />
+      <ComponentRef Id="MainIcon" />
+      <ComponentRef Id="IdleIcon" />
+      <ComponentRef Id="RecordIcon" />
+      <ComponentRef Id="Icon16" />
+      <ComponentRef Id="Icon32" />
+      <ComponentRef Id="Icon64" />
+      <ComponentRef Id="Icon128" />
+      <ComponentRef Id="Icon256" />
+    </ComponentGroup>
+
+    <ComponentGroup Id="AudioDatabaseComponents" Directory="DataFolder">
+      <Component Id="AudioDatabase" Guid="*">
+        <File Id="AudioDatabaseFile"
+              Name="audio_database.db"
+              Source="dist\data\audio_database.db" />
+        <CreateFolder />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="EnhancedModeComponents" Directory="INSTALLFOLDER">
+      <!-- Enhanced mode is primarily configuration-based -->
+      <Component Id="EnhancedModeConfig" Guid="*">
+        <RegistryValue Root="HKCU"
+                      Key="Software\Mauscribe\Settings"
+                      Name="enhanced_mode"
+                      Type="integer"
+                      Value="1"
+                      KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="WhisperModelsComponents" Directory="INSTALLFOLDER">
+      <!-- Whisper models will be downloaded post-install -->
+      <Component Id="WhisperModelsConfig" Guid="*">
+        <RegistryValue Root="HKCU"
+                      Key="Software\Mauscribe\Settings"
+                      Name="whisper_models"
+                      Type="integer"
+                      Value="1"
+                      KeyPath="yes" />
+        <CreateFolder />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="AutostartComponents" Directory="INSTALLFOLDER">
+      <Component Id="AutostartRegistry" Guid="*">
+        <RegistryValue Root="HKCU"
+                      Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                      Name="Mauscribe"
+                      Type="string"
+                      Value="[INSTALLFOLDER]Mauscribe.exe"
+                      KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="DesktopShortcutsComponents" Directory="DesktopFolder">
+      <ComponentRef Id="DesktopShortcut" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </ComponentGroup>
+
+    <ComponentGroup Id="UIIconsComponents" Directory="UIIconsFolder">
+      <!-- UI icons for buttons and interface elements -->
+      <Component Id="PlayIcon16" Guid="*">
+        <File Id="PlayIcon16File"
+              Name="play_16.png"
+              Source="dist\src\ui\icons\ui\play_16.png" />
+      </Component>
+
+      <Component Id="PlayIcon24" Guid="*">
+        <File Id="PlayIcon24File"
+              Name="play_24.png"
+              Source="dist\src\ui\icons\ui\play_24.png" />
+      </Component>
+
+      <Component Id="PlayIcon32" Guid="*">
+        <File Id="PlayIcon32File"
+              Name="play_32.png"
+              Source="dist\src\ui\icons\ui\play_32.png" />
+      </Component>
+
+      <!-- Add more UI icons as needed -->
+      <Component Id="PauseIcon16" Guid="*">
+        <File Id="PauseIcon16File"
+              Name="pause_16.png"
+              Source="dist\src\ui\icons\ui\pause_16.png" />
+      </Component>
+
+      <Component Id="StopIcon16" Guid="*">
+        <File Id="StopIcon16File"
+              Name="stop_16.png"
+              Source="dist\src\ui\icons\ui\stop_16.png" />
+      </Component>
+
+      <Component Id="SettingsIcon16" Guid="*">
+        <File Id="SettingsIcon16File"
+              Name="settings_16.png"
+              Source="dist\src\ui\icons\ui\settings_16.png" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Custom actions -->
+    <CustomAction Id="PostInstallAction"
+                  ExeCommand="[INSTALLFOLDER]tools\post_install.py"
+                  Directory="INSTALLFOLDER"
+                  Execute="deferred"
+                  Return="check" />
+
+    <!-- Installation sequence -->
+    <InstallExecuteSequence>
+      <Custom Action="PostInstallAction" After="InstallFiles">NOT Installed</Custom>
+    </InstallExecuteSequence>
+
+    <!-- UI configuration -->
+    <UIRef Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+    <WixVariable Id="WixUIBannerBmp" Value="banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
+
+    <!-- Icon for the installer -->
+    <Icon Id="MainIconFile" SourceFile="dist\src\ui\icons\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="MainIconFile" />
+
+    <!-- Upgrade configuration -->
+    <Upgrade Id="12345678-1234-1234-1234-123456789012">
+      <UpgradeVersion Minimum="1.0.0"
+                      IncludeMinimum="yes"
+                      Maximum="1.0.0"
+                      IncludeMaximum="no"
+                      Property="PREVIOUSVERSIONSINSTALLED" />
+    </Upgrade>
+
+    <!-- Launch conditions -->
+    <Condition Message="This application requires Windows 7 or later.">
+      <![CDATA[Installed OR (VersionNT >= 601)]]>
+    </Condition>
+
+  </Product>
+</Wix>

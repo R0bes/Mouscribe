@@ -1,0 +1,211 @@
+{
+  "features": {
+    "core": {
+      "name": "Core Application",
+      "description": "Essential Mauscribe functionality including voice recording, transcription, and basic UI",
+      "required": true,
+      "default": true,
+      "size_mb": 50,
+      "files": [
+        "Mauscribe.exe",
+        "settings.toml",
+        "src/ui/icons/icon.ico",
+        "src/ui/icons/icon_idle.ico",
+        "src/ui/icons/icon_record.ico",
+        "src/ui/icons/icon_16.png",
+        "src/ui/icons/icon_32.png",
+        "src/ui/icons/icon_64.png",
+        "src/ui/icons/icon_128.png",
+        "src/ui/icons/icon_256.png"
+      ],
+      "registry_keys": [],
+      "shortcuts": [
+        {
+          "name": "Mauscribe",
+          "target": "Mauscribe.exe",
+          "location": "start_menu",
+          "icon": "src/ui/icons/icon.ico"
+        }
+      ]
+    },
+    "audio_database": {
+      "name": "Audio Database",
+      "description": "Store and manage recorded audio files with playback and retranscription capabilities",
+      "required": false,
+      "default": true,
+      "size_mb": 10,
+      "files": [
+        "data/audio_database.db",
+        "data/audio/"
+      ],
+      "registry_keys": [],
+      "shortcuts": [],
+      "dependencies": ["core"],
+      "settings": {
+        "enable_audio_files_tab": true,
+        "enable_audio_database": true
+      }
+    },
+    "enhanced_mode": {
+      "name": "Enhanced Mode",
+      "description": "Advanced features including better transcription quality, noise reduction, and extended language support",
+      "required": false,
+      "default": false,
+      "size_mb": 20,
+      "files": [],
+      "registry_keys": [],
+      "shortcuts": [],
+      "dependencies": ["core"],
+      "settings": {
+        "enable_enhanced_mode": true
+      }
+    },
+    "whisper_models": {
+      "name": "Whisper Models",
+      "description": "Download and install Whisper AI models for improved transcription accuracy",
+      "required": false,
+      "default": false,
+      "size_mb": 1500,
+      "files": [],
+      "registry_keys": [],
+      "shortcuts": [],
+      "dependencies": ["core"],
+      "download_urls": {
+        "small": "https://huggingface.co/guillaumekln/faster-whisper-small.en/resolve/main/model.bin",
+        "medium": "https://huggingface.co/guillaumekln/faster-whisper-medium.en/resolve/main/model.bin",
+        "large": "https://huggingface.co/guillaumekln/faster-whisper-large-v2/resolve/main/model.bin"
+      },
+      "post_install_action": "download_models"
+    },
+    "autostart": {
+      "name": "Start with Windows",
+      "description": "Automatically start Mauscribe when Windows boots",
+      "required": false,
+      "default": false,
+      "size_mb": 0,
+      "files": [],
+      "registry_keys": [
+        {
+          "key": "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+          "name": "Mauscribe",
+          "value": "[INSTALLDIR]Mauscribe.exe",
+          "type": "string"
+        }
+      ],
+      "shortcuts": [],
+      "dependencies": ["core"],
+      "settings": {
+        "auto_start_gui": true
+      }
+    },
+    "desktop_shortcuts": {
+      "name": "Desktop Shortcuts",
+      "description": "Create desktop and start menu shortcuts for easy access",
+      "required": false,
+      "default": true,
+      "size_mb": 0,
+      "files": [],
+      "registry_keys": [],
+      "shortcuts": [
+        {
+          "name": "Mauscribe",
+          "target": "Mauscribe.exe",
+          "location": "desktop",
+          "icon": "src/ui/icons/icon.ico"
+        },
+        {
+          "name": "Mauscribe",
+          "target": "Mauscribe.exe",
+          "location": "start_menu",
+          "icon": "src/ui/icons/icon.ico"
+        }
+      ],
+      "dependencies": ["core"]
+    },
+    "ui_icons": {
+      "name": "UI Icons",
+      "description": "Additional UI icons for buttons and interface elements",
+      "required": false,
+      "default": true,
+      "size_mb": 5,
+      "files": [
+        "src/ui/icons/ui/play_16.png",
+        "src/ui/icons/ui/play_24.png",
+        "src/ui/icons/ui/play_32.png",
+        "src/ui/icons/ui/pause_16.png",
+        "src/ui/icons/ui/pause_24.png",
+        "src/ui/icons/ui/pause_32.png",
+        "src/ui/icons/ui/stop_16.png",
+        "src/ui/icons/ui/stop_24.png",
+        "src/ui/icons/ui/stop_32.png",
+        "src/ui/icons/ui/edit_16.png",
+        "src/ui/icons/ui/edit_24.png",
+        "src/ui/icons/ui/edit_32.png",
+        "src/ui/icons/ui/copy_16.png",
+        "src/ui/icons/ui/copy_24.png",
+        "src/ui/icons/ui/copy_32.png",
+        "src/ui/icons/ui/refresh_16.png",
+        "src/ui/icons/ui/refresh_24.png",
+        "src/ui/icons/ui/refresh_32.png",
+        "src/ui/icons/ui/delete_16.png",
+        "src/ui/icons/ui/delete_24.png",
+        "src/ui/icons/ui/delete_32.png",
+        "src/ui/icons/ui/settings_16.png",
+        "src/ui/icons/ui/settings_24.png",
+        "src/ui/icons/ui/settings_32.png",
+        "src/ui/icons/ui/status_success_16.png",
+        "src/ui/icons/ui/status_success_24.png",
+        "src/ui/icons/ui/status_success_32.png",
+        "src/ui/icons/ui/status_error_16.png",
+        "src/ui/icons/ui/status_error_24.png",
+        "src/ui/icons/ui/status_error_32.png",
+        "src/ui/icons/ui/status_warning_16.png",
+        "src/ui/icons/ui/status_warning_24.png",
+        "src/ui/icons/ui/status_warning_32.png"
+      ],
+      "registry_keys": [],
+      "shortcuts": [],
+      "dependencies": ["core"]
+    }
+  },
+  "installer": {
+    "name": "Mauscribe",
+    "manufacturer": "Robs",
+    "upgrade_code": "{12345678-1234-1234-1234-123456789012}",
+    "install_directory": "ProgramFilesFolder\\Mauscribe",
+    "appdata_directory": "LocalAppDataFolder\\Mauscribe",
+    "start_menu_folder": "ProgramMenuFolder\\Mauscribe",
+    "desktop_folder": "DesktopFolder",
+    "minimum_windows_version": "6.1",
+    "supported_architectures": ["x64", "x86"]
+  },
+  "ui": {
+    "welcome_title": "Welcome to Mauscribe Setup",
+    "welcome_text": "This wizard will guide you through the installation of Mauscribe, a powerful voice-to-text application.",
+    "license_file": "LICENSE",
+    "feature_selection_title": "Select Features",
+    "feature_selection_text": "Choose the features you want to install. You can change this selection later.",
+    "installation_title": "Installing Mauscribe",
+    "installation_text": "Please wait while Mauscribe is being installed.",
+    "completion_title": "Installation Complete",
+    "completion_text": "Mauscribe has been successfully installed on your computer.",
+    "run_after_install": true,
+    "show_readme": true
+  },
+  "uninstall": {
+    "remove_appdata": true,
+    "remove_registry_keys": true,
+    "remove_shortcuts": true,
+    "remove_start_menu": true,
+    "remove_desktop_shortcuts": true,
+    "remove_autostart": true,
+    "confirmation_message": "Are you sure you want to completely remove Mauscribe and all of its components?"
+  },
+  "post_install": {
+    "script": "tools/post_install.py",
+    "show_welcome": true,
+    "create_desktop_shortcut": true,
+    "start_application": false,
+    "show_readme": true
+  }
+}
