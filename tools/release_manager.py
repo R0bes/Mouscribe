@@ -153,19 +153,19 @@ class ReleaseManager:
             response = requests.post(url, headers=headers, files=files, params=params)
 
             if response.status_code == 201:
-                print(f"✅ Uploaded: {file_path.name}")
+                print(f"Uploaded: {file_path.name}")
             else:
-                print(f"❌ Failed to upload {file_path.name}: {response.status_code}")
+                print(f"Failed to upload {file_path.name}: {response.status_code}")
 
     def create_release(self, tag: str, upload_assets: bool = False) -> None:
         """Create GitHub release."""
         if not self.github_token:
-            print("❌ GITHUB_TOKEN environment variable not set")
+            print("GITHUB_TOKEN environment variable not set")
             sys.exit(1)
 
         latest_tag = self.get_latest_tag()
         if not latest_tag:
-            print("❌ No previous tag found")
+            print("No previous tag found")
             sys.exit(1)
 
         changelog = self.generate_changelog(latest_tag)
@@ -186,13 +186,13 @@ class ReleaseManager:
 
         if response.status_code == 201:
             release_data = response.json()
-            print(f"✅ Release created: {release_data['html_url']}")
+            print(f"Release created: {release_data['html_url']}")
 
             if upload_assets:
                 asset_paths = self.config["release"]["asset_patterns"]
                 self.upload_assets(release_data["id"], asset_paths)
         else:
-            print(f"❌ Failed to create release: {response.status_code}")
+            print(f"Failed to create release: {response.status_code}")
             print(response.text)
             sys.exit(1)
 
