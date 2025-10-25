@@ -16,6 +16,11 @@ dark_mode = true
 auto_start_gui = false
 close_app_on_gui_close = false
 
+# Feature flags for optional components
+enable_audio_files_tab = false
+enable_audio_database = false
+enable_enhanced_mode = false
+
 [ui.notifications]
 toast_duration = 1000
 

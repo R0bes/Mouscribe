@@ -465,15 +465,11 @@ class SysTray:
         """Emit settings change event."""
         try:
             if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
-                from ...utils.eventbus import EventType, Event
                 import time
-                
-                event = Event(
-                    event_type=EventType(event_type),
-                    data=data,
-                    timestamp=time.time(),
-                    source="system_tray"
-                )
+
+                from ...utils.eventbus import Event, EventType
+
+                event = Event(event_type=EventType(event_type), data=data, timestamp=time.time(), source="system_tray")
                 self.app_instance.event_bus.emit(event)
         except Exception as e:
             self.logger.error(f"Error emitting settings event: {e}")

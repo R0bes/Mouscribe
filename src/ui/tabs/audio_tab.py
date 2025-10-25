@@ -16,6 +16,7 @@ import pygame
 
 from ..icon_helper import icon_helper
 from ..theme import CyberpunkTheme
+from ...utils.feature_manager import FeatureManager
 
 
 class AudioTab(ctk.CTkFrame):
@@ -30,6 +31,12 @@ class AudioTab(ctk.CTkFrame):
         """
         super().__init__(parent, **kwargs)
         self.app_instance = app_instance
+        self.feature_manager = FeatureManager(app_instance.config if app_instance else None)
+
+        # Check if audio database feature is enabled
+        if not self.feature_manager.is_enabled("audio_database"):
+            self._create_disabled_message()
+            return
 
         # State
         self.current_files = []
@@ -54,6 +61,74 @@ class AudioTab(ctk.CTkFrame):
 
         # Subscribe to audio file events
         self._subscribe_to_events()
+
+    def _create_disabled_message(self) -> None:
+        """Create a message when audio database feature is disabled."""
+        # Main container
+        main_frame = ctk.CTkFrame(
+            self,
+            fg_color=CyberpunkTheme.BG_DARK,
+            corner_radius=CyberpunkTheme.CORNER_RADIUS,
+            border_width=CyberpunkTheme.BORDER_WIDTH,
+            border_color=CyberpunkTheme.BORDER_GLOW,
+        )
+        main_frame.pack(fill="both", expand=True, padx=8, pady=8)
+
+        # Disabled message
+        disabled_frame = ctk.CTkFrame(main_frame, fg_color=CyberpunkTheme.BG_SURFACE, corner_radius=8, border_width=1)
+        disabled_frame.pack(expand=True, fill="both", padx=20, pady=20)
+
+        # Icon
+        icon_label = ctk.CTkLabel(
+            disabled_frame,
+            text="🎵",
+            font=ctk.CTkFont(size=48),
+            text_color=CyberpunkTheme.ACCENT_CYAN,
+        )
+        icon_label.pack(pady=(20, 10))
+
+        # Title
+        title_label = ctk.CTkLabel(
+            disabled_frame,
+            text="Audio Files Feature Disabled",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color=CyberpunkTheme.TEXT_PRIMARY,
+        )
+        title_label.pack(pady=(0, 10))
+
+        # Description
+        desc_label = ctk.CTkLabel(
+            disabled_frame,
+            text="The Audio Files tab is currently disabled.\n\nTo enable it, set 'enable_audio_files_tab = true'\nand 'enable_audio_database = true' in settings.toml",
+            font=ctk.CTkFont(size=14),
+            text_color=CyberpunkTheme.TEXT_SECONDARY,
+        )
+        desc_label.pack(pady=(0, 20))
+
+        # Enable button (if config is available)
+        if self.app_instance and hasattr(self.app_instance, 'config'):
+            enable_button = ctk.CTkButton(
+                disabled_frame,
+                text="⚙️ Open Settings",
+                font=ctk.CTkFont(size=14, weight="bold"),
+                fg_color=CyberpunkTheme.ACCENT_CYAN,
+                hover_color="#00CCCC",
+                command=self._open_settings,
+                height=40,
+            )
+            enable_button.pack(pady=(0, 20))
+
+    def _open_settings(self) -> None:
+        """Open settings to enable audio files feature."""
+        try:
+            # Switch to settings tab
+            if hasattr(self.app_instance, 'control_center') and self.app_instance.control_center:
+                control_center = self.app_instance.control_center
+                if hasattr(control_center, 'tab_view') and control_center.tab_view:
+                    control_center.tab_view.set("⚙️ Settings")
+                    print("Switched to Settings tab")
+        except Exception as e:
+            print(f"Error opening settings: {e}")
 
     def _subscribe_to_events(self) -> None:
         """Subscribe to audio file events."""

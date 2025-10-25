@@ -68,6 +68,7 @@ class ConfigSettingsTab(ctk.CTkFrame):
         self._create_transcription_settings(content_frame)
         self._create_recording_settings(content_frame)
         self._create_ui_settings(content_frame)
+        self._create_feature_flags_settings(content_frame)
         self._create_notification_settings(content_frame)
 
         # Auto-save button (removed - all settings auto-save)
@@ -224,6 +225,89 @@ class ConfigSettingsTab(ctk.CTkFrame):
         )
         self.close_app_checkbox.pack(anchor="w", pady=4)
 
+    def _create_feature_flags_settings(self, parent: ctk.CTkScrollableFrame) -> None:
+        """Create feature flags settings section."""
+        # Feature flags section header
+        features_header = ctk.CTkLabel(
+            parent, text="🚀 Feature Flags", font=ctk.CTkFont(size=14, weight="bold"), text_color=CyberpunkTheme.ACCENT_PINK
+        )
+        features_header.pack(fill="x", padx=8, pady=(8, 4))
+
+        # Audio Files Tab setting
+        audio_files_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        audio_files_frame.pack(fill="x", padx=8, pady=4)
+
+        audio_files_label = ctk.CTkLabel(
+            audio_files_frame, text="Audio Files Tab:", font=ctk.CTkFont(size=12), text_color=CyberpunkTheme.TEXT_PRIMARY
+        )
+        audio_files_label.pack(anchor="w")
+
+        self.audio_files_var = ctk.BooleanVar()
+        self.audio_files_checkbox = ctk.CTkCheckBox(
+            audio_files_frame,
+            text="Enable Audio Files tab in Control Center",
+            variable=self.audio_files_var,
+            font=ctk.CTkFont(size=11),
+            text_color=CyberpunkTheme.TEXT_SECONDARY,
+            command=self._on_audio_files_change,
+        )
+        self.audio_files_checkbox.pack(anchor="w", pady=4)
+
+        # Audio Database setting
+        audio_db_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        audio_db_frame.pack(fill="x", padx=8, pady=4)
+
+        audio_db_label = ctk.CTkLabel(
+            audio_db_frame, text="Audio Database:", font=ctk.CTkFont(size=12), text_color=CyberpunkTheme.TEXT_PRIMARY
+        )
+        audio_db_label.pack(anchor="w")
+
+        self.audio_db_var = ctk.BooleanVar()
+        self.audio_db_checkbox = ctk.CTkCheckBox(
+            audio_db_frame,
+            text="Enable audio file storage and database features",
+            variable=self.audio_db_var,
+            font=ctk.CTkFont(size=11),
+            text_color=CyberpunkTheme.TEXT_SECONDARY,
+            command=self._on_audio_db_change,
+        )
+        self.audio_db_checkbox.pack(anchor="w", pady=4)
+
+        # Enhanced Mode setting
+        enhanced_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        enhanced_frame.pack(fill="x", padx=8, pady=4)
+
+        enhanced_label = ctk.CTkLabel(
+            enhanced_frame, text="Enhanced Mode:", font=ctk.CTkFont(size=12), text_color=CyberpunkTheme.TEXT_PRIMARY
+        )
+        enhanced_label.pack(anchor="w")
+
+        self.enhanced_var = ctk.BooleanVar()
+        self.enhanced_checkbox = ctk.CTkCheckBox(
+            enhanced_frame,
+            text="Enable enhanced recording mode (permanent storage)",
+            variable=self.enhanced_var,
+            font=ctk.CTkFont(size=11),
+            text_color=CyberpunkTheme.TEXT_SECONDARY,
+            command=self._on_enhanced_change,
+        )
+        self.enhanced_checkbox.pack(anchor="w", pady=4)
+
+    def _on_audio_files_change(self) -> None:
+        """Handle audio files checkbox change."""
+        self._auto_save_settings()
+        self._emit_settings_event("AUDIO_FILES_TAB_CHANGED", {"enabled": self.audio_files_var.get()})
+
+    def _on_audio_db_change(self) -> None:
+        """Handle audio database checkbox change."""
+        self._auto_save_settings()
+        self._emit_settings_event("AUDIO_DATABASE_CHANGED", {"enabled": self.audio_db_var.get()})
+
+    def _on_enhanced_change(self) -> None:
+        """Handle enhanced mode checkbox change."""
+        self._auto_save_settings()
+        self._emit_settings_event("ENHANCED_MODE_CHANGED", {"enabled": self.enhanced_var.get()})
+
     def _load_settings(self) -> None:
         """Load current settings from config."""
         if not self.config:
@@ -255,6 +339,14 @@ class ConfigSettingsTab(ctk.CTkFrame):
                     self.auto_start_var.set(self.config.ui.auto_start_gui)
                 if hasattr(self.config.ui, "close_app_on_gui_close"):
                     self.close_app_var.set(self.config.ui.close_app_on_gui_close)
+                
+                # Feature flags
+                if hasattr(self.config.ui, "enable_audio_files_tab"):
+                    self.audio_files_var.set(self.config.ui.enable_audio_files_tab)
+                if hasattr(self.config.ui, "enable_audio_database"):
+                    self.audio_db_var.set(self.config.ui.enable_audio_database)
+                if hasattr(self.config.ui, "enable_enhanced_mode"):
+                    self.enhanced_var.set(self.config.ui.enable_enhanced_mode)
 
         except Exception as e:
             print(f"Error loading settings: {e}")
@@ -287,9 +379,10 @@ class ConfigSettingsTab(ctk.CTkFrame):
         """Emit settings change event."""
         try:
             if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
-                from ...utils.eventbus import EventType, Event
                 import time
-                
+
+                from ...utils.eventbus import Event, EventType
+
                 event = Event(
                     event_type=EventType(event_type),
                     data=data,
@@ -305,7 +398,7 @@ class ConfigSettingsTab(ctk.CTkFrame):
         try:
             if event.source == "config_settings_tab":
                 return  # Don't update from our own changes
-            
+
             # Update UI based on event
             if event.event_type.value == "THEME_CHANGED":
                 theme = event.data.get("theme", "Cyberpunk")
@@ -330,6 +423,10 @@ class ConfigSettingsTab(ctk.CTkFrame):
         self._emit_settings_event("CLOSE_APP_ON_GUI_CLOSE_CHANGED", {"close_app": self.close_app_var.get()})
 
     def _auto_save_settings(self) -> None:
+        """Auto-save all settings to config file."""
+        try:
+            if not self.config:
+                return
 
             # Update config values
             if hasattr(self.config, "ui"):
@@ -338,6 +435,11 @@ class ConfigSettingsTab(ctk.CTkFrame):
                 # Theme setting
                 if hasattr(self, "theme_dropdown"):
                     self.config.ui.dark_mode = self.theme_dropdown.get() == "Cyberpunk"
+                
+                # Feature flags
+                self.config.ui.enable_audio_files_tab = self.audio_files_var.get()
+                self.config.ui.enable_audio_database = self.audio_db_var.get()
+                self.config.ui.enable_enhanced_mode = self.enhanced_var.get()
 
             # Save to file
             self.config.save()
@@ -351,12 +453,12 @@ class ConfigSettingsTab(ctk.CTkFrame):
         try:
             if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
                 from ...utils.eventbus import EventType
-                
+
                 # Subscribe to settings events
                 self.app_instance.event_bus.subscribe(EventType.THEME_CHANGED, self._on_settings_changed)
                 self.app_instance.event_bus.subscribe(EventType.AUTO_START_GUI_CHANGED, self._on_settings_changed)
                 self.app_instance.event_bus.subscribe(EventType.CLOSE_APP_ON_GUI_CLOSE_CHANGED, self._on_settings_changed)
-                
+
                 print("✅ Config Settings Tab subscribed to settings events")
         except Exception as e:
             print(f"Failed to subscribe to settings events: {e}")

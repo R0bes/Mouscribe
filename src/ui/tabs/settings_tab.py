@@ -353,12 +353,12 @@ class SettingsTab(ctk.CTkFrame):
         try:
             if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
                 from ...utils.eventbus import EventType
-                
+
                 # Subscribe to settings events
                 self.app_instance.event_bus.subscribe(EventType.VOLUME_REDUCTION_CHANGED, self._on_settings_changed)
                 self.app_instance.event_bus.subscribe(EventType.LANGUAGE_CHANGED, self._on_settings_changed)
                 self.app_instance.event_bus.subscribe(EventType.MODEL_CHANGED, self._on_settings_changed)
-                
+
                 print("✅ Transcription Tab subscribed to settings events")
         except Exception as e:
             print(f"Failed to subscribe to settings events: {e}")
@@ -493,15 +493,11 @@ class SettingsTab(ctk.CTkFrame):
         """Emit settings change event."""
         try:
             if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
-                from ...utils.eventbus import EventType, Event
                 import time
-                
-                event = Event(
-                    event_type=EventType(event_type),
-                    data=data,
-                    timestamp=time.time(),
-                    source="transcription_tab"
-                )
+
+                from ...utils.eventbus import Event, EventType
+
+                event = Event(event_type=EventType(event_type), data=data, timestamp=time.time(), source="transcription_tab")
                 self.app_instance.event_bus.emit(event)
         except Exception as e:
             print(f"Error emitting settings event: {e}")
@@ -511,7 +507,7 @@ class SettingsTab(ctk.CTkFrame):
         try:
             if event.source == "transcription_tab":
                 return  # Don't update from our own changes
-            
+
             # Update UI based on event
             if event.event_type.value == "VOLUME_REDUCTION_CHANGED":
                 value = event.data.get("value", 0.2)

@@ -14,6 +14,7 @@ import customtkinter as ctk
 
 from ..config import AppConfig
 from ..utils import get_logger
+from ..utils.feature_manager import FeatureManager
 from .theme import CyberpunkTheme
 
 
@@ -30,6 +31,7 @@ class ControlCenterWindow:
         self.config = config
         self.app_instance = app_instance
         self.logger = get_logger("ControlCenter")
+        self.feature_manager = FeatureManager(config)
 
         # Window state
         self.window: Optional[ctk.CTk] = None
@@ -295,7 +297,11 @@ class ControlCenterWindow:
             self.logger.error(f"❌ Failed to create Settings tab: {e}")
 
     def _create_audio_tab(self) -> None:
-        """Create the Audio Files tab."""
+        """Create the Audio Files tab (if enabled)."""
+        if not self.feature_manager.is_enabled("audio_files_tab"):
+            self.logger.info("🎵 Audio Files tab disabled by feature flag")
+            return
+
         try:
             audio_tab = self.tab_view.add("🎵 Audio Files")
             from .tabs import AudioTab
