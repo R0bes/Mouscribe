@@ -237,7 +237,7 @@ class SettingsTab(ctk.CTkFrame):
         """Create the status column with recording status and transcription result."""
         # Status frame
         status_frame = ctk.CTkFrame(parent, fg_color=CyberpunkTheme.BG_SURFACE, corner_radius=6, border_width=1)
-        status_frame.grid(row=0, column=1, padx=(2, 4), pady=4, sticky="nsew")
+        status_frame.grid(row=0, column=0, padx=4, pady=4, sticky="nsew")
 
         # Status header
         status_header = ctk.CTkLabel(
@@ -366,10 +366,7 @@ class SettingsTab(ctk.CTkFrame):
         content_frame.grid_columnconfigure(1, weight=2)  # Status/Action column (larger)
         content_frame.grid_rowconfigure(0, weight=1)  # Use full height
 
-        # Settings column (left)
-        self._create_settings_column(content_frame)
-
-        # Status column (right)
+        # Status column (full width)
         self._create_status_column(content_frame)
 
     def _create_recording_card(self, parent: ctk.CTkFrame) -> None:

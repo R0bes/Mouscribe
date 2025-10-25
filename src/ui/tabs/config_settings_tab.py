@@ -193,6 +193,44 @@ class ConfigSettingsTab(ctk.CTkFrame):
         )
         self.theme_dropdown.pack(fill="x", pady=4)
 
+        # GUI Auto-start setting
+        auto_start_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        auto_start_frame.pack(fill="x", padx=8, pady=4)
+
+        auto_start_label = ctk.CTkLabel(
+            auto_start_frame, text="Auto-start GUI:", font=ctk.CTkFont(size=12), text_color=CyberpunkTheme.TEXT_PRIMARY
+        )
+        auto_start_label.pack(anchor="w")
+
+        self.auto_start_var = ctk.BooleanVar()
+        self.auto_start_checkbox = ctk.CTkCheckBox(
+            auto_start_frame,
+            text="Start Control Center automatically with Mauscribe",
+            variable=self.auto_start_var,
+            font=ctk.CTkFont(size=11),
+            text_color=CyberpunkTheme.TEXT_SECONDARY,
+        )
+        self.auto_start_checkbox.pack(anchor="w", pady=4)
+
+        # GUI Close behavior setting
+        close_behavior_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        close_behavior_frame.pack(fill="x", padx=8, pady=4)
+
+        close_behavior_label = ctk.CTkLabel(
+            close_behavior_frame, text="GUI Close Behavior:", font=ctk.CTkFont(size=12), text_color=CyberpunkTheme.TEXT_PRIMARY
+        )
+        close_behavior_label.pack(anchor="w")
+
+        self.close_app_var = ctk.BooleanVar()
+        self.close_app_checkbox = ctk.CTkCheckBox(
+            close_behavior_frame,
+            text="Close Mauscribe when Control Center is closed",
+            variable=self.close_app_var,
+            font=ctk.CTkFont(size=11),
+            text_color=CyberpunkTheme.TEXT_SECONDARY,
+        )
+        self.close_app_checkbox.pack(anchor="w", pady=4)
+
     def _load_settings(self) -> None:
         """Load current settings from config."""
         if not self.config:
@@ -217,6 +255,13 @@ class ConfigSettingsTab(ctk.CTkFrame):
 
             # UI settings
             self.theme_dropdown.set("Cyberpunk")
+
+            # GUI behavior settings
+            if hasattr(self.config, "ui"):
+                if hasattr(self.config.ui, "auto_start_gui"):
+                    self.auto_start_var.set(self.config.ui.auto_start_gui)
+                if hasattr(self.config.ui, "close_app_on_gui_close"):
+                    self.close_app_var.set(self.config.ui.close_app_on_gui_close)
 
         except Exception as e:
             print(f"Error loading settings: {e}")
@@ -260,6 +305,11 @@ class ConfigSettingsTab(ctk.CTkFrame):
                 self.config.transcription.model = self.model_dropdown.get()
 
             self.config.recording_mode = self.mode_dropdown.get().lower()
+
+            # UI settings
+            if hasattr(self.config, "ui"):
+                self.config.ui.auto_start_gui = self.auto_start_var.get()
+                self.config.ui.close_app_on_gui_close = self.close_app_var.get()
 
             # Save to file
             self.config.save()

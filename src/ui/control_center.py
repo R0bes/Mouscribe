@@ -408,6 +408,13 @@ class ControlCenterWindow:
             self.is_running = False
             self.is_closing = True
 
+            # Check if we should close the main app
+            if hasattr(self.app_instance, "config") and hasattr(self.app_instance.config.ui, "close_app_on_gui_close"):
+                if self.app_instance.config.ui.close_app_on_gui_close:
+                    self.logger.info("🔄 Closing main application...")
+                    if hasattr(self.app_instance, "shutdown_event"):
+                        self.app_instance.shutdown_event.set()
+
             # Cleanup tabs first
             self._cleanup_tabs()
 
@@ -467,7 +474,7 @@ def open_control_center(config: AppConfig, app_instance: Any) -> None:
             if hasattr(app_instance, "toaster"):
                 try:
                     app_instance.toaster.show_error("Control Center Error", f"Failed to open Control Center: {str(e)}")
-                except:
+                except Exception:
                     pass
 
     # Start Control Center in separate thread

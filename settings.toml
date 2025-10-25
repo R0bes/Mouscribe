@@ -13,6 +13,8 @@ volume_reduction_factor = 0.2
 
 [ui]
 dark_mode = true
+auto_start_gui = false
+close_app_on_gui_close = false
 
 [ui.notifications]
 toast_duration = 1000

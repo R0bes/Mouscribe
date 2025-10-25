@@ -625,12 +625,19 @@ class MauscribeApp:
             self.toaster.show_info("Mauscribe erfolgreich gestartet", "Anwendung")
 
         self.logger.info("🎯 Mauscribe Steuerung:")
-        self.logger.info(f"\t🐭 X2-Taste (hold): Aufnahme starten/stoppen")
+        self.logger.info("\t🐭 X2-Taste (hold): Aufnahme starten/stoppen")
         if self.config.input_config.enabled:
-            self.logger.info(f"\t🐭 Linke Maustaste (hold) + X2-Taste (press): Text einfügen")
+            self.logger.info("\t🐭 Linke Maustaste (hold) + X2-Taste (press): Text einfügen")
         else:
             self.logger.info("\t🐭 Sekundäre Eingabe deaktiviert")
         self.logger.info("🎮 Bereit für Eingaben!")
+
+        # Auto-start GUI if enabled
+        if hasattr(self.config.ui, "auto_start_gui") and self.config.ui.auto_start_gui:
+            self.logger.info("🎮 Auto-starting Control Center...")
+            from .ui.control_center import open_control_center
+
+            open_control_center(self.config, self)
 
         while not self.shutdown_event.is_set():
             # Check for double-click window
