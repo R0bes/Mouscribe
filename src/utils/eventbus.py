@@ -32,6 +32,15 @@ class EventType(Enum):
     SYSTEM_STATUS_CHANGED = "system_status_changed"
     LOG_MESSAGE_ADDED = "log_message_added"
 
+    # Settings events
+    SETTINGS_CHANGED = "settings_changed"
+    VOLUME_REDUCTION_CHANGED = "volume_reduction_changed"
+    LANGUAGE_CHANGED = "language_changed"
+    MODEL_CHANGED = "model_changed"
+    THEME_CHANGED = "theme_changed"
+    AUTO_START_GUI_CHANGED = "auto_start_gui_changed"
+    CLOSE_APP_ON_GUI_CLOSE_CHANGED = "close_app_on_gui_close_changed"
+
 
 @dataclass
 class Event:

@@ -43,6 +43,9 @@ class SettingsTab(ctk.CTkFrame):
         # Start event-based updates instead of polling
         self._start_event_updates()
 
+        # Subscribe to settings events
+        self._subscribe_to_settings_events()
+
     def _start_event_updates(self) -> None:
         """Start event-based updates using EventBus."""
         try:
@@ -345,6 +348,21 @@ class SettingsTab(ctk.CTkFrame):
         except Exception as e:
             print(f"Error copying transcription: {str(e)}")
 
+    def _subscribe_to_settings_events(self) -> None:
+        """Subscribe to settings change events."""
+        try:
+            if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
+                from ...utils.eventbus import EventType
+                
+                # Subscribe to settings events
+                self.app_instance.event_bus.subscribe(EventType.VOLUME_REDUCTION_CHANGED, self._on_settings_changed)
+                self.app_instance.event_bus.subscribe(EventType.LANGUAGE_CHANGED, self._on_settings_changed)
+                self.app_instance.event_bus.subscribe(EventType.MODEL_CHANGED, self._on_settings_changed)
+                
+                print("✅ Transcription Tab subscribed to settings events")
+        except Exception as e:
+            print(f"Failed to subscribe to settings events: {e}")
+
     def _create_layout(self) -> None:
         """Create the status tab layout."""
         # Main container with enhanced styling
@@ -450,9 +468,7 @@ class SettingsTab(ctk.CTkFrame):
         model_label.pack(anchor="w")
 
         self.model_dropdown = ctk.CTkOptionMenu(
-            model_frame, 
-            values=["tiny", "base", "small", "medium", "large"], 
-            command=self._on_model_change
+            model_frame, values=["tiny", "base", "small", "medium", "large"], command=self._on_model_change
         )
         self.model_dropdown.pack(fill="x", pady=(4, 0))
         self.model_dropdown.set("base")  # Default to base model
@@ -461,29 +477,69 @@ class SettingsTab(ctk.CTkFrame):
         """Handle volume slider change and auto-save."""
         self.volume_value_label.configure(text=f"{value:.2f}")
         self._save_recording_settings()
+        self._emit_settings_event("VOLUME_REDUCTION_CHANGED", {"value": value})
 
     def _on_language_change(self, language: str) -> None:
         """Handle language change and auto-save."""
         self._save_recording_settings()
+        self._emit_settings_event("LANGUAGE_CHANGED", {"language": language})
 
     def _on_model_change(self, model: str) -> None:
         """Handle model change and auto-save."""
         self._save_recording_settings()
+        self._emit_settings_event("MODEL_CHANGED", {"model": model})
+
+    def _emit_settings_event(self, event_type: str, data: dict) -> None:
+        """Emit settings change event."""
+        try:
+            if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
+                from ...utils.eventbus import EventType, Event
+                import time
+                
+                event = Event(
+                    event_type=EventType(event_type),
+                    data=data,
+                    timestamp=time.time(),
+                    source="transcription_tab"
+                )
+                self.app_instance.event_bus.emit(event)
+        except Exception as e:
+            print(f"Error emitting settings event: {e}")
+
+    def _on_settings_changed(self, event) -> None:
+        """Handle settings change from other sources."""
+        try:
+            if event.source == "transcription_tab":
+                return  # Don't update from our own changes
+            
+            # Update UI based on event
+            if event.event_type.value == "VOLUME_REDUCTION_CHANGED":
+                value = event.data.get("value", 0.2)
+                self.volume_slider.set(value)
+                self.volume_value_label.configure(text=f"{value:.2f}")
+            elif event.event_type.value == "LANGUAGE_CHANGED":
+                language = event.data.get("language", "de")
+                self.language_dropdown.set(language)
+            elif event.event_type.value == "MODEL_CHANGED":
+                model = event.data.get("model", "base")
+                self.model_dropdown.set(model)
+        except Exception as e:
+            print(f"Error handling settings change: {e}")
 
     def _save_recording_settings(self) -> None:
         """Auto-save recording settings to config."""
         try:
-            if hasattr(self.app_instance, 'config') and self.app_instance.config:
+            if hasattr(self.app_instance, "config") and self.app_instance.config:
                 # Update config values
-                if hasattr(self.app_instance.config, 'audio'):
+                if hasattr(self.app_instance.config, "audio"):
                     self.app_instance.config.audio.volume_reduction_factor = self.volume_slider.get()
-                
-                if hasattr(self.app_instance.config, 'audio'):
+
+                if hasattr(self.app_instance.config, "audio"):
                     self.app_instance.config.audio.language = self.language_dropdown.get()
-                
-                if hasattr(self.app_instance.config, 'audio'):
+
+                if hasattr(self.app_instance.config, "audio"):
                     self.app_instance.config.audio.model = self.model_dropdown.get()
-                
+
                 # Save to file
                 self.app_instance.config.save()
                 print("✅ Recording settings auto-saved")

@@ -383,6 +383,9 @@ class SysTray:
             self.app_instance.config.audio.model = model
             self.app_instance.config.model = model
 
+            # Emit settings change event
+            self._emit_settings_event("MODEL_CHANGED", {"model": model})
+
             # Refresh menu to show updated state
             self._refresh_menu()
 
@@ -440,6 +443,9 @@ class SysTray:
             self.app_instance.config.audio.language = language
             self.app_instance.config.language = language
 
+            # Emit settings change event
+            self._emit_settings_event("LANGUAGE_CHANGED", {"language": language})
+
             # Refresh menu to show updated state
             self._refresh_menu()
 
@@ -454,6 +460,23 @@ class SysTray:
 
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Setzen der Sprache: {e}")
+
+    def _emit_settings_event(self, event_type: str, data: dict) -> None:
+        """Emit settings change event."""
+        try:
+            if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
+                from ...utils.eventbus import EventType, Event
+                import time
+                
+                event = Event(
+                    event_type=EventType(event_type),
+                    data=data,
+                    timestamp=time.time(),
+                    source="system_tray"
+                )
+                self.app_instance.event_bus.emit(event)
+        except Exception as e:
+            self.logger.error(f"Error emitting settings event: {e}")
 
     def _create_volume_reduction_submenu(self) -> list:
         """Create volume reduction submenu with 20% steps."""
@@ -507,6 +530,9 @@ class SysTray:
             # Update app instance config
             self.app_instance.config.volume_reduction_factor = factor
             self.app_instance.config.audio.volume_reduction_factor = factor
+
+            # Emit settings change event
+            self._emit_settings_event("VOLUME_REDUCTION_CHANGED", {"value": factor})
 
             # Refresh menu to show updated selection
             self._refresh_menu()

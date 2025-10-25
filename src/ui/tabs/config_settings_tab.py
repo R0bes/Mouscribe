@@ -31,6 +31,9 @@ class ConfigSettingsTab(ctk.CTkFrame):
         # Load current settings
         self._load_settings()
 
+        # Subscribe to settings events
+        self._subscribe_to_settings_events()
+
     def _create_layout(self) -> None:
         """Create the settings layout."""
         # Main container with enhanced styling
@@ -197,7 +200,7 @@ class ConfigSettingsTab(ctk.CTkFrame):
             variable=self.auto_start_var,
             font=ctk.CTkFont(size=11),
             text_color=CyberpunkTheme.TEXT_SECONDARY,
-            command=self._auto_save_settings,
+            command=self._on_auto_start_change,
         )
         self.auto_start_checkbox.pack(anchor="w", pady=4)
 
@@ -217,7 +220,7 @@ class ConfigSettingsTab(ctk.CTkFrame):
             variable=self.close_app_var,
             font=ctk.CTkFont(size=11),
             text_color=CyberpunkTheme.TEXT_SECONDARY,
-            command=self._auto_save_settings,
+            command=self._on_close_app_change,
         )
         self.close_app_checkbox.pack(anchor="w", pady=4)
 
@@ -278,19 +281,62 @@ class ConfigSettingsTab(ctk.CTkFrame):
     def _on_theme_change(self, choice: str) -> None:
         """Handle theme change and auto-save."""
         self._auto_save_settings()
+        self._emit_settings_event("THEME_CHANGED", {"theme": choice})
+
+    def _emit_settings_event(self, event_type: str, data: dict) -> None:
+        """Emit settings change event."""
+        try:
+            if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
+                from ...utils.eventbus import EventType, Event
+                import time
+                
+                event = Event(
+                    event_type=EventType(event_type),
+                    data=data,
+                    timestamp=time.time(),
+                    source="config_settings_tab"
+                )
+                self.app_instance.event_bus.emit(event)
+        except Exception as e:
+            print(f"Error emitting settings event: {e}")
+
+    def _on_settings_changed(self, event) -> None:
+        """Handle settings change from other sources."""
+        try:
+            if event.source == "config_settings_tab":
+                return  # Don't update from our own changes
+            
+            # Update UI based on event
+            if event.event_type.value == "THEME_CHANGED":
+                theme = event.data.get("theme", "Cyberpunk")
+                self.theme_dropdown.set(theme)
+            elif event.event_type.value == "AUTO_START_GUI_CHANGED":
+                auto_start = event.data.get("auto_start", False)
+                self.auto_start_var.set(auto_start)
+            elif event.event_type.value == "CLOSE_APP_ON_GUI_CLOSE_CHANGED":
+                close_app = event.data.get("close_app", False)
+                self.close_app_var.set(close_app)
+        except Exception as e:
+            print(f"Error handling settings change: {e}")
+
+    def _on_auto_start_change(self) -> None:
+        """Handle auto-start checkbox change."""
+        self._auto_save_settings()
+        self._emit_settings_event("AUTO_START_GUI_CHANGED", {"auto_start": self.auto_start_var.get()})
+
+    def _on_close_app_change(self) -> None:
+        """Handle close app checkbox change."""
+        self._auto_save_settings()
+        self._emit_settings_event("CLOSE_APP_ON_GUI_CLOSE_CHANGED", {"close_app": self.close_app_var.get()})
 
     def _auto_save_settings(self) -> None:
-        """Auto-save all settings to config file."""
-        try:
-            if not self.config:
-                return
 
             # Update config values
             if hasattr(self.config, "ui"):
                 self.config.ui.auto_start_gui = self.auto_start_var.get()
                 self.config.ui.close_app_on_gui_close = self.close_app_var.get()
                 # Theme setting
-                if hasattr(self, 'theme_dropdown'):
+                if hasattr(self, "theme_dropdown"):
                     self.config.ui.dark_mode = self.theme_dropdown.get() == "Cyberpunk"
 
             # Save to file
@@ -299,6 +345,21 @@ class ConfigSettingsTab(ctk.CTkFrame):
 
         except Exception as e:
             print(f"❌ Error auto-saving settings: {e}")
+
+    def _subscribe_to_settings_events(self) -> None:
+        """Subscribe to settings change events."""
+        try:
+            if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
+                from ...utils.eventbus import EventType
+                
+                # Subscribe to settings events
+                self.app_instance.event_bus.subscribe(EventType.THEME_CHANGED, self._on_settings_changed)
+                self.app_instance.event_bus.subscribe(EventType.AUTO_START_GUI_CHANGED, self._on_settings_changed)
+                self.app_instance.event_bus.subscribe(EventType.CLOSE_APP_ON_GUI_CLOSE_CHANGED, self._on_settings_changed)
+                
+                print("✅ Config Settings Tab subscribed to settings events")
+        except Exception as e:
+            print(f"Failed to subscribe to settings events: {e}")
 
     def _save_all_settings(self) -> None:
         """Save all settings to config file."""
