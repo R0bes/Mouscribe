@@ -9,16 +9,21 @@ from typing import Optional
 
 from pydantic import Field
 
+from ..config import AppConfig
 from .logger import get_logger
-from .settings import Settings
 
-class DictionarySettings(Settings):
+
+class DictionarySettings:
     """Dictionary settings."""
+
     enabled: bool = Field(default=True, description="Enable dictionary")
     auto_add_unknown: bool = Field(default=False, description="Auto-add unknown words")
     path: str = Field(default="", description="Dictionary path")
     max_words: int = Field(default=1000, ge=100, le=10000, description="Maximum words in dictionary")
-    model_config = { "env_prefix": "MAUSCRIBE_DICT_", }
+    model_config = {
+        "env_prefix": "MAUSCRIBE_DICT_",
+    }
+
 
 class CustomDict:
     """

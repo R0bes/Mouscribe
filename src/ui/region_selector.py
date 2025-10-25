@@ -112,7 +112,10 @@ class QtSelector(RegionSelector):
 
                     # Size label
                     w, h = local_sel.width(), local_sel.height()
-                    label_rect = QtCore.QRect(local_sel.topLeft() + QtCore.QPoint(6, -30), QtCore.QSize(150, 24))
+                    label_rect = QtCore.QRect(
+                        local_sel.topLeft() + QtCore.QPoint(6, -30),
+                        QtCore.QSize(150, 24),
+                    )
                     p.fillRect(label_rect, QtGui.QColor(0, 0, 0, 160))
                     p.setPen(QtGui.QColor(255, 255, 255))
                     p.drawText(
@@ -226,7 +229,10 @@ class MouseCenteredSelector(RegionSelector):
                 half_height = self.region_size.height() // 2
 
                 selection_rect = QtCore.QRect(
-                    center.x() - half_width, center.y() - half_height, self.region_size.width(), self.region_size.height()
+                    center.x() - half_width,
+                    center.y() - half_height,
+                    self.region_size.width(),
+                    self.region_size.height(),
                 )
 
                 self.result_rect = selection_rect
@@ -427,7 +433,15 @@ class MouseCenteredSelector(RegionSelector):
                 self.canvas.create_rectangle(x1, y1, x2, y2, outline="white", width=3, tags="region")
 
                 # Innere Umrandung
-                self.canvas.create_rectangle(x1 + 1, y1 + 1, x2 - 1, y2 - 1, outline="black", width=1, tags="region")
+                self.canvas.create_rectangle(
+                    x1 + 1,
+                    y1 + 1,
+                    x2 - 1,
+                    y2 - 1,
+                    outline="black",
+                    width=1,
+                    tags="region",
+                )
 
                 # Größenanzeige
                 self.canvas.create_text(
@@ -525,7 +539,13 @@ class MouseCenteredSelector(RegionSelector):
 
                     # Zeichne Rechteck
                     self.rect_id = self.canvas.create_rectangle(
-                        self.start_x, self.start_y, event.x, event.y, outline="white", width=2, tags="selection"
+                        self.start_x,
+                        self.start_y,
+                        event.x,
+                        event.y,
+                        outline="white",
+                        width=2,
+                        tags="selection",
                     )
 
                     # Zeige Größe
@@ -620,7 +640,12 @@ class ScreenCaptureSelector(RegionSelector):
                 from PIL import ImageGrab
 
                 screenshot = ImageGrab.grab(
-                    bbox=(region.left, region.top, region.left + region.width, region.top + region.height)
+                    bbox=(
+                        region.left,
+                        region.top,
+                        region.left + region.width,
+                        region.top + region.height,
+                    )
                 )
 
                 # Dateiname generieren
@@ -674,7 +699,12 @@ class ScreenCaptureSelector(RegionSelector):
                         from PIL import ImageGrab
 
                         screenshot = ImageGrab.grab(
-                            bbox=(region.left, region.top, region.left + region.width, region.top + region.height)
+                            bbox=(
+                                region.left,
+                                region.top,
+                                region.left + region.width,
+                                region.top + region.height,
+                            )
                         )
 
                         # PIL zu OpenCV konvertieren

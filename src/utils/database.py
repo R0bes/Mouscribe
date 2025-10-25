@@ -2,6 +2,7 @@
 Database module for Mauscribe audio recordings and transcriptions.
 Provides storage and retrieval of audio data for training purposes.
 """
+
 import json
 import os
 import sqlite3
@@ -12,8 +13,8 @@ from typing import Any, Literal, Optional
 import numpy as np
 from pydantic import Field
 
+from ..config import AppConfig
 from .logger import get_logger
-from .settings import Settings
 
 
 class DatabaseSettings:

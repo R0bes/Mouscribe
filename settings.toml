@@ -1,21 +1,58 @@
-[transcription]
-model = "small"
+app_name = "Mauscribe"
+version = "0.7.0"
+volume_reduction_factor = 0.2
 language = "de"
 
-[system]
-volume_reduction_factor = 0.4
+[logging]
+level = "DEBUG"
 
-[notifications]
-sound = true
-toast = true
+[audio]
+language = "de"
+model = "small"
+volume_reduction_factor = 0.2
 
 [ui]
-icon_path = "icons/icon.png"
+dark_mode = true
 
-[input.primary]
-name = "x2"
-type = "click"
+[ui.notifications]
+toast_duration = 1000
 
-[input.secondary]
-name = "left"
-type = "hold"
+[ui.notifications.transcription_success]
+toast = true
+sound = true
+
+[ui.notifications.recording_start]
+toast = true
+sound = true
+
+[ui.notifications.recording_stop]
+toast = true
+sound = true
+
+[ui.notifications.recording_error]
+toast = true
+sound = true
+
+[ui.notifications.transcription_error]
+toast = true
+sound = true
+
+[ui.notifications.transcription_empty]
+toast = true
+sound = true
+
+[ui.notifications.text_inserted]
+toast = true
+sound = true
+
+[ui.notifications.text_insert_error]
+toast = true
+sound = true
+
+[ui.notifications.app_start]
+toast = true
+sound = true
+
+[ui.notifications.app_shutdown]
+toast = true
+sound = true

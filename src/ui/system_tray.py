@@ -10,7 +10,8 @@ from typing import Any, Optional
 import pystray
 from PIL import Image
 
-from ..utils import Settings, get_logger
+from ..config import AppConfig
+from ..utils import get_logger
 
 
 class MenuItem(Enum):
@@ -20,7 +21,7 @@ class MenuItem(Enum):
     LANGUAGE_SUBMENU = "🌍 Sprachen"
     VOLUME_REDUCTION_SUBMENU = "🔊 Lautstärke-Reduzierung"
     SEPARATOR = "---"
-    HOTWORD_TOGGLE = "🎯 Hot Word Detection"
+    CONTROL_CENTER = "🎮 Control Center"
     NOTIFICATIONS_TOGGLE = "🔔 Benachrichtigungen"
     EXIT = "Exit"
 
@@ -28,14 +29,14 @@ class MenuItem(Enum):
 class SysTray:
     """Manages the system tray icon and menu for Mauscribe."""
 
-    def __init__(self, settings: Settings, app_instance: Any) -> None:
+    def __init__(self, config: AppConfig, app_instance: Any) -> None:
         """Initialize the system tray manager.
 
         Args:
-            settings: Settings instance
+            config: AppConfig instance
             app_instance: Reference to the main application instance
         """
-        self.settings = settings
+        self.config = config
         self.app_instance = app_instance
 
         self.logger = get_logger("SystemTray")
@@ -50,17 +51,30 @@ class SysTray:
             MenuItem.LANGUAGE_SUBMENU.value: self._create_language_submenu,
             MenuItem.VOLUME_REDUCTION_SUBMENU.value: self._create_volume_reduction_submenu,
             MenuItem.SEPARATOR.value: None,  # Separator item
-            MenuItem.HOTWORD_TOGGLE.value: self._toggle_hotword_detection,
+            MenuItem.CONTROL_CENTER.value: self._open_control_center,
             MenuItem.NOTIFICATIONS_TOGGLE.value: self._toggle_notifications,
             MenuItem.EXIT.value: self.app_instance.stop,
         }
 
     def create_icon(self) -> Image.Image:
-        """Load icon from icons directory for the system tray using Settings."""
+        """Load icon from icons directory for the system tray."""
         try:
             # Use absolute path to icon
             project_root = Path(__file__).parent.parent.parent
-            icon_path = project_root / "src" / "ui" / "icons" / "icon.png"
+            icons_dir = project_root / "src" / "ui" / "icons"
+
+            # Choose icon based on recording state
+            if self.is_recording:
+                icon_path = icons_dir / "icon_record.ico"
+            else:
+                icon_path = icons_dir / "icon_idle.ico"
+
+            # Fallback to PNG if ICO fails
+            if not icon_path.exists():
+                if self.is_recording:
+                    icon_path = icons_dir / "icon_record.png"
+                else:
+                    icon_path = icons_dir / "icon_idle.png"
 
             # Load the icon and resize to appropriate size for system tray
             icon = Image.open(icon_path)
@@ -69,19 +83,32 @@ class SysTray:
                 icon = icon.convert("RGBA")
             icon = icon.resize((64, 64), Image.Resampling.LANCZOS)
 
-            # Add recording indicator if recording
-            if self.is_recording:
-                from PIL import ImageDraw
-
-                draw = ImageDraw.Draw(icon)
-                # Add red dot in top-right corner
-                draw.ellipse([50, 10, 58, 18], fill=(255, 0, 0), outline=(200, 0, 0), width=1)
-
             return icon
 
         except Exception as e:
-            self.logger.error(f"❌ Fehler beim Laden des konfigurierten Icons: {e}")
-            raise e
+            self.logger.error(f"❌ Fehler beim Laden des Icons: {e}")
+            # Create a simple fallback icon
+            fallback_icon = Image.new("RGBA", (64, 64), (128, 128, 128, 255))
+            return fallback_icon
+
+    def set_recording_state(self, is_recording: bool) -> None:
+        """Update recording state and refresh icon."""
+        try:
+            if self.is_recording != is_recording:
+                self.is_recording = is_recording
+                self._refresh_icon()
+                self.logger.info(f"🎙️ Recording state changed: {'Recording' if is_recording else 'Idle'}")
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Aktualisieren des Recording-Status: {e}")
+
+    def _refresh_icon(self) -> None:
+        """Refresh the system tray icon."""
+        try:
+            if self.system_tray:
+                new_icon = self.create_icon()
+                self.system_tray.icon = new_icon
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Aktualisieren des Icons: {e}")
 
     def setup(self) -> None:
         """Initialize the system tray icon and menu."""
@@ -105,15 +132,30 @@ class SysTray:
                 elif item_name == MenuItem.WHISPER_MODEL_SUBMENU.value:
                     # Create submenu for whisper model selection
                     submenu_items = self._create_whisper_model_submenu()
-                    menu_items.append(pystray.MenuItem(MenuItem.WHISPER_MODEL_SUBMENU.value, pystray.Menu(*submenu_items)))
+                    menu_items.append(
+                        pystray.MenuItem(
+                            MenuItem.WHISPER_MODEL_SUBMENU.value,
+                            pystray.Menu(*submenu_items),
+                        )
+                    )
                 elif item_name == MenuItem.LANGUAGE_SUBMENU.value:
                     # Create submenu for language selection
                     submenu_items = self._create_language_submenu()
-                    menu_items.append(pystray.MenuItem(MenuItem.LANGUAGE_SUBMENU.value, pystray.Menu(*submenu_items)))
+                    menu_items.append(
+                        pystray.MenuItem(
+                            MenuItem.LANGUAGE_SUBMENU.value,
+                            pystray.Menu(*submenu_items),
+                        )
+                    )
                 elif item_name == MenuItem.VOLUME_REDUCTION_SUBMENU.value:
                     # Create submenu for volume reduction selection
                     submenu_items = self._create_volume_reduction_submenu()
-                    menu_items.append(pystray.MenuItem(MenuItem.VOLUME_REDUCTION_SUBMENU.value, pystray.Menu(*submenu_items)))
+                    menu_items.append(
+                        pystray.MenuItem(
+                            MenuItem.VOLUME_REDUCTION_SUBMENU.value,
+                            pystray.Menu(*submenu_items),
+                        )
+                    )
                 else:
                     # Create a proper callback function for each menu item
                     def create_callback(name):
@@ -157,22 +199,7 @@ class SysTray:
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Aktualisieren des Menüs: {e}")
 
-    def _toggle_hotword_detection(self) -> None:
-        """Toggle Hot Word Detection on/off."""
-        try:
-            if not hasattr(self.app_instance, "hotword_detector"):
-                self.logger.error("❌ Hot Word Detector nicht verfügbar")
-                return
-
-            # Toggle Hot Word Detection
-            is_active = self.app_instance.toggle_hotword_detection()
-
-            # Update menu text (simplified - full refresh would be complex)
-            status = "Aktiviert" if is_active else "Deaktiviert"
-            self.logger.info(f"🎯 Hot Word Detection {status}")
-
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Umschalten der Hot Word Detection: {e}")
+    # Hotword Detection entfernt
 
     def update_recording_state(self, is_recording: bool) -> None:
         """Update the recording state and refresh the icon.
@@ -180,13 +207,7 @@ class SysTray:
         Args:
             is_recording: Whether recording is currently active
         """
-        self.is_recording = is_recording
-        if self.system_tray:
-            try:
-                self.system_tray.icon = self.create_icon()
-                self.logger.debug("System tray icon updated")
-            except Exception as e:
-                self.logger.error(f"❌ Fehler beim Aktualisieren des System Tray Icons: {e}")
+        self.set_recording_state(is_recording)
 
     def run(self) -> None:
         """Run the system tray in a separate thread."""
@@ -225,9 +246,14 @@ class SysTray:
     def _is_notifications_enabled(self) -> bool:
         """Check if notifications are currently enabled."""
         try:
-            if hasattr(self.app_instance, "config") and hasattr(self.app_instance.config, "notifications"):
-                return self.app_instance.config.notifications.get("enabled", True)
-            return True  # Default to enabled
+            # Check if any notification type is enabled
+            notifications = self.config.ui.notifications
+            return (
+                notifications.transcription_success.toast
+                or notifications.transcription_success.sound
+                or notifications.recording_start.toast
+                or notifications.recording_start.sound
+            )
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Prüfen des Notification Status: {e}")
             return True
@@ -241,72 +267,75 @@ class SysTray:
     def _toggle_notifications(self, icon=None, item=None) -> None:
         """Toggle notifications on/off."""
         try:
-            if not hasattr(self.app_instance, "config"):
-                self.logger.error("❌ Config nicht verfügbar")
-                return
-
             # Get current state
             current_state = self._is_notifications_enabled()
             new_state = not current_state
 
-            # Save to TOML file first
-            self._save_notifications_setting(new_state)
+            # Update config object and save selectively
+            notification_keys = [
+                "ui.notifications.transcription_success.toast",
+                "ui.notifications.transcription_success.sound",
+                "ui.notifications.recording_start.toast",
+                "ui.notifications.recording_start.sound",
+                "ui.notifications.recording_stop.toast",
+                "ui.notifications.recording_stop.sound",
+                "ui.notifications.recording_error.toast",
+                "ui.notifications.recording_error.sound",
+                "ui.notifications.transcription_error.toast",
+                "ui.notifications.transcription_error.sound",
+                "ui.notifications.transcription_empty.toast",
+                "ui.notifications.transcription_empty.sound",
+                "ui.notifications.text_inserted.toast",
+                "ui.notifications.text_inserted.sound",
+                "ui.notifications.text_insert_error.toast",
+                "ui.notifications.text_insert_error.sound",
+                "ui.notifications.app_start.toast",
+                "ui.notifications.app_start.sound",
+                "ui.notifications.app_shutdown.toast",
+                "ui.notifications.app_shutdown.sound",
+            ]
 
-            # Reload settings to apply changes
-            if hasattr(self.app_instance, "config"):
-                # Reload the config
-                from ..utils.settings import Settings
+            for key in notification_keys:
+                self.config.update_and_save(key, new_state)
 
-                self.app_instance.config = Settings()
+            # Update app instance config
+            notifications = self.app_instance.config.ui.notifications
+            notifications.transcription_success.toast = new_state
+            notifications.transcription_success.sound = new_state
+            notifications.recording_start.toast = new_state
+            notifications.recording_start.sound = new_state
+            notifications.recording_stop.toast = new_state
+            notifications.recording_stop.sound = new_state
+            notifications.recording_error.toast = new_state
+            notifications.recording_error.sound = new_state
+            notifications.transcription_error.toast = new_state
+            notifications.transcription_error.sound = new_state
+            notifications.transcription_empty.toast = new_state
+            notifications.transcription_empty.sound = new_state
+            notifications.text_inserted.toast = new_state
+            notifications.text_inserted.sound = new_state
+            notifications.text_insert_error.toast = new_state
+            notifications.text_insert_error.sound = new_state
+            notifications.app_start.toast = new_state
+            notifications.app_start.sound = new_state
+            notifications.app_shutdown.toast = new_state
+            notifications.app_shutdown.sound = new_state
 
-                # Reinitialize toaster with new settings
-                if hasattr(self.app_instance, "toaster"):
-                    notification_enabled = self.app_instance.config.notifications.get("enabled", True)
-                    notification_sound = self.app_instance.config.notifications.get("sound", True)
-                    notification_duration = self.app_instance.config.notifications.get(
-                        "duration", 1000
-                    )  # Changed from 5000 to 1000
-
-                    from ..ui.toast import Toaster
-
-                    self.app_instance.toaster = Toaster(
-                        enable_sound=notification_sound,
-                        default_duration=notification_duration,
-                        enabled=notification_enabled,
-                        notification_settings=self.app_instance.config.notifications,
-                    )
+            # Refresh menu to show updated state
+            self._refresh_menu()
 
             # Show notification
             status_text = "aktiviert" if new_state else "deaktiviert"
             if hasattr(self.app_instance, "toaster"):
                 self.app_instance.toaster.show_info(
-                    f"🔔 Benachrichtigungen {status_text}", f"Notifications sind jetzt {status_text}"
+                    f"🔔 Benachrichtigungen {status_text}",
+                    f"Notifications sind jetzt {status_text}",
                 )
 
             self.logger.info(f"✅ Benachrichtigungen {status_text}")
 
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Umschalten der Benachrichtigungen: {e}")
-
-    def _save_notifications_setting(self, enabled: bool) -> None:
-        """Save notifications setting to TOML file."""
-        try:
-            import toml
-
-            # Read current config
-            with open("settings.toml", encoding="utf-8") as f:
-                config = toml.load(f)
-
-            # Update the setting
-            if "notifications" not in config:
-                config["notifications"] = {}
-            config["notifications"]["enabled"] = enabled
-
-            # Write back to file with clean formatting - manual TOML writing to avoid syntax issues
-            self._write_clean_toml(config)
-
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Speichern der Notification Einstellung: {e}")
 
     def _create_whisper_model_submenu(self) -> list:
         """Create submenu for whisper model selection."""
@@ -321,13 +350,13 @@ class SysTray:
             ]
 
             # Get current model
-            current_model = self.settings.model
+            current_model = self.config.audio.model
 
             submenu_items = []
             for model_id, model_desc in models:
                 # Create callback for this model
                 def create_model_callback(model):
-                    return lambda icon, item: self._set_whisper_model(model)
+                    return lambda icon, item: self._set_whisper_model(model, icon, item)
 
                 # Create menu item with checkmark for current model
                 menu_item = pystray.MenuItem(
@@ -343,22 +372,19 @@ class SysTray:
             self.logger.error(f"❌ Fehler beim Erstellen des Whisper-Modell Submenus: {e}")
             return []
 
-    def _set_whisper_model(self, model: str) -> None:
+    def _set_whisper_model(self, model: str, icon=None, item=None) -> None:
         """Set whisper model."""
         try:
-            # Save to TOML file first
-            self._save_whisper_model_setting(model)
+            # Update config object and save selectively
+            self.config.update_and_save("audio.model", model)
+            self.config.update_and_save("model", model)  # Legacy compatibility
 
-            # Reload settings to apply changes
-            self.app_instance.config = Settings()
+            # Update app instance config
+            self.app_instance.config.audio.model = model
+            self.app_instance.config.model = model
 
-            # Reinitialize transcriptor with new model
-            if hasattr(self.app_instance, "transcriptor"):
-                from ..audio.transcriptor import Transcriptor
-
-                self.app_instance.transcriptor = Transcriptor(
-                    model_size=model, language=self.app_instance.config.transcription.get("language", "de")
-                )
+            # Refresh menu to show updated state
+            self._refresh_menu()
 
             # Show notification
             if hasattr(self.app_instance, "toaster"):
@@ -369,67 +395,30 @@ class SysTray:
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Setzen des Whisper-Modells: {e}")
 
-    def _save_whisper_model_setting(self, model: str) -> None:
-        """Save whisper model setting to TOML file."""
-        try:
-            import toml
-
-            # Read current config
-            with open("settings.toml", encoding="utf-8") as f:
-                config = toml.load(f)
-
-            # Update the setting
-            if "transcription" not in config:
-                config["transcription"] = {}
-            config["transcription"]["model"] = model
-
-            # Write back to file with clean formatting - manual TOML writing to avoid syntax issues
-            self._write_clean_toml(config)
-
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Speichern der Whisper-Modell Einstellung: {e}")
-
     def _create_language_submenu(self) -> list:
         """Create submenu for language selection."""
         try:
             # Available languages
-            languages = [("de", "🇩🇪 Deutsch"), ("en", "🇺🇸 English"), ("auto", "🔍 Automatisch")]
+            languages = [
+                ("de", "🇩🇪 Deutsch"),
+                ("en", "🇺🇸 English"),
+                ("auto", "🔍 Automatisch"),
+            ]
 
-            # Get current enabled languages
-            current_languages = getattr(self.settings, "enabled_languages", ["de", "en"])
-            current_primary = getattr(self.settings, "primary_language", "de")
+            # Get current language
+            current_primary = self.config.audio.language
 
             submenu_items = []
 
-            # Language toggle items
-            for lang_id, lang_desc in languages:
-                if lang_id != "auto":  # Skip auto for toggles
-
-                    def create_lang_callback(lang):
-                        return lambda icon, item: self._toggle_language(lang)
-
-                    is_enabled = lang_id in current_languages
-                    menu_item = pystray.MenuItem(
-                        f"{'✅' if is_enabled else '  '} {lang_desc}",
-                        create_lang_callback(lang_id),
-                        checked=lambda item, lang=lang_id: lang in current_languages,
-                    )
-                    submenu_items.append(menu_item)
-
-            # Separator
-            submenu_items.append(pystray.Menu.SEPARATOR)
-
-            # Primary language selection
-            submenu_items.append(pystray.MenuItem("🎯 Hauptsprache:", None))
-
+            # Language selection items
             for lang_id, lang_desc in languages:
 
-                def create_primary_callback(lang):
-                    return lambda icon, item: self._set_primary_language(lang)
+                def create_lang_callback(lang):
+                    return lambda icon, item: self._set_language(lang, icon, item)
 
                 menu_item = pystray.MenuItem(
                     f"{'✅' if lang_id == current_primary else '  '} {lang_desc}",
-                    create_primary_callback(lang_id),
+                    create_lang_callback(lang_id),
                     checked=lambda item, lang=lang_id: lang == current_primary,
                 )
                 submenu_items.append(menu_item)
@@ -440,41 +429,37 @@ class SysTray:
             self.logger.error(f"❌ Fehler beim Erstellen des Sprach-Submenus: {e}")
             return []
 
-    def _toggle_language(self, language: str) -> None:
-        """Toggle language on/off."""
+    def _set_language(self, language: str, icon=None, item=None) -> None:
+        """Set language."""
         try:
-            # Get current enabled languages
-            current_languages = getattr(self.settings, "enabled_languages", ["de", "en"])
+            # Update config object and save selectively
+            self.config.update_and_save("audio.language", language)
+            self.config.update_and_save("language", language)  # Legacy compatibility
 
-            if language in current_languages:
-                # Remove language
-                current_languages.remove(language)
-                status_text = "deaktiviert"
-            else:
-                # Add language
-                current_languages.append(language)
-                status_text = "aktiviert"
+            # Update app instance config
+            self.app_instance.config.audio.language = language
+            self.app_instance.config.language = language
 
-            # Save to TOML file
-            self._save_language_settings(current_languages, getattr(self.settings, "primary_language", "de"))
-
-            # Reload settings
-            self.app_instance.config = Settings()
+            # Refresh menu to show updated state
+            self._refresh_menu()
 
             # Show notification
             if hasattr(self.app_instance, "toaster"):
-                self.app_instance.toaster.show_info(f"🌍 Sprache {status_text}", f"{language.upper()} wurde {status_text}")
+                self.app_instance.toaster.show_info(
+                    "🌍 Sprache geändert",
+                    f"Neue Sprache: {language.upper()}",
+                )
 
-            self.logger.info(f"✅ Sprache {language} {status_text}")
+            self.logger.info(f"✅ Sprache auf {language} gesetzt")
 
         except Exception as e:
-            self.logger.error(f"❌ Fehler beim Umschalten der Sprache: {e}")
+            self.logger.error(f"❌ Fehler beim Setzen der Sprache: {e}")
 
     def _create_volume_reduction_submenu(self) -> list:
         """Create volume reduction submenu with 20% steps."""
         try:
-            # Get current volume reduction factor directly from settings object
-            current_factor = self.settings.volume_reduction_factor
+            # Get current volume reduction factor
+            current_factor = self.config.volume_reduction_factor
 
             # Create menu items for different reduction levels (20% steps)
             # FIXED: Inverted logic - reduction_factor = 0.0 means 100% reduction (mute)
@@ -493,7 +478,10 @@ class SysTray:
                 status = "✅" if abs(factor - current_factor) < 0.01 else "⚪"
                 menu_text = f"{status} {label}"
 
-                submenu_items.append(pystray.MenuItem(menu_text, lambda f=factor: self._set_volume_reduction(f)))
+                def create_volume_callback(f):
+                    return lambda icon, item: self._set_volume_reduction(f)
+
+                submenu_items.append(pystray.MenuItem(menu_text, create_volume_callback(factor)))
 
             return submenu_items
 
@@ -501,13 +489,14 @@ class SysTray:
             self.logger.error(f"❌ Fehler beim Erstellen des Lautstärke-Submenüs: {e}")
             return []
 
-    def _set_volume_reduction(self, factor: float) -> None:
+    def _set_volume_reduction(self, factor: float, icon=None, item=None) -> None:
         """Set volume reduction factor."""
         try:
-            # Update settings object directly
-            self.settings.volume_reduction_factor = factor
+            # Update config object and save selectively
+            self.config.update_and_save("volume_reduction_factor", factor)
+            self.config.update_and_save("audio.volume_reduction_factor", factor)
 
-            # Update volume controller if available - CRITICAL FIX
+            # Update volume controller if available
             if hasattr(self.app_instance, "volume_controller"):
                 self.app_instance.volume_controller.reduction_factor = factor
                 reduction_percent = (1.0 - factor) * 100
@@ -515,8 +504,9 @@ class SysTray:
             else:
                 self.logger.warning("⚠️ Volume Controller nicht verfügbar")
 
-            # Save to TOML file
-            self._save_volume_reduction_setting(factor)
+            # Update app instance config
+            self.app_instance.config.volume_reduction_factor = factor
+            self.app_instance.config.audio.volume_reduction_factor = factor
 
             # Refresh menu to show updated selection
             self._refresh_menu()
@@ -525,122 +515,28 @@ class SysTray:
             if hasattr(self.app_instance, "toaster"):
                 reduction_percent = (1.0 - factor) * 100
                 self.app_instance.toaster.show_info(
-                    "🔊 Lautstärke-Reduzierung", f"{reduction_percent:.0f}% Reduzierung gesetzt"
+                    "🔊 Lautstärke-Reduzierung",
+                    f"{reduction_percent:.0f}% Reduzierung gesetzt",
                 )
 
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Setzen der Lautstärke-Reduzierung: {e}")
 
-    def _save_volume_reduction_setting(self, factor: float) -> None:
-        """Save volume reduction setting to TOML file."""
+    def _open_control_center(self, icon=None, item=None) -> None:
+        """Open the Control Center window."""
         try:
-            import toml
+            # Import here to avoid circular imports and missing dependencies
+            from .control_center import open_control_center
 
-            # Load current config
-            config_path = "settings.toml"
-            try:
-                with open(config_path, encoding="utf-8") as f:
-                    config = toml.load(f)
-            except FileNotFoundError:
-                config = {}
-
-            # Ensure system section exists
-            if "system" not in config:
-                config["system"] = {}
-
-            # Set volume reduction factor
-            config["system"]["volume_reduction_factor"] = factor
-
-            # Save back to file
-            with open(config_path, "w", encoding="utf-8") as f:
-                toml.dump(config, f)
-
-            self.logger.info(f"💾 Lautstärke-Reduzierung ({factor:.0%}) in settings.toml gespeichert")
-
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Speichern der Lautstärke-Einstellung: {e}")
-
-    def _write_clean_toml(self, config: dict) -> None:
-        """Write TOML file with clean formatting to avoid syntax issues."""
-        try:
-            import toml
-
-            # Read current file
-            with open("settings.toml", encoding="utf-8") as f:
-                current_config = toml.load(f)
-
-            # Update only the changed values
-            for section, values in config.items():
-                if section in current_config:
-                    current_config[section].update(values)
-                else:
-                    current_config[section] = values
-
-            # Ensure simple values are properly formatted
-            if "transcription" in current_config:
-                # Clean up any old list-based settings
-                if "enabled_models" in current_config["transcription"]:
-                    del current_config["transcription"]["enabled_models"]
-                if "enabled_languages" in current_config["transcription"]:
-                    del current_config["transcription"]["enabled_languages"]
-                if "primary_model" in current_config["transcription"]:
-                    del current_config["transcription"]["primary_model"]
-                if "primary_language" in current_config["transcription"]:
-                    del current_config["transcription"]["primary_language"]
-                if "whisper_model" in current_config["transcription"]:
-                    del current_config["transcription"]["whisper_model"]
-
-            # Write back with clean formatting
-            with open("settings.toml", "w", encoding="utf-8") as f:
-                toml.dump(current_config, f)
-
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Schreiben der TOML-Datei: {e}")
-            # Fallback: Write minimal config
-            try:
-                import toml
-
-                with open("settings.toml", "w", encoding="utf-8") as f:
-                    toml.dump(config, f)
-            except Exception as e2:
-                self.logger.error(f"❌ Auch Fallback fehlgeschlagen: {e2}")
-
-    def _set_primary_language(self, language: str) -> None:
-        """Set primary language."""
-        try:
-            # Save to TOML file
-            current_languages = getattr(self.settings, "enabled_languages", ["de", "en"])
-            self._save_language_settings(current_languages, language)
-
-            # Reload settings
-            self.app_instance.config = Settings()
-
-            # Show notification
+            open_control_center(self.config, self.app_instance)
+            self.logger.info("🎮 Control Center opened from SystemTray")
+        except ImportError as e:
+            self.logger.error(f"❌ Failed to import Control Center: {e}")
+            # Show notification if available
             if hasattr(self.app_instance, "toaster"):
-                self.app_instance.toaster.show_info("🎯 Hauptsprache geändert", f"Neue Hauptsprache: {language.upper()}")
-
-            self.logger.info(f"✅ Hauptsprache auf {language} gesetzt")
-
+                self.app_instance.toaster.show_error("Control Center Error", f"Control Center not available: {str(e)}")
         except Exception as e:
-            self.logger.error(f"❌ Fehler beim Setzen der Hauptsprache: {e}")
-
-    def _save_language_settings(self, enabled_languages: list, primary_language: str) -> None:
-        """Save language settings to TOML file."""
-        try:
-            import toml
-
-            # Read current config
-            with open("settings.toml", encoding="utf-8") as f:
-                config = toml.load(f)
-
-            # Update the settings
-            if "transcription" not in config:
-                config["transcription"] = {}
-            config["transcription"]["enabled_languages"] = enabled_languages
-            config["transcription"]["primary_language"] = primary_language
-
-            # Write back to file with clean formatting - manual TOML writing to avoid syntax issues
-            self._write_clean_toml(config)
-
-        except Exception as e:
-            self.logger.error(f"❌ Fehler beim Speichern der Sprach-Einstellungen: {e}")
+            self.logger.error(f"❌ Failed to open Control Center: {e}")
+            # Show notification if available
+            if hasattr(self.app_instance, "toaster"):
+                self.app_instance.toaster.show_error("Control Center Error", f"Failed to open Control Center: {str(e)}")

@@ -1,0 +1,108 @@
+---
+templateType: supporting-template
+primaryUse: component-within-AGENT_RES_WF_P4
+description: Template for end-of-interaction compliance confirmation (used within REPORT phase)
+---
+
+# Compliance Confirmation
+
+## ✅ Workflow Compliance
+
+- [ ] **PLAN** phase completed with supervisor approval
+- [ ] **EXECUTE** phase completed within approved scope
+- [ ] **VERIFY** phase completed with validation
+- [ ] **REPORT** phase completed with documentation
+
+## 🎯 Paradigms Applied
+
+**Core Paradigms**:
+
+- [ ] **YAGNI** - No premature features added
+- [ ] **OBSERVABLE** - Work emits evidence (logs, tests, documentation)
+- [ ] **EXPLICIT** - Clear and documented behavior
+- [ ] **IDEMPOTENT** - Safe to run multiple times
+- [ ] **DETERMINISTIC** - Predictable outputs
+- [ ] **RELIABLE** - Proper error handling
+- [ ] **MINIMAL** - Smallest viable change
+- [ ] **COMPLETE** - Code + tests + docs + validation
+- [ ] **REVERSIBLE** - Changes can be rolled back
+- [ ] **COMPOSABLE** - Changes work with existing code
+- [ ] **TRACEABLE** - All changes linked to plan/issue
+- [ ] **TEST-DRIVEN** - Tests capture intent
+- [ ] **EVIDENCE-DRIVEN** - Decisions based on data
+
+**Additional Principles**:
+
+- [ ] **SECURE** - Sensitive data handled appropriately
+- [ ] **MAINTAINABLE** - Code is readable and modifiable
+- [ ] **SCALABLE** - Solution handles growth
+
+## 📝 Communication Standards
+
+- [ ] **When unsure** - Asked for clarification when needed
+- [ ] **Escalation** - Reported blockers early with context
+- [ ] **Change requests** - Updated plan before implementing changes
+- [ ] **Status updates** - Provided regular, concise updates
+- [ ] **Documentation** - Documented all decisions and rationale
+- [ ] **Feedback** - Provided constructive feedback
+
+## 🔍 Quality Standards
+
+- [ ] **Documentation** - All public APIs have docstrings
+- [ ] **Type Hints** - Used for all function parameters and return values
+- [ ] **Error Handling** - Proper exception handling with meaningful messages
+- [ ] **Logging** - Structured logging with appropriate levels
+- [ ] **Security** - No hardcoded secrets, secure coding practices
+- [ ] **Test Coverage** - High test coverage maintained
+- [ ] **Code Review** - All changes reviewed and approved
+
+## 🧹 Cleanup Verification
+
+- [ ] **Atomic Changes** - All or nothing changes applied
+- [ ] **No Orphans** - No leftover files or directories
+- [ ] **CHANGELOG.md** - Updated with all changes
+- [ ] **Rollback Ready** - Changes can be reverted quickly
+
+## 📊 Change Summary
+
+**Files Modified**: [List of files changed]
+**Lines Added**: [Number of lines added]
+**Lines Removed**: [Number of lines removed]
+**Tests Added**: [Number of tests added]
+**Documentation Updated**: [Yes/No]
+
+## 🎯 Solution Assessment
+
+**Minimal**: [Yes/No] - Solution is the smallest viable change
+**Complete**: [Yes/No] - All necessary components included
+**Reversible**: [Yes/No] - Changes can be rolled back
+**Traceable**: [Yes/No] - All changes linked to plan/issue
+
+## 📝 Changelog Reference
+
+### **Latest Changes Summary**
+
+**CHANGELOG.md Entry**: [Brief summary of changes made]
+**Reference**: See [CHANGELOG.md](CHANGELOG.md) for detailed change log
+
+### **Direct Changelog Quote**
+
+> **[Date] - [Change Type]**: [Direct quote from CHANGELOG.md]
+>
+> **Details**: [Additional context from changelog entry]
+>
+> **Full Entry**: [Link to specific changelog section](CHANGELOG.md#changelog-section)
+
+### **Change Impact**
+
+**Files Affected**: [Number] files modified
+**Lines Changed**: [Number] lines added/removed
+**Breaking Changes**: [Yes/No]
+**Migration Required**: [Yes/No]
+
+## 🔄 Random Rule Citation
+
+**Applied Rule**: [Random rule from the rule set]
+**Application**: [How this rule was applied in this interaction]
+
+---

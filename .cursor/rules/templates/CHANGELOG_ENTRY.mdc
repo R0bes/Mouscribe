@@ -1,0 +1,63 @@
+# CHANGELOG Entry Template
+
+---
+templateType: supporting-template
+primaryUse: component-within-AGENT_RES_WF_P4
+description: Template for CHANGELOG.md entries (used within REPORT phase)
+---
+
+## [YYYY-MM-DD] - [Brief Description]
+
+### Added
+
+- [ ] New feature or functionality
+- [ ] New configuration option
+- [ ] New dependency
+
+### Changed
+
+- [ ] Modified existing behavior
+- [ ] Updated configuration format
+- [ ] Performance improvements
+
+### Fixed
+
+- [ ] Bug fixes
+- [ ] Error handling improvements
+- [ ] Security fixes
+
+### Removed
+
+- [ ] Deprecated features
+- [ ] Obsolete dependencies
+- [ ] Unused code
+
+### Security
+
+- [ ] Security updates
+- [ ] Vulnerability fixes
+- [ ] Access control changes
+
+### Documentation
+
+- [ ] Updated documentation
+- [ ] New examples
+- [ ] API documentation updates
+
+### Technical Details
+
+- **Files Modified**: [List of files changed]
+- **Breaking Changes**: [Yes/No - describe if applicable]
+- **Migration Required**: [Yes/No - describe if applicable]
+- **Testing**: [Describe testing performed]
+
+### Compliance
+
+- [ ] All workflow phases completed (Plan-Execute-Verify-Report)
+- [ ] Paradigms followed appropriately
+- [ ] Communication standards met
+- [ ] Quality standards maintained
+- [ ] No orphaned files or directories
+- [ ] Changes are atomic and reversible
+
+---

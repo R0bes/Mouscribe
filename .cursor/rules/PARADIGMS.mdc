@@ -1,0 +1,106 @@
+---
+alwaysApply: true
+---
+# Paradigms - Development Principles
+
+## 🎯 Core Paradigms
+
+### **YAGNI** — You aren't gonna need it
+
+- No premature features or over-engineering
+- Build only what is currently needed
+- Avoid speculative development
+
+### **OBSERVABLE** — Work emits evidence
+
+- Logs, metrics, traces, tests must be present
+- All work should be measurable and trackable
+- Provide clear evidence of functionality
+
+### **EXPLICIT** — Prefer explicit behavior/config
+
+- Avoid implicit magic or hidden behavior
+- Make configurations and behavior clear and documented
+- Prefer explicit over implicit patterns
+
+### **IDEMPOTENT** — Repeated runs do not cause unintended side effects
+
+- Operations should be safe to run multiple times
+- State should be consistent regardless of execution count
+- Avoid side effects that accumulate
+
+### **DETERMINISTIC** — Same inputs/environment → predictable outputs
+
+- Same inputs should always produce same outputs
+- Avoid non-deterministic behavior
+- Make behavior predictable and reproducible
+
+### **RELIABLE** — Handle errors/timeouts/retries
+
+- Implement proper error handling
+- Degrade gracefully under failure conditions
+- Include timeout and retry mechanisms
+
+### **MINIMAL** — Smallest viable change
+
+- Reduce complexity and blast radius
+- Prefer incremental improvements
+- Avoid unnecessary complexity
+
+### **COMPLETE** — Code + tests + docs + validation
+
+- Every change must include all necessary components
+- Tests, documentation, and validation are mandatory
+- Nothing should be left incomplete
+
+### **REVERSIBLE** — Changes can be rolled back quickly
+
+- All changes must be easily reversible
+- Include rollback procedures
+- Maintain backward compatibility when possible
+
+### **COMPOSABLE** — Changes compose cleanly
+
+- Changes should work well with existing and future work
+- Avoid breaking existing functionality
+- Design for composition and modularity
+
+### **TRACEABLE** — Every change links to plan/issue/decision
+
+- All changes must be traceable to their origin
+- Link to plans, issues, or decision records
+- Maintain audit trail
+
+### **TEST-DRIVEN** — Prefer tests that capture intent
+
+- Tests should prevent regressions
+- Write tests that capture the intent, not just implementation
+- Tests should be meaningful and maintainable
+
+### **EVIDENCE-DRIVEN** — Decisions based on data
+
+- Base decisions on data, measurements, or reproducible experiments
+- Avoid decisions based on assumptions
+- Use metrics and evidence to guide development
+
+## 🔒 Additional Principles
+
+### **SECURE** — Handle sensitive data appropriately
+
+- Never log secrets or sensitive information
+- Use environment variables or secure config
+- Follow security best practices
+
+### **MAINTAINABLE** — Code should be readable and modifiable
+
+- Write code that others can understand and modify
+- Use clear naming and structure
+- Document complex logic
+
+### **SCALABLE** — Solutions should handle growth
+
+- Design for future growth without major refactoring
+- Consider performance implications
+- Plan for scalability from the start
+
+---

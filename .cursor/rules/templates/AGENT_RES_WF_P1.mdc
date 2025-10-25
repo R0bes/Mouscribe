@@ -1,0 +1,52 @@
+---
+templateType: workflow-phase-response
+phase: PLAN
+description: Template for PLAN phase agent responses
+---
+
+# PLAN Phase Response Template
+
+## 🎯 Plan Summary
+
+**Goal**: [Primary objective]
+**Task**: [Brief description of the task]
+**Scope**: [What is included/excluded]
+**Estimated Duration**: [Time estimate]
+
+## 📋 Plan Details
+
+### **Approach & Strategy**
+
+[High-level approach to solving the problem]
+
+### **Key Deliverables**
+
+**Files to be Modified**:
+
+- [ ] [File 1] - [Brief description]
+- [ ] [File 2] - [Brief description]
+
+**New Files to be Created**:
+
+- [ ] [File 1] - [Brief description]
+
+### **Risks & Mitigation**
+
+- [ ] [Risk 1] - [Mitigation strategy]
+- [ ] [Risk 2] - [Mitigation strategy]
+
+### **Validation Strategy**
+
+- [ ] [Test approach]
+- [ ] [Validation criteria]
+- [ ] [Success metrics]
+
+### **Rollback Plan**
+
+[Brief rollback strategy and triggers]
+
+## ✅ Approval Request
+
+**Awaiting supervisor approval (ACK) before proceeding to EXECUTE phase.**
+
+---

@@ -105,7 +105,12 @@ class BaseWidget(ABC):
 
             # Create content
             content = self.create_content(self.window)
-            content.pack(fill="both", expand=True, padx=self.config.padding, pady=self.config.padding)
+            content.pack(
+                fill="both",
+                expand=True,
+                padx=self.config.padding,
+                pady=self.config.padding,
+            )
 
             # Make window visible
             self.window.deiconify()
@@ -368,7 +373,13 @@ class Win32Widget(BaseWidget):
         self._frame = tk.Frame(parent, bg=theme["bg"], relief="flat", bd=0)
 
         # Title
-        self._title_label = tk.Label(self._frame, text=self.title, font=("Arial", 12, "bold"), fg=theme["fg"], bg=theme["bg"])
+        self._title_label = tk.Label(
+            self._frame,
+            text=self.title,
+            font=("Arial", 12, "bold"),
+            fg=theme["fg"],
+            bg=theme["bg"],
+        )
         self._title_label.pack(pady=8)
 
         # Test button
@@ -385,7 +396,14 @@ class Win32Widget(BaseWidget):
 
         # Close button
         self._close_button = tk.Button(
-            self._frame, text="×", command=self.hide, bg="#E74C3C", fg="white", relief="flat", bd=0, width=3
+            self._frame,
+            text="×",
+            command=self.hide,
+            bg="#E74C3C",
+            fg="white",
+            relief="flat",
+            bd=0,
+            width=3,
         )
         self._close_button.pack(side="right", padx=5, pady=5)
 
@@ -429,7 +447,14 @@ class TextWidget(BaseWidget):
         """Create text label."""
         theme = self.config.theme.value
 
-        self._label = tk.Label(parent, text=self.text, bg=theme["bg"], fg=theme["fg"], font=("Segoe UI", 10), justify="left")
+        self._label = tk.Label(
+            parent,
+            text=self.text,
+            bg=theme["bg"],
+            fg=theme["fg"],
+            font=("Segoe UI", 10),
+            justify="left",
+        )
         return self._label
 
     def update_content(self, text: str = None, **kwargs) -> None:
@@ -467,12 +492,22 @@ class RecordingWidget(BaseWidget):
 
         # Status text
         self._status_label = tk.Label(
-            self._frame, text="Recording...", bg=theme["bg"], fg=theme["fg"], font=("Segoe UI", 10, "bold")
+            self._frame,
+            text="Recording...",
+            bg=theme["bg"],
+            fg=theme["fg"],
+            font=("Segoe UI", 10, "bold"),
         )
         self._status_label.pack(side="left", padx=(0, 10))
 
         # Time display
-        self._time_label = tk.Label(self._frame, text="00:00", bg=theme["bg"], fg=theme["fg"], font=("Segoe UI Mono", 10))
+        self._time_label = tk.Label(
+            self._frame,
+            text="00:00",
+            bg=theme["bg"],
+            fg=theme["fg"],
+            font=("Segoe UI Mono", 10),
+        )
         self._time_label.pack(side="left")
 
         # Start animation
@@ -527,9 +562,19 @@ class MouseOverlayManager:
         if WINDOWS_API_AVAILABLE:
             self._setup_mouse_hook()
 
-    def register_widget(self, name: str, widget: BaseWidget, trigger_button: str = "left", hold_duration: float = 0.5) -> None:
+    def register_widget(
+        self,
+        name: str,
+        widget: BaseWidget,
+        trigger_button: str = "left",
+        hold_duration: float = 0.5,
+    ) -> None:
         """Register a widget with hold-to-show trigger."""
-        self.widgets[name] = {"widget": widget, "trigger_button": trigger_button, "hold_duration": hold_duration}
+        self.widgets[name] = {
+            "widget": widget,
+            "trigger_button": trigger_button,
+            "hold_duration": hold_duration,
+        }
 
     def show_widget(self, name: str, x: int = None, y: int = None) -> bool:
         """Show widget by name at position or mouse cursor."""
@@ -587,24 +632,33 @@ def create_win32_widget(
 
 
 def create_round_widget(
-    title: str = "Round Widget", theme: WidgetTheme = WidgetTheme.DARK, alpha: float = 0.9, size: str = "250x250"
+    title: str = "Round Widget",
+    theme: WidgetTheme = WidgetTheme.DARK,
+    alpha: float = 0.9,
+    size: str = "250x250",
 ) -> Win32Widget:
     """Create a round Win32 widget."""
     return create_win32_widget(title, theme, "round", alpha, size)
 
 
 def create_text_widget(
-    text: str, theme: WidgetTheme = WidgetTheme.DARK, position: WidgetPosition = WidgetPosition.TOP_RIGHT
+    text: str,
+    theme: WidgetTheme = WidgetTheme.DARK,
+    position: WidgetPosition = WidgetPosition.TOP_RIGHT,
 ) -> TextWidget:
     """Create a simple text widget."""
     config = WidgetConfig(theme=theme, position=position)
     return TextWidget(text, config)
 
 
-def create_recording_widget(position: WidgetPosition = WidgetPosition.TOP_RIGHT) -> RecordingWidget:
+def create_recording_widget(
+    position: WidgetPosition = WidgetPosition.TOP_RIGHT,
+) -> RecordingWidget:
     """Create a recording status widget."""
     config = WidgetConfig(
-        theme=WidgetTheme.RECORDING, position=position, auto_hide_duration=None  # Don't auto-hide recording widget
+        theme=WidgetTheme.RECORDING,
+        position=position,
+        auto_hide_duration=None,  # Don't auto-hide recording widget
     )
     return RecordingWidget(config)
 

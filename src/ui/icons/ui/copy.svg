@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Copy icon -->
+  <rect x="9" y="9" width="13" height="13" rx="2" fill="none" stroke="#00F0FF" stroke-width="2" filter="url(#glow)"/>
+  <path d="M 5 15 L 5 5 L 15 5" fill="none" stroke="#00F0FF" stroke-width="2" filter="url(#glow)"/>
+</svg>

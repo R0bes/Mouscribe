@@ -80,7 +80,14 @@ class WindowsToastBackend:
                 try:
                     # Versuche das Icon mit korrekten Flags zu löschen
                     # Das nid muss die gleichen Flags haben wie beim Erstellen
-                    nid = (self._toaster.hwnd, 0, 0x07, 0x4014, None, "Tooltip")  # NIF_ICON | NIF_MESSAGE | NIF_TIP
+                    nid = (
+                        self._toaster.hwnd,
+                        0,
+                        0x07,
+                        0x4014,
+                        None,
+                        "Tooltip",
+                    )  # NIF_ICON | NIF_MESSAGE | NIF_TIP
                     from win32gui import NIM_DELETE, Shell_NotifyIcon
 
                     Shell_NotifyIcon(NIM_DELETE, nid)
@@ -182,7 +189,19 @@ class WindowsToastBackend:
 
                     style = WS_OVERLAPPED | WS_SYSMENU
                     # HIER ist der wichtige Teil - "Mauscribe" statt "Taskbar"
-                    hwnd = CreateWindow(classAtom, "Mauscribe", style, 0, 0, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, hinst, None)
+                    hwnd = CreateWindow(
+                        classAtom,
+                        "Mauscribe",
+                        style,
+                        0,
+                        0,
+                        CW_USEDEFAULT,
+                        CW_USEDEFAULT,
+                        0,
+                        0,
+                        hinst,
+                        None,
+                    )
                     UpdateWindow(hwnd)
 
                     # Ändere den Fenster-Titel nach der Erstellung
@@ -202,9 +221,15 @@ class WindowsToastBackend:
                     if icon_path is not None:
                         icon_path = path.realpath(icon_path)
                     else:
-                        icon_path = resource_filename(
-                            Requirement.parse("win10toast_click"), "win10toast_click/icon/notification.ico"
-                        )
+                        # Fallback für .exe Build - verwende lokales Icon
+                        try:
+                            icon_path = resource_filename(
+                                Requirement.parse("win10toast_click"),
+                                "win10toast_click/icon/notification.ico",
+                            )
+                        except Exception:
+                            # Fallback für .exe: verwende Standard-Icon
+                            icon_path = None
                     icon_flags = LR_LOADFROMFILE | LR_DEFAULTSIZE
                     try:
                         hicon = LoadImage(hinst, icon_path, IMAGE_ICON, 0, 0, icon_flags)
@@ -216,7 +241,18 @@ class WindowsToastBackend:
                     nid = (hwnd, 0, flags, WM_USER + 20, hicon, "Mauscribe Tooltip")
                     Shell_NotifyIcon(NIM_ADD, nid)
                     Shell_NotifyIcon(
-                        NIM_MODIFY, (hwnd, 0, NIF_INFO, WM_USER + 20, hicon, "Mauscribe Balloon Tooltip", msg, 200, title)
+                        NIM_MODIFY,
+                        (
+                            hwnd,
+                            0,
+                            NIF_INFO,
+                            WM_USER + 20,
+                            hicon,
+                            "Mauscribe Balloon Tooltip",
+                            msg,
+                            200,
+                            title,
+                        ),
                     )
                     PumpMessages()
 
@@ -274,7 +310,7 @@ class WindowsToastBackend:
                 duration=notification.duration // 1000,
                 threaded=True,
                 icon_path=None,  # Verhindert zusätzliche Shell Notify Icon Probleme
-                callback_on_click=notification.callback if notification.clickable else None,
+                callback_on_click=(notification.callback if notification.clickable else None),
             )
             return True
         except Exception as e:
@@ -286,7 +322,11 @@ class Toaster:
     """Main notification manager with Windows Toast backend only."""
 
     def __init__(
-        self, enable_sound: bool = True, default_duration: int = 500, enabled: bool = True, notification_settings: dict = None
+        self,
+        enable_sound: bool = True,
+        default_duration: int = 500,
+        enabled: bool = True,
+        notification_settings: dict = None,
     ):
         self.enable_sound = enable_sound
         self.default_duration = default_duration
@@ -389,7 +429,10 @@ class Toaster:
     # Application-specific methods
     def recording_started(self, **kwargs) -> bool:
         return self.show(
-            "Recording Started", "Recording is running... Press again to stop.", NotificationType.RECORDING, **kwargs
+            "Recording Started",
+            "Recording is running... Press again to stop.",
+            NotificationType.RECORDING,
+            **kwargs,
         )
 
     def recording_stopped(self, text_length: int = 0, **kwargs) -> bool:
@@ -427,7 +470,7 @@ class Toaster:
         """Get system info for debugging."""
         return {
             "active_backend": self.backend_name,
-            "available_backends": [self._active_backend.__class__.__name__] if self._active_backend.is_available() else [],
+            "available_backends": ([self._active_backend.__class__.__name__] if self._active_backend.is_available() else []),
             "platform": sys.platform,
             "windows_version": (
                 f"{sys.getwindowsversion().major}.{sys.getwindowsversion().minor}" if sys.platform == "win32" else "N/A"

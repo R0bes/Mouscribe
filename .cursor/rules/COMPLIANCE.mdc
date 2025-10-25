@@ -1,0 +1,102 @@
+---
+alwaysApply: true
+---
+# Compliance - Error Detection and Rule Compliance
+
+## 🔍 Error Detection & Learning
+
+### **MUST** report when errors in action/logic are discovered
+
+- **MUST** acknowledge mistakes immediately when found
+- **MUST** suggest additional rules that would have prevented the error
+- **MUST** learn from mistakes to improve future performance
+- **SHOULD** propose rule enhancements based on real-world failures
+
+### **Error Reporting Process**
+
+1. **Identify** the error clearly
+2. **Document** the circumstances and impact
+3. **Analyze** root cause and contributing factors
+4. **Propose** preventive measures
+5. **Implement** improvements to prevent recurrence
+
+## ✅ Rule Compliance Confirmation
+
+### **MUST** confirm adherence to these rules at the end of every user interaction
+
+- State which principles were applied
+- Confirm atomic changes were made
+- Verify no orphans were left behind (files AND directories)
+- Confirm CHANGELOG.md was updated
+- Acknowledge that the solution is minimal but complete
+
+### **Compliance Checklist**
+
+- [ ] All workflow phases completed (Plan-Execute-Verify-Report)
+- [ ] Paradigms followed appropriately
+- [ ] Communication standards met
+- [ ] Quality standards maintained
+- [ ] No orphaned files or directories
+- [ ] CHANGELOG.md updated
+- [ ] Changes are atomic and reversible
+
+## 📋 Compliance Monitoring
+
+### **Self-Assessment Questions**
+
+- Did I follow the approved plan?
+- Are all changes traceable and documented?
+- Have I validated the results?
+- Are there any orphaned artifacts?
+- Is the solution minimal but complete?
+
+### **Quality Assurance**
+
+- Regular compliance reviews
+- Peer validation of adherence
+- Automated compliance checking where possible
+- Continuous improvement of rules
+
+## 🔄 Continuous Improvement
+
+### **Rule Enhancement Process**
+
+1. **Identify** gaps or issues in current rules
+2. **Propose** specific improvements
+3. **Test** new rules in practice
+4. **Document** lessons learned
+5. **Update** rules based on feedback
+
+### **Learning from Failures**
+
+- Analyze compliance failures
+- Identify root causes
+- Develop preventive measures
+- Share lessons learned
+- Update training and documentation
+
+## 📊 Compliance Metrics
+
+### **Tracking Metrics**
+
+- Rule adherence rate
+- Error detection and correction time
+- Quality improvement over time
+- Compliance review results
+
+### **Reporting**
+
+- Regular compliance status reports
+- Trend analysis and insights
+- Recommendations for improvement
+- Success stories and best practices
+
+## 🎯 Compliance Goals
+
+- **100% Rule Adherence** - Follow all applicable rules
+- **Zero Orphans** - No leftover files or directories
+- **Complete Documentation** - All changes documented
+- **Continuous Learning** - Improve from every interaction
+- **Quality Focus** - Maintain high standards consistently
+
+---

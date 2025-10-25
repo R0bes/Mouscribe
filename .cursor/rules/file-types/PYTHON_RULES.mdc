@@ -1,0 +1,312 @@
+---
+fileTypes: [py]
+description: Specific rules for Python files
+---
+
+# Python Rules - .py Files
+
+## 🎯 Overview
+These rules apply specifically to Python files (`.py` extension) to ensure code quality, consistency, and compliance with Python best practices.
+
+## 📋 Critical Rules (Must Follow)
+
+### **PEP 8 Compliance**
+**Rule**: Follow PEP 8 style guide for Python code.
+**Violation**: Inconsistent formatting, naming, or structure.
+**Fix**: Use automated formatting tools and manual review.
+
+**Key Requirements**:
+- Line length: 79 characters maximum
+- Indentation: 4 spaces (no tabs)
+- Naming conventions: snake_case for variables/functions, PascalCase for classes
+- Import organization: standard library, third-party, local imports
+
+### **Import Organization**
+**Rule**: Imports must be organized and formatted correctly.
+**Violation**: Imports not grouped or formatted properly.
+**Fix**: Group imports and use proper formatting.
+
+**Example**:
+```python
+# Bad
+import os
+from typing import List, Dict
+import sys
+from .local_module import something
+
+# Good
+import os
+import sys
+from typing import Dict, List
+
+from .local_module import something
+```
+
+### **Type Hints**
+**Rule**: Use type hints for all function parameters and return values.
+**Violation**: Missing type hints in function signatures.
+**Fix**: Add appropriate type hints.
+
+**Example**:
+```python
+# Bad
+def process_data(data, config):
+    return result
+
+# Good
+def process_data(data: List[Dict[str, Any]], config: Config) -> ProcessedData:
+    return result
+```
+
+### **Docstrings**
+**Rule**: All public functions, classes, and modules must have docstrings.
+**Violation**: Missing docstrings for public APIs.
+**Fix**: Add comprehensive docstrings.
+
+**Example**:
+```python
+# Bad
+def calculate_total(items):
+    return sum(item.price for item in items)
+
+# Good
+def calculate_total(items: List[Item]) -> float:
+    """Calculate the total price of all items.
+
+    Args:
+        items: List of items to calculate total for.
+
+    Returns:
+        The total price of all items.
+
+    Raises:
+        ValueError: If items list is empty.
+    """
+    if not items:
+        raise ValueError("Items list cannot be empty")
+    return sum(item.price for item in items)
+```
+
+## 📝 Code Quality Standards
+
+### **Error Handling**
+**Rule**: Implement proper exception handling with meaningful messages.
+**Violation**: Generic exception handling or missing error handling.
+**Fix**: Use specific exception types and clear error messages.
+
+**Example**:
+```python
+# Bad
+try:
+    result = risky_operation()
+except:
+    print("Error occurred")
+
+# Good
+try:
+    result = risky_operation()
+except FileNotFoundError as e:
+    logger.error(f"Required file not found: {e}")
+    raise
+except PermissionError as e:
+    logger.error(f"Permission denied: {e}")
+    raise
+```
+
+### **Logging**
+**Rule**: Use structured logging with appropriate levels.
+**Violation**: Using print statements or inconsistent logging.
+**Fix**: Use proper logging configuration and levels.
+
+**Example**:
+```python
+# Bad
+print("Processing started")
+print(f"Error: {error}")
+
+# Good
+import logging
+
+logger = logging.getLogger(__name__)
+
+logger.info("Processing started")
+logger.error(f"Processing failed: {error}")
+```
+
+### **Security**
+**Rule**: Never hardcode secrets; use environment variables or secure config.
+**Violation**: Hardcoded passwords, API keys, or sensitive data.
+**Fix**: Use environment variables or secure configuration.
+
+**Example**:
+```python
+# Bad
+API_KEY = "sk-1234567890abcdef"
+DATABASE_PASSWORD = "mypassword123"
+
+# Good
+import os
+from typing import Optional
+
+API_KEY: Optional[str] = os.getenv("API_KEY")
+DATABASE_PASSWORD: Optional[str] = os.getenv("DATABASE_PASSWORD")
+
+if not API_KEY:
+    raise ValueError("API_KEY environment variable is required")
+```
+
+## 🧪 Testing Requirements
+
+### **Test Coverage**
+**Rule**: Maintain high test coverage (minimum 80%).
+**Violation**: Low test coverage or missing tests.
+**Fix**: Add comprehensive tests for all public APIs.
+
+### **Test Structure**
+**Rule**: Follow AAA pattern (Arrange, Act, Assert).
+**Violation**: Unclear test structure or missing assertions.
+**Fix**: Structure tests clearly with proper assertions.
+
+**Example**:
+```python
+# Bad
+def test_calculate_total():
+    items = [Item(price=10), Item(price=20)]
+    result = calculate_total(items)
+    assert result == 30
+
+# Good
+def test_calculate_total_with_valid_items():
+    # Arrange
+    items = [Item(price=10.0), Item(price=20.0)]
+    expected_total = 30.0
+
+    # Act
+    result = calculate_total(items)
+
+    # Assert
+    assert result == expected_total
+    assert isinstance(result, float)
+```
+
+## 🔧 Implementation Guidelines
+
+### **Before Editing Python Files**
+1. Check existing code structure and patterns
+2. Identify potential PEP 8 violations
+3. Plan changes to maintain consistency
+4. Consider impact on existing tests
+
+### **During Editing**
+1. Follow PEP 8 formatting rules
+2. Add type hints for new functions
+3. Include docstrings for public APIs
+4. Use proper error handling
+5. Add logging where appropriate
+
+### **After Editing**
+1. Run linting tools (flake8, pylint, black)
+2. Run tests to ensure functionality
+3. Check test coverage
+4. Verify security best practices
+
+## 🛠️ Tools and Validation
+
+### **Code Formatting**
+```bash
+# Install black for formatting
+pip install black
+
+# Format code
+black filename.py
+
+# Check formatting
+black --check filename.py
+```
+
+### **Linting**
+```bash
+# Install flake8 for linting
+pip install flake8
+
+# Run linting
+flake8 filename.py
+
+# Install pylint for comprehensive analysis
+pip install pylint
+
+# Run pylint
+pylint filename.py
+```
+
+### **Type Checking**
+```bash
+# Install mypy for type checking
+pip install mypy
+
+# Run type checking
+mypy filename.py
+```
+
+### **Testing**
+```bash
+# Install pytest for testing
+pip install pytest
+
+# Run tests
+pytest
+
+# Run tests with coverage
+pytest --cov=src tests/
+```
+
+## 📊 Compliance Checklist
+
+When working with Python files, ensure:
+- [ ] **PEP 8**: Code follows PEP 8 style guide
+- [ ] **Imports**: Imports are organized and formatted
+- [ ] **Type Hints**: All functions have type hints
+- [ ] **Docstrings**: Public APIs have docstrings
+- [ ] **Error Handling**: Proper exception handling
+- [ ] **Logging**: Structured logging used
+- [ ] **Security**: No hardcoded secrets
+- [ ] **Testing**: High test coverage maintained
+- [ ] **Code Quality**: Code is readable and maintainable
+
+## 🎯 Best Practices
+
+### **Code Organization**
+- Use meaningful variable and function names
+- Keep functions small and focused
+- Use classes for complex data structures
+- Organize code into logical modules
+
+### **Performance**
+- Use appropriate data structures
+- Avoid unnecessary computations
+- Use generators for large datasets
+- Profile code for bottlenecks
+
+### **Maintainability**
+- Write self-documenting code
+- Use consistent naming conventions
+- Add comments for complex logic
+- Keep functions and classes focused
+
+## ⚠️ Common Violations
+
+### **Most Frequent Issues**
+1. **PEP 8**: Line length, indentation, naming
+2. **Type Hints**: Missing type annotations
+3. **Docstrings**: Missing or incomplete docstrings
+4. **Error Handling**: Generic exception handling
+5. **Imports**: Unorganized import statements
+
+### **Prevention**
+- Use automated formatting tools
+- Enable linting in your editor
+- Run tests before committing
+- Use pre-commit hooks
+- Regular code reviews
+
+---

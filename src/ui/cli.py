@@ -7,8 +7,9 @@ import argparse
 import sys
 from pathlib import Path
 
+from ..config import get_config
 from ..mouscribe import MauscribeApp
-from ..utils import Settings, get_logger, setup_logging
+from ..utils import get_logger, setup_logging
 
 
 def cli() -> None:
@@ -20,7 +21,8 @@ def cli() -> None:
         epilog="""
 Why the mouse became a voice recognition expert?
 It was tired of being clicked around... 🐭
-        """)
+        """,
+    )
     parser.add_argument(
         "--config",
         "-c",
@@ -42,13 +44,11 @@ It was tired of being clicked around... 🐭
     logger = get_logger("CLI")
 
     try:
-        # Load configuration
+        # Load configuration using new config system
         config_path = Path(args.config)
         if not config_path.exists():
             logger.info(f"Configuration file not found: {config_path}")
-            logger.info("Creating default configuration...")
-            Settings.create_default_config(str(config_path))
-            logger.info(f"✅ Default configuration created: {config_path}")
+            logger.info("Using default configuration...")
 
         logger.info(f"📁 Configuration loaded from: {config_path}")
 
@@ -63,9 +63,9 @@ It was tired of being clicked around... 🐭
         logger.error(f"Fatal error: {e}")
         if args.debug:
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
-
 
 
 if __name__ == "__main__":

@@ -1,0 +1,130 @@
+---
+alwaysApply: true
+---
+# Quality Standards - Code Quality and Testing
+
+## 📝 Code Quality Standards
+
+### **Documentation**
+
+- All public APIs must have docstrings
+- Include parameter descriptions and return values
+- Document complex logic and algorithms
+- Maintain up-to-date README files
+
+### **Type Hints**
+
+- Use type hints for all function parameters and return values
+- Include type hints for class attributes
+- Use generic types where appropriate
+- Validate types at runtime when necessary
+
+### **Error Handling**
+
+- Implement proper exception handling with meaningful messages
+- Use specific exception types
+- Include context information in error messages
+- Log errors appropriately
+
+### **Logging**
+
+- Use structured logging with appropriate levels
+- Include relevant context in log messages
+- Avoid logging sensitive information
+- Use consistent log format across the project
+
+### **Security**
+
+- Never hardcode secrets; use environment variables or secure config
+- Validate all inputs
+- Use secure coding practices
+- Regular security reviews
+
+## 🧪 Testing Standards
+
+### **Test Coverage**
+
+- Maintain high test coverage (minimum 80%)
+- Test all public APIs
+- Include edge cases and error conditions
+- Test both positive and negative scenarios
+
+### **Test Types**
+
+- **Unit Tests** - Test individual components in isolation
+- **Integration Tests** - Test component interactions
+- **End-to-End Tests** - Test complete workflows
+- **Performance Tests** - Test under load and stress
+
+### **Test Quality**
+
+- Tests should be readable and maintainable
+- Use descriptive test names
+- Follow AAA pattern (Arrange, Act, Assert)
+- Avoid test interdependencies
+
+### **Test Data**
+
+- Use realistic test data
+- Avoid hardcoded test values
+- Use factories for test data generation
+- Clean up test data after tests
+
+## 🔍 Code Review Standards
+
+### **Review Checklist**
+
+- [ ] Code follows style guidelines
+- [ ] Tests are included and pass
+- [ ] Documentation is updated
+- [ ] Error handling is appropriate
+- [ ] Performance implications considered
+- [ ] Security implications reviewed
+
+### **Review Process**
+
+- All code changes require review
+- Address all review comments
+- Re-test after addressing comments
+- Get approval before merging
+
+## 📊 Quality Metrics
+
+### **Code Metrics**
+
+- Cyclomatic complexity
+- Code duplication
+- Test coverage percentage
+- Documentation coverage
+
+### **Performance Metrics**
+
+- Response times
+- Memory usage
+- CPU utilization
+- Error rates
+
+### **Quality Gates**
+
+- All tests must pass
+- Coverage threshold met
+- No critical security issues
+- Performance benchmarks met
+
+## 🛠️ Tools and Automation
+
+### **Static Analysis**
+
+- Use linters and formatters
+- Run static analysis tools
+- Check for security vulnerabilities
+- Validate type hints
+
+### **Continuous Integration**
+
+- Automated testing on every commit
+- Quality gates in CI pipeline
+- Automated security scanning
+- Performance regression testing
+
+---

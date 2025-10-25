@@ -164,7 +164,10 @@ def create_multi_monitor_selector():
                 local_center = self.mouse_pos - tl
 
                 region_rect = QtCore.QRect(
-                    local_center.x() - half_width, local_center.y() - half_height, self.region_width, self.region_height
+                    local_center.x() - half_width,
+                    local_center.y() - half_height,
+                    self.region_width,
+                    self.region_height,
                 )
 
                 # Punch hole (transparent)
@@ -230,7 +233,11 @@ def create_multi_monitor_selector():
                 # Bildschirm-Info
                 if len(self.screens) > 1:
                     painter.setPen(QtGui.QColor(100, 200, 255, 200))
-                    painter.drawText(20, 20, f"🖥️ Bildschirm {self.current_screen + 1}/{len(self.screens)}")
+                    painter.drawText(
+                        20,
+                        20,
+                        f"🖥️ Bildschirm {self.current_screen + 1}/{len(self.screens)}",
+                    )
 
         # Hauptfunktion
         app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)

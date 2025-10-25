@@ -1,0 +1,78 @@
+---
+templateType: supporting-template
+primaryUse: component-within-AGENT_RES_WF_P2-or-P3
+description: Template for escalation reports when blockers are encountered (used within EXECUTE/VERIFY phases)
+---
+
+# Escalation Report - [Date/Time]
+
+## 🚨 Issue Summary
+
+**Priority**: [Critical/High/Medium/Low]
+**Category**: [Technical Blocker/Process Issue/Quality Concern]
+**Impact**: [Description of impact on project/timeline]
+
+## 📋 Problem Description
+
+**What**: [Clear description of the problem]
+**When**: [When the problem was discovered]
+**Where**: [Location in code/process where problem occurs]
+**Who**: [Who is affected by this problem]
+
+## 🔍 Root Cause Analysis
+
+**Immediate Cause**: [What directly caused the problem]
+**Underlying Cause**: [Why the immediate cause occurred]
+**Contributing Factors**: [Other factors that led to this issue]
+
+## 📊 Impact Assessment
+
+**Scope**: [How widespread is the impact]
+**Timeline**: [How does this affect project timeline]
+**Resources**: [Additional resources needed]
+**Dependencies**: [What other work is blocked]
+
+## 🛠️ Attempted Solutions
+
+- [ ] [Solution 1 attempted]
+  - **Result**: [Success/Failure/Partial]
+  - **Reason**: [Why it worked/didn't work]
+- [ ] [Solution 2 attempted]
+  - **Result**: [Success/Failure/Partial]
+  - **Reason**: [Why it worked/didn't work]
+
+## 💡 Proposed Solutions
+
+- [ ] [Solution 1]
+  - **Pros**: [Benefits]
+  - **Cons**: [Drawbacks]
+  - **Effort**: [Time/resources required]
+  - **Risk**: [Potential risks]
+- [ ] [Solution 2]
+  - **Pros**: [Benefits]
+  - **Cons**: [Drawbacks]
+  - **Effort**: [Time/resources required]
+  - **Risk**: [Potential risks]
+
+## 🎯 Recommended Action
+
+**Preferred Solution**: [Which solution is recommended and why]
+**Next Steps**: [Specific actions needed]
+**Timeline**: [When resolution is needed]
+**Resources Required**: [What help is needed]
+
+## 📞 Escalation Details
+
+**Escalated To**: [Who this is being escalated to]
+**Escalation Reason**: [Why escalation is necessary]
+**Expected Response Time**: [When response is needed]
+**Follow-up Required**: [Yes/No - when and how]
+
+## 📝 Supporting Information
+
+**Logs**: [Relevant log entries or error messages]
+**Screenshots**: [If applicable]
+**Related Issues**: [Links to related problems]
+**Documentation**: [Relevant documentation references]
+
+---

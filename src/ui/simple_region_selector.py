@@ -133,7 +133,11 @@ class SimpleRegionSelector:
             tags="instructions",
         )
 
-        instructions = ["Mausrad: Größe ändern", "Linksklick/Enter: Bestätigen", "Rechtsklick/ESC: Abbrechen"]
+        instructions = [
+            "Mausrad: Größe ändern",
+            "Linksklick/Enter: Bestätigen",
+            "Rechtsklick/ESC: Abbrechen",
+        ]
 
         if self.total_screens > 1:
             instructions.extend(["Pfeiltasten/Tab: Bildschirm wechseln"])

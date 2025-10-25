@@ -1,87 +1,27 @@
-# pyproject.toml - Python project configuration for Mauscribe
 [project]
 name = "mauscribe"
-version = "1.0.0"
+version = "1.0.1"
 description = "Voice-to-Text Tool mit Push-to-Talk und automatischem Clipboard-Management"
-authors = [
-    {name = "Robs", email = "rob.schwe@gmail.com"}
-]
 readme = "README.md"
-license = {text = "MIT"}
 requires-python = ">=3.8"
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Topic :: Multimedia :: Sound/Audio :: Speech",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Text Processing :: Linguistic",
-]
-dependencies = [
-    # Core dependencies for all platforms
-    "faster-whisper>=0.10.0",
-    "numpy>=1.21.0",
-    "sounddevice>=0.4.0",
-    "soundfile>=0.12.0",
-    "webrtcvad>=2.0.10",
-    "pillow>=9.0.0",
-    "pyautogui>=0.9.54",
-    "pynput>=1.7.6",
-    "pyperclip>=1.8.2",
-    "pystray>=0.19.4",
-    "pyspellchecker>=0.7.2",
-    "python-dotenv>=1.0.0",
-    "requests>=2.31.0",
-    "tomli>=2.0.0; python_version < '3.11'",
-    "tomli-w>=1.0.0",
-    "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
-    "pydub>=0.25.1",
-    "speechrecognition>=3.10.0",
-]
+classifiers = [ "Development Status :: 4 - Beta", "Intended Audience :: End Users/Desktop", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11", "Topic :: Multimedia :: Sound/Audio :: Speech", "Topic :: Scientific/Engineering :: Artificial Intelligence", "Topic :: Text Processing :: Linguistic",]
+dependencies = [ "faster-whisper>=0.10.0", "numpy>=1.21.0", "sounddevice>=0.4.0", "soundfile>=0.12.0", "webrtcvad>=2.0.10", "pillow>=9.0.0", "pyautogui>=0.9.54", "pynput>=1.7.6", "pyperclip>=1.8.2", "pystray>=0.19.4", "pyspellchecker>=0.7.2", "python-dotenv>=1.0.0", "requests>=2.31.0", "tomli>=2.0.0; python_version < '3.11'", "tomli-w>=1.0.0", "pydantic>=2.0.0", "pydantic-settings>=2.0.0", "pydub>=0.25.1", "speechrecognition>=3.10.0", "customtkinter>=5.2.0",]
+[[project.authors]]
+name = "Robs"
+email = "rob.schwe@gmail.com"
+
+[build-system]
+requires = [ "setuptools>=61.0", "wheel",]
+build-backend = "setuptools.build_meta"
+
+[project.license]
+text = "MIT"
 
 [project.optional-dependencies]
-# Development dependencies
-dev = [
-    "black>=23.0.0",
-    "flake8>=6.0.0",
-    "isort>=5.12.0",
-    "mypy>=1.0.0",
-    "types-requests>=2.31.0",
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "pytest-html>=3.2.0",
-    "pytest-mock>=3.10.0",
-    "pytest-xdist>=3.5.0",
-    "ipython>=8.0.0",
-    "pre-commit>=3.0.0",
-    "build>=1.0.0",
-    "pyinstaller>=5.0.0",
-    "wheel>=0.40.0",
-]
-# Windows-specific dependencies
-windows = [
-    "comtypes>=1.2.0",
-    "pycaw>=20230407",
-    "pywin32>=223",
-    "winotify>=1.1.0",
-    "win10toast>=0.9",
-    "win10toast-click>=1.0.0",
-]
-# Linux-specific dependencies
-linux = [
-    "pyaudio>=0.2.11; sys_platform == 'linux'",
-]
-# All dependencies for easy installation
-all = [
-    "mauscribe[windows,linux,dev]",
-]
+dev = [ "black>=23.0.0", "flake8>=6.0.0", "isort>=5.12.0", "mypy>=1.0.0", "types-requests>=2.31.0", "pytest>=7.0.0", "pytest-cov>=4.0.0", "pytest-html>=3.2.0", "pytest-mock>=3.10.0", "pytest-xdist>=3.5.0", "ipython>=8.0.0", "pre-commit>=3.0.0", "build>=1.0.0", "pyinstaller>=5.0.0", "wheel>=0.40.0",]
+windows = [ "comtypes>=1.2.0", "pycaw>=20230407", "pywin32>=223", "winotify>=1.1.0", "win10toast>=0.9",]
+linux = [ "pyaudio>=0.2.11; sys_platform == 'linux'",]
+all = [ "mauscribe[windows,linux,dev]",]
 
 [project.scripts]
 mauscribe = "src.ui.cli:cli"
@@ -91,17 +31,6 @@ Homepage = "https://github.com/R0bes/Mauscribe"
 Repository = "https://github.com/R0bes/Mauscribe"
 Issues = "https://github.com/R0bes/Mauscribe/issues"
 Documentation = "https://github.com/R0bes/Mauscribe#readme"
-
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["src*"]
-
-[tool.setuptools.package-dir]
-"" = "."
 
 [tool.mypy]
 python_version = "3.11"
@@ -118,12 +47,11 @@ warn_no_return = false
 warn_unreachable = false
 strict_equality = false
 ignore_missing_imports = true
-exclude = [
-    "tests/",
-    "build/",
-    "dist/",
-    "venv/",
-    "env/",
-    ".venv/",
-    ".env/"
-]
+exclude = [ "tests/", "build/", "dist/", "venv/", "env/", ".venv/", ".env/",]
+
+[tool.setuptools.package-dir]
+"" = "."
+
+[tool.setuptools.packages.find]
+where = [ ".",]
+include = [ "src*",]

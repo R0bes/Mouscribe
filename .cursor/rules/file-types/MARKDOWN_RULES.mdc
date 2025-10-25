@@ -1,0 +1,130 @@
+---
+fileTypes: [md, mdc]
+description: General rules for Markdown files
+---
+
+# Markdown Rules - MD/MDC Files
+
+## 🎯 Overview
+
+General guidelines for Markdown files (`.md` and `.mdc` extensions) to ensure consistent formatting, readability, and maintainability.
+
+## 📋 Core Formatting Rules
+
+### **Structure and Organization**
+
+- **Headings**: Use consistent heading hierarchy (H1 → H2 → H3)
+- **Blank Lines**: Add blank lines around headings, lists, and code blocks
+- **File Structure**: Start files with a top-level heading
+- **Line Endings**: End files with a single newline character
+
+### **Content Formatting**
+
+- **Line Length**: Keep lines within reasonable limits (80-120 characters)
+- **Lists**: Use consistent list formatting and indentation
+- **Code Blocks**: Specify language for syntax highlighting
+- **Links**: Use descriptive link text instead of bare URLs
+
+### **Readability**
+
+- **Clear Headings**: Write descriptive, concise headings
+- **Logical Flow**: Maintain logical document structure
+- **Consistent Style**: Use consistent formatting throughout
+- **Table of Contents**: Include TOC for long documents
+
+## 🔧 Implementation Guidelines
+
+### **Before Editing**
+
+1. Review existing structure and formatting
+2. Identify formatting inconsistencies
+3. Plan changes to maintain readability
+
+### **During Editing**
+
+1. Follow consistent formatting patterns
+2. Add appropriate blank lines
+3. Use proper Markdown syntax
+4. Maintain logical document flow
+
+### **After Editing**
+
+1. Review formatting consistency
+2. Check for readability issues
+3. Verify proper structure
+4. Test rendering if applicable
+
+## 🛠️ Tools and Validation
+
+### **Linting Tools**
+
+- **markdownlint**: Automated formatting checks
+- **VS Code Extension**: Real-time validation
+- **Pre-commit Hooks**: Automated checking
+
+### **Validation**
+
+- **Syntax Check**: Validate Markdown syntax
+- **Format Check**: Ensure consistent formatting
+- **Structure Check**: Verify logical organization
+- **Link Check**: Validate internal and external links
+
+## 📊 Quality Checklist
+
+When working with Markdown files, ensure:
+
+- [ ] **Structure**: Consistent heading hierarchy
+- [ ] **Formatting**: Proper blank lines and spacing
+- [ ] **Readability**: Clear and concise content
+- [ ] **Consistency**: Uniform formatting style
+- [ ] **Links**: Descriptive link text
+- [ ] **Code**: Proper code block formatting
+- [ ] **Organization**: Logical document flow
+
+## 🎯 Best Practices
+
+### **Content Organization**
+
+- Use clear, descriptive headings
+- Maintain logical document structure
+- Include table of contents for long documents
+- Group related content together
+
+### **Formatting Consistency**
+
+- Use consistent list formatting
+- Apply uniform code block styling
+- Maintain consistent link formatting
+- Use appropriate emphasis (bold, italic)
+
+### **Readability Enhancement**
+
+- Write clear, concise sentences
+- Use bullet points for lists
+- Include examples where helpful
+- Add visual breaks for long content
+
+## ⚠️ Common Issues
+
+### **Formatting Problems**
+
+- Missing blank lines around elements
+- Inconsistent heading hierarchy
+- Improper list formatting
+- Missing file structure
+
+### **Content Issues**
+
+- Unclear or vague headings
+- Poor document organization
+- Missing context or examples
+- Inconsistent writing style
+
+### **Prevention**
+
+- Use automated formatting tools
+- Review content before publishing
+- Follow established style guides
+- Regular formatting audits
+
+---

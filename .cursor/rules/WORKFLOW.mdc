@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+---
+# Workflow - Plan-Execute-Verify-Report
+
+## 🔄 Workflow Cycle
+
+### 1) **PLAN**
+
+- Draft a plan **with the supervisor** before making any changes
+- Wait for explicit written approval (ACK) before **EXECUTE**
+- Plan must include: goal, scope, non-goals, approach, risks, validation, rollback
+- Include time estimates and resource requirements
+- Define success criteria and acceptance tests
+- **Response Format**: Use [AGENT_RES_WF_P1.mdc](templates/AGENT_RES_WF_P1.mdc) template
+
+### 2) **EXECUTE**
+
+- Implement **conservatively** (smallest viable change; no opportunistic refactors)
+- Stay strictly within the approved scope; ask before changing the plan
+- Keep diffs small and isolated; prefer incremental PRs
+- Follow atomic apply principle (all or nothing changes)
+- Clean up obsolete artifacts (files + directories)
+- **Response Format**: Use [AGENT_RES_WF_P2.mdc](templates/AGENT_RES_WF_P2.mdc) template
+
+### 3) **VERIFY**
+
+- **Validate your results** (tests, checks, evidence) before reporting completion
+- Critically reflect on rules compliance. Did you follow all the Rules and Paradigms?
+- If you **cannot** validate on your own, **stop** and escalate to the supervisor with findings and blockers
+- Run tests and checks to ensure functionality
+- Verify no breaking changes were introduced
+- **Response Format**: Use [AGENT_RES_WF_P3.mdc](templates/AGENT_RES_WF_P3.mdc) template
+
+### 4) **REPORT**
+
+- Provide a concise status: what changed, evidence, tests, open questions
+- **MUST** update .cursor/CHANGELOG.md with all changes
+- End with a compliance confirmation and cite **one random rule** (see *End-of-Interaction*)
+- Document any deviations from the original plan
+- Include rollback instructions if applicable
+- **Response Format**: Use [AGENT_RES_WF_P4.mdc](templates/AGENT_RES_WF_P4.mdc) template
+
+## ⏱️ 30-Second Test
+
+Can another agent understand **what/why**, **safely repeat**, and **revert** within 30 seconds?
+→ If not, sharpen it.
+
+## 📝 Action Requirements
+
+- **Atomic Apply** (preferred/when possible) - all or nothing changes
+- **Trash Orphans** (files + directories) - clean up obsolete artifacts
+- **Incremental Changes** - prefer small, isolated diffs
+- **Rollback Ready** - changes must be reversible quickly
+
+---

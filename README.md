@@ -18,13 +18,51 @@ Ein fortschrittliches Sprach-zu-Text-Tool, das Audio-Aufnahmen über Mausklicks 
 - **Python**: 3.8 oder höher
 - **RAM**: Mindestens 4GB (8GB empfohlen)
 - **Speicherplatz**: 2GB für Anwendung + Modell-Downloads
+
+## 🚀 Release Management
+
+Mauscribe verwendet ein automatisiertes CI/CD-System mit GitHub Actions und benutzerdefinierten Python-Tools für Release-Management.
+
+### Release-Prozess
+
+1. **Version Bump**: `make release-patch` (oder `release-minor`/`release-major`)
+2. **Automatischer Build**: GitHub Actions erstellt .exe auf Tag-Push
+3. **Automatisches Release**: Release-Manager erstellt GitHub Release mit Changelog
+
+### Verfügbare Make-Targets
+
+```bash
+# Release-Management
+make release-patch    # Patch-Version (1.0.0 -> 1.0.1)
+make release-minor    # Minor-Version (1.0.0 -> 1.1.0)
+make release-major    # Major-Version (1.0.0 -> 2.0.0)
+make changelog        # Changelog-Vorschau generieren
+make upload-release   # Release-Assets hochladen
+
+# Entwicklung
+make dev-release      # Development-Release für Tests
+```
+
+### CI/CD Pipeline
+
+- **Tests**: Automatische Tests bei jedem Push/PR
+- **Linting**: Code-Quality-Checks mit Black, isort, flake8
+- **Security**: Bandit und Safety Scans
+- **Build**: Automatischer .exe-Build bei Version-Tags
+- **Release**: Automatische GitHub Releases mit Changelog
+
+### Release-Tools
+
+- **`tools/version_bump.py`**: Semantic Versioning und Git-Tagging
+- **`tools/release_manager.py`**: GitHub Release-Erstellung mit Changelog
+- **`tools/release_config.toml`**: Release-Konfiguration
 - **Audio**: Mikrofon oder Audio-Eingabegerät
 
 ## 🛠️ Installation
 
 ### 1. Repository klonen
 ```bash
-git clone https://github.com/yourusername/mauscribe.git
+git clone https://github.com/R0bes/Mauscribe.git
 cd mauscribe
 ```
 
@@ -43,14 +81,17 @@ source venv/bin/activate
 ### 3. Abhängigkeiten installieren
 ```bash
 # Hauptabhängigkeiten
-pip install -r requirements.txt
+pip install -e .
 
-# Test-Abhängigkeiten (optional)
-pip install -r requirements-test.txt
+# Windows-spezifische Abhängigkeiten
+pip install -e ".[windows]"
+
+# Entwicklungs-Abhängigkeiten (optional)
+pip install -e ".[dev]"
 ```
 
 ### 4. Konfiguration anpassen
-Die Standardkonfiguration ist in `config.toml` gespeichert. Passe sie nach deinen Bedürfnissen an:
+Die Standardkonfiguration ist in `settings.toml` gespeichert. Passe sie nach deinen Bedürfnissen an:
 
 ```toml
 [audio]
@@ -63,12 +104,23 @@ language = "de"  # oder "en", "auto"
 whisper_model = "base"  # tiny, base, small, medium, large
 ```
 
+### 5. Anwendung starten
+```bash
+# Mit Makefile (empfohlen)
+make run
+
+# Oder direkt
+python main.py
+```
+
 ## 🎯 Verwendung
 
 ### Grundlegende Bedienung
 
 1. **Anwendung starten**:
    ```bash
+   make run
+   # oder
    python main.py
    ```
 
@@ -141,10 +193,10 @@ show_all = true         # Alle Benachrichtigungen anzeigen
 
 ```bash
 # Alle Tests ausführen
-python run_all_tests.py
+make tests
 
-# Spezifischen Test ausführen
-python run_all_tests.py tests/test_integration.py
+# Tests mit Coverage
+make tests-coverage
 
 # Mit pytest direkt
 pytest tests/ -v
@@ -187,23 +239,26 @@ mauscribe/
 
 1. **Komponente implementieren** in `src/`
 2. **Tests schreiben** in `tests/`
-3. **Konfiguration erweitern** in `config.toml`
+3. **Konfiguration erweitern** in `settings.toml`
 4. **Dokumentation aktualisieren**
 
 ### Code-Qualität
 
 ```bash
-# Code formatieren
-black src/ tests/
+# Alle Checks ausführen
+make check
 
-# Linting
-flake8 src/ tests/
+# Auto-Fix für Code-Issues
+make fix
 
-# Typ-Checking
-mypy src/
+# Komplette Validierung (Checks + Tests)
+make validate
 
-# Coverage
-pytest --cov=src tests/
+# Einzelne Tools
+black src/ tests/          # Code formatieren
+flake8 src/ tests/         # Linting
+mypy src/                  # Typ-Checking
+pytest --cov=src tests/    # Coverage
 ```
 
 ## 🐛 Fehlerbehebung
@@ -211,7 +266,7 @@ pytest --cov=src tests/
 ### Häufige Probleme
 
 **Audio-Gerät nicht erkannt**:
-- Überprüfe `config.toml` Audio-Einstellungen
+- Überprüfe `settings.toml` Audio-Einstellungen
 - Teste verschiedene `device`-Indizes
 - Stelle sicher, dass das Mikrofon aktiv ist
 
@@ -286,9 +341,9 @@ Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe [LICENSE](LICENSE) Da
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/mauscribe/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/mauscribe/discussions)
-- **Wiki**: [Projekt-Wiki](https://github.com/yourusername/mauscribe/wiki)
+- **Issues**: [GitHub Issues](https://github.com/R0bes/Mauscribe/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/R0bes/Mauscribe/discussions)
+- **Wiki**: [Projekt-Wiki](https://github.com/R0bes/Mauscribe/wiki)
 
 ---
 

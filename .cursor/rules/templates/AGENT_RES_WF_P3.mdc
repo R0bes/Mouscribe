@@ -1,0 +1,132 @@
+---
+templateType: workflow-phase-response
+phase: VERIFY
+description: Template for VERIFY phase agent responses
+---
+
+# VERIFY Phase Response Template
+
+## 🔍 Verification Status
+
+**Implementation Completed**: [Yes/No] - [Date/Time]
+**Verification Started**: [Date/Time]
+**Current Status**: [In Progress/Completed/Blocked]
+
+## ✅ Validation Results
+
+### **Functional Testing**
+
+**Unit Tests**:
+
+- [ ] **Tests Run**: [Number] tests executed
+- [ ] **Tests Passed**: [Number] tests passed
+- [ ] **Tests Failed**: [Number] tests failed
+- [ ] **Coverage**: [Percentage] code coverage
+
+**Integration Tests**:
+
+- [ ] **Tests Run**: [Number] tests executed
+- [ ] **Tests Passed**: [Number] tests passed
+- [ ] **Tests Failed**: [Number] tests failed
+
+### **Performance Testing**
+
+**Benchmarks**:
+
+- [ ] **Response Time**: [Time] - [Target: Time]
+- [ ] **Memory Usage**: [Usage] - [Target: Usage]
+- [ ] **CPU Usage**: [Usage] - [Target: Usage]
+
+### **Security Testing**
+
+**Security Checks**:
+
+- [ ] **Vulnerability Scan**: [Results]
+- [ ] **Authentication**: [Validation results]
+- [ ] **Data Protection**: [Validation results]
+
+### **Compliance Testing**
+
+**Rule Compliance**:
+
+- [ ] **Workflow Rules**: [Compliance status]
+- [ ] **Paradigms**: [Compliance status]
+- [ ] **Quality Standards**: [Compliance status]
+
+## 🧪 Test Evidence
+
+### **Test Results**
+
+**Automated Tests**:
+
+```text
+[Test output or summary]
+```
+
+**Manual Tests**:
+
+- [ ] **Test 1**: [Description] - [Result]
+- [ ] **Test 2**: [Description] - [Result]
+
+### **Validation Evidence**
+
+**Code Quality**:
+
+- [ ] **Linting Results**: [Summary]
+- [ ] **Type Checking**: [Results]
+- [ ] **Security Scan**: [Results]
+
+## ⚠️ Issues Found
+
+### **Critical Issues**
+
+- [ ] [Issue 1]
+  - **Description**: [What is the issue]
+  - **Impact**: [How this affects functionality]
+  - **Resolution**: [How it will be resolved]
+
+### **Non-Critical Issues**
+
+- [ ] [Issue 1]
+  - **Description**: [What is the issue]
+  - **Impact**: [How this affects functionality]
+  - **Resolution**: [How it will be resolved]
+
+## 🔍 Verification Checklist
+
+### **Functional Verification**
+
+- [ ] **Core Functionality**: All core features work as expected
+- [ ] **Edge Cases**: Edge cases are handled properly
+- [ ] **Error Handling**: Error conditions are handled gracefully
+
+### **Technical Verification**
+
+- [ ] **Code Quality**: Code meets quality standards
+- [ ] **Performance**: Performance meets requirements
+- [ ] **Security**: Security requirements are met
+
+### **Compliance Verification**
+
+- [ ] **Workflow Compliance**: All workflow phases completed
+- [ ] **Paradigm Compliance**: All paradigms followed
+- [ ] **Quality Compliance**: Quality standards maintained
+
+## 📊 Verification Metrics
+
+**Tests Executed**: [Number]
+**Tests Passed**: [Number]
+**Tests Failed**: [Number]
+**Coverage Achieved**: [Percentage]
+**Issues Found**: [Number]
+
+## 🎯 Verification Conclusion
+
+**Overall Status**: [Pass/Fail/Partial]
+**Ready for Production**: [Yes/No]
+**Ready for REPORT Phase**: [Yes/No]
+**Blockers**: [Description of any blockers]
+
+**Verification completed successfully. Ready to proceed to REPORT phase.**
+
+---

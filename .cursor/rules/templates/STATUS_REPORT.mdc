@@ -1,0 +1,56 @@
+---
+templateType: supporting-template
+primaryUse: component-within-AGENT_RES_WF_P2
+description: Template for regular status updates (used within EXECUTE phase)
+---
+
+# Status Report - [Date/Time]
+
+## 📋 Summary
+
+**Task**: [Brief description of current task]
+**Status**: [In Progress/Completed/Blocked]
+**Progress**: [X% complete or specific milestones reached]
+
+## ✅ Completed
+
+- [ ] [Specific task or milestone completed]
+- [ ] [Evidence of completion - tests, checks, etc.]
+
+## 🔄 In Progress
+
+- [ ] [Current task being worked on]
+- [ ] [Expected completion time]
+
+## ⚠️ Blockers/Issues
+
+- [ ] [Description of blocker]
+  - **Impact**: [How this affects progress]
+  - **Next Steps**: [What needs to happen to resolve]
+  - **Escalation**: [Yes/No - if yes, to whom]
+
+## 🧪 Testing & Validation
+
+- [ ] [Tests run and results]
+- [ ] [Validation performed]
+- [ ] [Evidence of functionality]
+
+## 📝 Open Questions
+
+- [ ] [Question 1]
+- [ ] [Question 2]
+
+## 🎯 Next Steps
+
+- [ ] [Immediate next action]
+- [ ] [Short-term goals]
+- [ ] [Long-term objectives]
+
+## 📊 Metrics
+
+- **Time Spent**: [Hours/days]
+- **Files Modified**: [Count and list]
+- **Tests Added**: [Count]
+- **Documentation Updated**: [Yes/No]
+
+---

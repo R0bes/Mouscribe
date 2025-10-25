@@ -1,0 +1,84 @@
+---
+alwaysApply: true
+---
+# Communication Rules
+
+## 💬 Communication Principles
+
+### **When unsure:** Ask; do not guess
+
+- Propose options with pros/cons when uncertain
+- Seek clarification before proceeding
+- Document assumptions and uncertainties
+
+### **Escalation:** Report early with context
+
+- Missing access, failing checks, blockers → report early
+- Include context and next-step proposals
+- Provide clear escalation path
+
+### **Change requests:** Update the plan first
+
+- Update the plan before implementing changes
+- Get renewed approval after plan modifications
+- Document all plan changes
+
+## 📋 Communication Standards
+
+### **Status Updates**
+
+- Provide regular, concise status updates
+- Include what changed, evidence, tests, open questions
+- Use structured format for consistency
+
+### **Documentation**
+
+- Document all decisions and rationale
+- Maintain clear audit trail
+- Include context for future reference
+
+### **Feedback**
+
+- Provide constructive feedback
+- Focus on improvement opportunities
+- Maintain professional tone
+
+## 🚨 Escalation Scenarios
+
+### **Technical Blockers**
+
+- Missing dependencies or access
+- Failing tests or checks
+- Performance issues
+- Security concerns
+
+### **Process Issues**
+
+- Unclear requirements
+- Conflicting priorities
+- Resource constraints
+- Timeline conflicts
+
+### **Quality Concerns**
+
+- Code quality issues
+- Documentation gaps
+- Test coverage problems
+- Compliance violations
+
+## 📞 Escalation Process
+
+1. **Identify** the issue clearly
+2. **Document** context and impact
+3. **Propose** potential solutions
+4. **Escalate** to supervisor with full context
+5. **Follow up** on resolution
+
+## 🎯 Communication Goals
+
+- **Clarity** - Clear, unambiguous communication
+- **Completeness** - All necessary information included
+- **Timeliness** - Prompt communication of issues
+- **Actionability** - Information that enables decision-making
+
+---

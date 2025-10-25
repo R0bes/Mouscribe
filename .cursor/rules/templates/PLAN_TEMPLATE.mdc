@@ -1,0 +1,125 @@
+---
+templateType: supporting-template
+primaryUse: component-within-AGENT_RES_WF_P1
+description: Template for planning phase of workflow (used within PLAN phase)
+---
+
+# Plan: [Brief Description]
+
+## 🎯 Goal
+
+**Primary Objective**: [What we want to achieve]
+**Success Criteria**: [How we'll know we've succeeded]
+**Acceptance Tests**: [Specific tests that must pass]
+
+## 📋 Scope
+
+**In Scope**:
+
+- [ ] [Feature/change 1]
+- [ ] [Feature/change 2]
+- [ ] [Feature/change 3]
+
+**Out of Scope**:
+
+- [ ] [What we're NOT doing]
+- [ ] [Future considerations]
+- [ ] [Related but separate work]
+
+## 🛠️ Approach
+
+**Strategy**: [High-level approach to solving the problem]
+**Methodology**: [Specific methods or techniques to be used]
+**Architecture**: [System design or structural changes]
+**Dependencies**: [What needs to be in place first]
+
+## ⚠️ Risks
+
+**Technical Risks**:
+
+- [ ] [Risk 1]
+  - **Impact**: [High/Medium/Low]
+  - **Probability**: [High/Medium/Low]
+  - **Mitigation**: [How to reduce risk]
+- [ ] [Risk 2]
+  - **Impact**: [High/Medium/Low]
+  - **Probability**: [High/Medium/Low]
+  - **Mitigation**: [How to reduce risk]
+
+**Process Risks**:
+
+- [ ] [Risk 1]
+  - **Impact**: [High/Medium/Low]
+  - **Probability**: [High/Medium/Low]
+  - **Mitigation**: [How to reduce risk]
+
+## 🧪 Validation
+
+**Testing Strategy**:
+
+- [ ] [Unit tests to be added]
+- [ ] [Integration tests to be added]
+- [ ] [End-to-end tests to be added]
+- [ ] [Performance tests to be added]
+
+**Validation Criteria**:
+
+- [ ] [Specific validation steps]
+- [ ] [Performance benchmarks]
+- [ ] [Security checks]
+- [ ] [Compliance verification]
+
+## 🔄 Rollback
+
+**Rollback Strategy**: [How to undo changes if needed]
+**Rollback Triggers**: [When to initiate rollback]
+**Rollback Steps**:
+
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+
+## 📅 Timeline
+
+**Estimated Duration**: [Hours/days]
+**Milestones**:
+
+- [ ] [Milestone 1] - [Date/Time]
+- [ ] [Milestone 2] - [Date/Time]
+- [ ] [Milestone 3] - [Date/Time]
+
+**Resource Requirements**:
+
+- **Time**: [Hours/days needed]
+- **Dependencies**: [What needs to be available]
+- **Tools**: [Required tools or software]
+- **Access**: [Required permissions or access]
+
+## 📝 Deliverables
+
+**Code Changes**:
+
+- [ ] [File 1] - [Description of changes]
+- [ ] [File 2] - [Description of changes]
+- [ ] [File 3] - [Description of changes]
+
+**Documentation**:
+
+- [ ] [Documentation to be updated]
+- [ ] [New documentation to be created]
+- [ ] [Examples to be added]
+
+**Testing**:
+
+- [ ] [Test files to be created/updated]
+- [ ] [Test data to be prepared]
+- [ ] [Test environment setup]
+
+## ✅ Approval
+
+**Plan Status**: [Draft/Ready for Review/Approved]
+**Reviewer**: [Who needs to review this plan]
+**Approval Required**: [Yes/No]
+**Next Steps**: [What happens after approval]
+
+---

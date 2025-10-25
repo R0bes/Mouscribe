@@ -1,0 +1,338 @@
+---
+fileTypes: [toml, yaml, yml, json, ini, cfg, conf]
+description: Specific rules for configuration files
+---
+
+# Configuration Rules - Config Files
+
+## 🎯 Overview
+
+These rules apply specifically to configuration files (`.toml`, `.yaml`, `.yml`, `.json`, `.ini`, `.cfg`, `.conf` extensions) to ensure consistency, security, and maintainability.
+
+## 📋 Critical Rules (Must Follow)
+
+### **Security First**
+
+**Rule**: Never commit secrets or sensitive data to configuration files.
+**Violation**: Hardcoded passwords, API keys, or sensitive information.
+**Fix**: Use environment variables, secure config management, or external secret stores.
+
+**Example**:
+
+```toml
+# Bad - secrets in config
+[database]
+password = "mypassword123"
+api_key = "sk-1234567890abcdef"
+
+# Good - use environment variables
+[database]
+password = "${DATABASE_PASSWORD}"
+api_key = "${API_KEY}"
+```
+
+### **Validation and Schema**
+
+**Rule**: Validate configuration files against defined schemas.
+**Violation**: Invalid configuration values or missing required fields.
+**Fix**: Implement configuration validation and provide clear error messages.
+
+**Example**:
+
+```python
+# Configuration validation
+from pydantic import BaseModel, validator
+from typing import Optional
+
+class DatabaseConfig(BaseModel):
+    host: str
+    port: int
+    database: str
+    password: Optional[str] = None
+
+    @validator('port')
+    def port_must_be_positive(cls, v):
+        if v <= 0:
+            raise ValueError('Port must be positive')
+        return v
+```
+
+### **Environment-Specific Configs**
+
+**Rule**: Use environment-specific configuration files.
+**Violation**: Single config file for all environments.
+**Fix**: Separate configs for development, staging, and production.
+
+**Example**:
+
+```text
+config/
+├── base.toml          # Common settings
+├── development.toml   # Development overrides
+├── staging.toml       # Staging overrides
+└── production.toml    # Production overrides
+```
+
+## 📝 Format-Specific Rules
+
+### **TOML Files (.toml)**
+
+**Rule**: Follow TOML specification and best practices.
+**Violation**: Invalid TOML syntax or inconsistent formatting.
+**Fix**: Use proper TOML syntax and consistent formatting.
+
+**Example**:
+
+```toml
+# Good TOML formatting
+[section]
+key = "value"
+number = 42
+boolean = true
+
+[section.subsection]
+nested_key = "nested_value"
+
+# Arrays
+list = ["item1", "item2", "item3"]
+
+# Tables
+[table]
+key = "value"
+```
+
+### **YAML Files (.yaml, .yml)**
+
+**Rule**: Follow YAML specification and use consistent formatting.
+**Violation**: Invalid YAML syntax or inconsistent indentation.
+**Fix**: Use proper YAML syntax and consistent indentation.
+
+**Example**:
+
+```yaml
+# Good YAML formatting
+section:
+  key: value
+  number: 42
+  boolean: true
+
+  subsection:
+    nested_key: nested_value
+
+  list:
+    - item1
+    - item2
+    - item3
+```
+
+### **JSON Files (.json)**
+
+**Rule**: Follow JSON specification and use consistent formatting.
+**Violation**: Invalid JSON syntax or inconsistent formatting.
+**Fix**: Use proper JSON syntax and consistent formatting.
+
+**Example**:
+
+```json
+{
+  "section": {
+    "key": "value",
+    "number": 42,
+    "boolean": true,
+    "subsection": {
+      "nested_key": "nested_value"
+    },
+    "list": ["item1", "item2", "item3"]
+  }
+}
+```
+
+### **INI Files (.ini, .cfg, .conf)**
+
+**Rule**: Follow INI file conventions and use consistent formatting.
+**Violation**: Invalid INI syntax or inconsistent formatting.
+**Fix**: Use proper INI syntax and consistent formatting.
+
+**Example**:
+
+```ini
+# Good INI formatting
+[section]
+key = value
+number = 42
+boolean = true
+
+[section.subsection]
+nested_key = nested_value
+```
+
+## 🔧 Implementation Guidelines
+
+### **Before Editing Config Files**
+
+1. Check existing configuration structure
+2. Identify environment-specific settings
+3. Plan changes to maintain consistency
+4. Consider impact on different environments
+
+### **During Editing**
+
+1. Use consistent formatting and syntax
+2. Add comments for complex configurations
+3. Validate configuration values
+4. Use environment variables for secrets
+5. Maintain backward compatibility
+
+### **After Editing**
+
+1. Validate configuration syntax
+2. Test configuration loading
+3. Verify environment-specific settings
+4. Check for security issues
+5. Update documentation if needed
+
+## 🛠️ Tools and Validation
+
+### **TOML Validation**
+
+```bash
+# Install toml-validator
+pip install toml-validator
+
+# Validate TOML file
+toml-validator config.toml
+```
+
+### **YAML Validation**
+
+```bash
+# Install yamllint
+pip install yamllint
+
+# Validate YAML file
+yamllint config.yaml
+
+# Install js-yaml for Node.js
+npm install -g js-yaml
+
+# Validate YAML file
+js-yaml config.yaml
+```
+
+### **JSON Validation**
+
+```bash
+# Validate JSON file
+python -m json.tool config.json
+
+# Install jsonlint
+npm install -g jsonlint
+
+# Validate JSON file
+jsonlint config.json
+```
+
+### **Configuration Testing**
+
+```python
+# Test configuration loading
+import toml
+import yaml
+import json
+
+def test_config_loading():
+    # Test TOML
+    with open('config.toml', 'r') as f:
+        toml_config = toml.load(f)
+
+    # Test YAML
+    with open('config.yaml', 'r') as f:
+        yaml_config = yaml.safe_load(f)
+
+    # Test JSON
+    with open('config.json', 'r') as f:
+        json_config = json.load(f)
+
+    # Validate configuration
+    assert 'required_key' in toml_config
+    assert toml_config['required_key'] is not None
+```
+
+## 📊 Compliance Checklist
+
+When working with configuration files, ensure:
+
+- [ ] **Security**: No hardcoded secrets or sensitive data
+- [ ] **Validation**: Configuration values are validated
+- [ ] **Environment**: Environment-specific configs are used
+- [ ] **Syntax**: File syntax is valid for the format
+- [ ] **Formatting**: Consistent formatting and structure
+- [ ] **Documentation**: Configuration is documented
+- [ ] **Testing**: Configuration loading is tested
+- [ ] **Backward Compatibility**: Changes don't break existing setups
+
+## 🎯 Best Practices
+
+### **Structure**
+
+- Use logical grouping of related settings
+- Maintain consistent naming conventions
+- Use hierarchical structure where appropriate
+- Include comments for complex configurations
+
+### **Security**
+
+- Never commit secrets to version control
+- Use environment variables for sensitive data
+- Implement configuration validation
+- Use secure configuration management tools
+
+### **Maintainability**
+
+- Use consistent formatting across all config files
+- Document configuration options
+- Provide default values where appropriate
+- Use meaningful names for configuration keys
+
+## ⚠️ Common Violations
+
+### **Most Frequent Issues**
+
+1. **Security**: Hardcoded secrets in configuration files
+2. **Validation**: Missing validation for configuration values
+3. **Environment**: Single config file for all environments
+4. **Syntax**: Invalid syntax for the configuration format
+5. **Documentation**: Missing or incomplete configuration documentation
+
+### **Prevention**
+
+- Use configuration validation tools
+- Implement environment-specific configs
+- Use secure configuration management
+- Regular security reviews
+- Automated configuration testing
+
+## 🔒 Security Considerations
+
+### **Secrets Management**
+
+- Use environment variables for secrets
+- Implement secret rotation
+- Use secure configuration management tools
+- Regular security audits
+
+### **Access Control**
+
+- Limit access to configuration files
+- Use proper file permissions
+- Implement configuration encryption where needed
+- Monitor configuration changes
+
+### **Validation**
+
+- Validate all configuration inputs
+- Implement configuration schema validation
+- Use type checking for configuration values
+- Provide clear error messages for invalid configurations
+
+---

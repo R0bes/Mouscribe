@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+description: Alias translation system for agent interactions
+---
+
+# Alias Translation System
+
+## 🎯 Overview
+
+This file provides a translation system for aliases. When you send a semicolon-separated list of keywords, they will be matched against the alias definitions below and translated accordingly.
+
+## 📋 Alias Definitions
+
+**Analysis** → Complete and comprehensive analysis of the entire project/repository/working directory
+
+- **Full Project Analysis**: Read all data, check all dependencies, critically examine for logic errors
+- **Project Intention**: Identify and document the original project intention and purpose
+- **Agent Detection**: Look for signs that AI agents have worked on the project
+- **Deviation Analysis**: Check if agents have deviated from the original project intention
+- **Agent Impact Assessment**: Evaluate if agent-typical behaviors have negatively impacted the project
+- **Critical Review**: Comprehensive logic error detection and architectural assessment
+
+**Flow** / **Function** / **Functionality** → Detailed analysis of program flow and user interface interactions**
+
+- **Interface Mapping**: Identify all user interfaces and interaction points
+- **Flow Analysis**: Trace exact program flow for each user interaction
+- **Interface Documentation**: Document what happens when each interface is accessed
+- **User Journey Mapping**: Map complete user workflows and decision paths
+- **State Transitions**: Analyze program state changes and transitions
+- **Event Tracing**: Track all events triggered by user interactions
+
+**Optimize** → Improve system performance and efficiency
+
+- **Performance Profiling**: Measure and analyze current performance metrics
+- **Bottleneck Identification**: Find performance bottlenecks and resource constraints
+- **Algorithm Optimization**: Optimize algorithms and data structures for better performance
+- **Memory Usage Optimization**: Reduce memory consumption and improve memory management
+- **Database Query Optimization**: Optimize database queries and indexing strategies
+- **Caching Implementation**: Implement caching mechanisms for frequently accessed data
+- **Resource Utilization**: Improve CPU, memory, and I/O resource utilization
+- **Performance Monitoring**: Set up monitoring and alerting for performance metrics
+- **Load Testing**: Test system performance under various load conditions
+- **Optimization Report**: Generate detailed before/after performance comparison
+
+## 📝 Usage Example
+
+**Input**: "analyse;flow;optimize"
+
+**Output**:
+
+- Analyse → Complete project analysis with documentation and diagrams
+- Flow → Detailed program flow analysis with interface mapping and user journey documentation
+- Optimize → Complete performance optimization with monitoring and detailed optimization report

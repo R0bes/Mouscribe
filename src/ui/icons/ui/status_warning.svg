@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Warning triangle -->
+  <path d="M 1 21 L 23 21 L 12 2 Z" fill="none" stroke="#FF60A0" stroke-width="2" filter="url(#glow)"/>
+  <path d="M 12 9 L 12 13" stroke="#FF60A0" stroke-width="2" filter="url(#glow)"/>
+  <path d="M 12 17 L 12.01 17" stroke="#FF60A0" stroke-width="2" filter="url(#glow)"/>
+</svg>

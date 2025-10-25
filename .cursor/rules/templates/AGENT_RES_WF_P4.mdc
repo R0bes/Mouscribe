@@ -1,0 +1,217 @@
+---
+templateType: workflow-phase-response
+phase: REPORT
+description: Template for REPORT phase agent responses
+---
+
+# REPORT Phase Response Template
+
+## 📋 Final Report Summary
+
+**Task**: [Brief description of completed task]
+**Status**: [Completed/Partially Completed/Failed]
+**Duration**: [Total time spent]
+**Completion Date**: [Date/Time]
+
+## ✅ What Changed
+
+### **Files Modified**
+
+- [ ] [File 1](path/to/file1) - [Brief description of changes]
+- [ ] [File 2](path/to/file2) - [Brief description of changes]
+
+### **Key Changes Made**
+
+**Code Changes**:
+
+- [ ] [Specific code changes made]
+- [ ] [New functions/classes added]
+
+**Configuration Changes**:
+
+- [ ] [Config files modified]
+- [ ] [Environment variables added]
+
+**Documentation Changes**:
+
+- [ ] [Documentation file 1] - [Brief description of changes]
+- [ ] [Documentation file 2] - [Brief description of changes]
+
+## 🧪 Evidence and Testing
+
+### **Test Results**
+
+**Unit Tests**:
+
+- [ ] **Tests Run**: [Number] tests executed
+- [ ] **Tests Passed**: [Number] tests passed
+- [ ] **Tests Failed**: [Number] tests failed
+- [ ] **Coverage**: [Percentage] code coverage
+
+**Integration Tests**:
+
+- [ ] **Tests Run**: [Number] tests executed
+- [ ] **Tests Passed**: [Number] tests passed
+- [ ] **Tests Failed**: [Number] tests failed
+
+### **Validation Evidence**
+
+**Code Quality**:
+
+- [ ] **Linting**: [Results summary]
+- [ ] **Type Checking**: [Results summary]
+- [ ] **Security Scan**: [Results summary]
+
+**Functional Validation**:
+
+- [ ] **Core Features**: [Validation results]
+- [ ] **Edge Cases**: [Validation results]
+- [ ] **Error Handling**: [Validation results]
+
+## 📊 Metrics and Performance
+
+### **Performance Metrics**
+
+**Response Time**: [Time] - [Target: Time]
+**Memory Usage**: [Usage] - [Target: Usage]
+**CPU Usage**: [Usage] - [Target: Usage]
+
+### **Quality Metrics**
+
+**Code Coverage**: [Percentage]
+**Cyclomatic Complexity**: [Average]
+**Code Duplication**: [Percentage]
+
+### **Compliance Metrics**
+
+**Workflow Compliance**: [Percentage]
+**Paradigm Compliance**: [Percentage]
+**Quality Standard Compliance**: [Percentage]
+
+## ❓ Open Questions
+
+### **Unresolved Questions**
+
+- [ ] [Question 1]
+  - **Context**: [Why this question exists]
+  - **Impact**: [How this affects the solution]
+  - **Next Steps**: [What needs to happen]
+
+### **Future Considerations**
+
+- [ ] [Consideration 1]
+  - **Description**: [What to consider in the future]
+  - **Timeline**: [When this should be addressed]
+  - **Priority**: [High/Medium/Low]
+
+## 🔄 Rollback Information
+
+### **Rollback Strategy**
+
+**Rollback Required**: [Yes/No]
+**Rollback Complexity**: [Low/Medium/High]
+**Rollback Time**: [Estimated time]
+
+**Rollback Steps**:
+
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+
+## 📝 Documentation Updates
+
+### **CHANGELOG.md**
+
+**Entry Added**: [Yes/No]
+**Entry Content**: [Brief description of changelog entry]
+
+#### **Direct Changelog Quote**
+
+> **[Date] - [Change Type]**: [Direct quote from CHANGELOG.md]
+>
+> **Details**: [Additional context from changelog entry]
+>
+> **Full Entry**: [Link to specific changelog section](CHANGELOG.md#changelog-section)
+
+#### **Change Impact Summary**
+
+**Files Affected**: [Number] files modified
+**Lines Changed**: [Number] lines added/removed
+**Breaking Changes**: [Yes/No]
+**Migration Required**: [Yes/No]
+
+### **README Updates**
+
+**README Modified**: [Yes/No]
+**Sections Updated**: [List of sections]
+
+## 🎯 Success Criteria Assessment
+
+### **Original Goals**
+
+- [ ] **Goal 1**: [Status] - [Description]
+- [ ] **Goal 2**: [Status] - [Description]
+- [ ] **Goal 3**: [Status] - [Description]
+
+### **Success Criteria**
+
+- [ ] **Criterion 1**: [Met/Not Met] - [Description]
+- [ ] **Criterion 2**: [Met/Not Met] - [Description]
+- [ ] **Criterion 3**: [Met/Not Met] - [Description]
+
+## ✅ Compliance Confirmation
+
+### **Workflow Compliance**
+
+- [ ] **PLAN Phase**: Completed with supervisor approval
+- [ ] **EXECUTE Phase**: Completed within approved scope
+- [ ] **VERIFY Phase**: Completed with validation
+- [ ] **REPORT Phase**: Completed with documentation
+
+### **Paradigm Compliance**
+
+- [ ] **YAGNI**: No premature features added
+- [ ] **OBSERVABLE**: Work emits evidence (logs, tests, documentation)
+- [ ] **EXPLICIT**: Clear and documented behavior
+- [ ] **IDEMPOTENT**: Safe to run multiple times
+- [ ] **DETERMINISTIC**: Predictable outputs
+- [ ] **RELIABLE**: Proper error handling
+- [ ] **MINIMAL**: Smallest viable change
+- [ ] **COMPLETE**: Code + tests + docs + validation
+- [ ] **REVERSIBLE**: Changes can be rolled back
+- [ ] **COMPOSABLE**: Changes work with existing code
+- [ ] **TRACEABLE**: All changes linked to plan/issue
+- [ ] **TEST-DRIVEN**: Tests capture intent
+- [ ] **EVIDENCE-DRIVEN**: Decisions based on data
+
+### **Quality Compliance**
+
+- [ ] **Code Quality**: Meets quality standards
+- [ ] **Documentation**: Complete and up-to-date
+- [ ] **Testing**: High test coverage maintained
+- [ ] **Security**: Security best practices followed
+
+### **Cleanup Verification**
+
+- [ ] **Atomic Changes**: All or nothing changes applied
+- [ ] **No Orphans**: No leftover files or directories
+- [ ] **CHANGELOG.md**: Updated with all changes
+- [ ] **Rollback Ready**: Changes can be reverted quickly
+
+### **Changelog Integration**
+
+- [ ] **Direct Quote**: Changelog entry quoted in response
+- [ ] **Link Reference**: Direct link to changelog section provided
+- [ ] **Impact Summary**: Change impact clearly documented
+- [ ] **Traceability**: All changes linked to changelog entry
+
+## 🎯 Final Assessment
+
+**Overall Success**: [Success/Partial Success/Failure]
+**Solution Quality**: [Excellent/Good/Acceptable/Poor]
+**Ready for Production**: [Yes/No]
+**Lessons Learned**: [Key insights from this work]
+
+**Task completed successfully. All workflow phases completed and documented.**
+
+---

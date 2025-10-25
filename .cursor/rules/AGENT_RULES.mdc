@@ -1,0 +1,84 @@
+---
+alwaysApply: true
+---
+# Agent Rules - Table of Contents
+
+**IMPORTANT:** All following rule files must be read and followed.
+
+## 📋 Rule Files
+
+1. **[WORKFLOW.mdc](WORKFLOW.mdc)** - Plan-Execute-Verify-Report Cycle
+2. **[PARADIGMS.mdc](PARADIGMS.mdc)** - Development Principles and Paradigms
+3. **[COMMUNICATION.mdc](COMMUNICATION.mdc)** - Communication Rules and Escalation
+4. **[QUALITY_STANDARDS.mdc](QUALITY_STANDARDS.mdc)** - Code Quality and Testing
+5. **[COMPLIANCE.mdc](COMPLIANCE.mdc)** - Error Detection and Rule Compliance
+6. **[ALIASES.mdc](ALIASES.mdc)** - Communication aliases and shortcuts
+
+## 📁 Additional Resources
+
+### **File-Type Specific Rules**
+
+**IMPORTANT**: Apply these rules when editing files of the respective types.
+
+#### **Available Rules**
+
+- **[MARKDOWN_RULES.mdc](file-types/MARKDOWN_RULES.mdc)** - Rules for MD/MDC files
+  - **File Types**: `.md`, `.mdc`
+  - **Purpose**: Markdown formatting and markdownlint compliance
+  - **Key Rules**: MD022, MD032, MD041, MD047
+  - **Focus**: Headings, lists, file structure, line endings
+
+- **[PYTHON_RULES.mdc](file-types/PYTHON_RULES.mdc)** - Rules for Python files
+  - **File Types**: `.py`
+  - **Purpose**: Python code quality and PEP 8 compliance
+  - **Key Rules**: PEP 8, type hints, docstrings, error handling
+  - **Focus**: Code formatting, imports, testing, security
+
+- **[CONFIG_RULES.mdc](file-types/CONFIG_RULES.mdc)** - Rules for configuration files
+  - **File Types**: `.toml`, `.yaml`, `.yml`, `.json`, `.ini`, `.cfg`, `.conf`
+  - **Purpose**: Configuration file consistency and security
+  - **Key Rules**: Security, validation, environment-specific configs
+  - **Focus**: Secrets management, syntax validation, structure
+
+#### **Rule Application Process**
+
+1. **Identify File Type**: Determine which rules apply
+2. **Check Existing Rules**: Review current file against rules
+3. **Apply Rules**: Make necessary changes to comply
+4. **Validate**: Use appropriate tools to verify compliance
+5. **Document**: Update any relevant documentation
+
+### **Communication Templates**
+
+**IMPORTANT**: Agents MUST use the workflow response templates for all interactions.
+
+#### **Primary Templates (MANDATORY)**
+
+- **[AGENT_RES_WF_P1.mdc](templates/AGENT_RES_WF_P1.mdc)** - PLAN phase response template
+- **[AGENT_RES_WF_P2.mdc](templates/AGENT_RES_WF_P2.mdc)** - EXECUTE phase response template
+- **[AGENT_RES_WF_P3.mdc](templates/AGENT_RES_WF_P3.mdc)** - VERIFY phase response template
+- **[AGENT_RES_WF_P4.mdc](templates/AGENT_RES_WF_P4.mdc)** - REPORT phase response template
+
+#### **Supporting Templates (OPTIONAL)**
+
+These templates are used as components within the workflow responses:
+
+- **[CHANGELOG_ENTRY.mdc](templates/CHANGELOG_ENTRY.mdc)** - Changelog entry template (used within REPORT phase)
+- **[COMPLIANCE_CONFIRMATION.mdc](templates/COMPLIANCE_CONFIRMATION.mdc)** - Compliance confirmation template (used within REPORT phase)
+- **[ESCALATION_REPORT.mdc](templates/ESCALATION_REPORT.mdc)** - Escalation report template (used within EXECUTE/VERIFY phases)
+- **[STATUS_REPORT.mdc](templates/STATUS_REPORT.mdc)** - Status report template (used within EXECUTE phase)
+- **[PLAN_TEMPLATE.mdc](templates/PLAN_TEMPLATE.mdc)** - Planning template (used within PLAN phase)
+
+## 🎯 Overview
+
+These rules define the workflow for AI agents in this project:
+
+- **Structured Workflow** with clear phases
+- **Quality Standards** for code and documentation
+- **Communication Guidelines** for effective collaboration
+- **Compliance Mechanisms** for continuous improvement
+- **File-Type Specific Rules** for consistent formatting and quality
+- **Standardized Templates** for consistent communication and documentation
+- **Communication Aliases** for efficient and comprehensive task execution
+
+---

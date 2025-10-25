@@ -1,0 +1,87 @@
+# settings.toml - Enhanced configuration
+"""
+Enhanced Mauscribe configuration with dual mode support.
+"""
+
+[general]
+name = "Mauscribe"
+version = "2.0"
+debug = false
+
+# Recording modes configuration
+[recording_modes]
+# Default mode: "normal" or "enhanced"
+default_mode = "normal"
+
+# Normal mode settings
+[recording_modes.normal]
+auto_cleanup = true
+cleanup_after_n_recordings = 10
+cleanup_on_exit = true
+max_temp_recordings = 50
+cleanup_interval_minutes = 30
+
+# Enhanced mode settings
+[recording_modes.enhanced]
+save_audio_files = true
+save_audio_data_in_db = false
+max_file_size_mb = 100
+compression_enabled = true
+backup_enabled = true
+backup_interval_hours = 24
+
+# Training data settings
+[recording_modes.training]
+auto_mark_high_confidence = true
+min_confidence_threshold = 0.8
+min_duration_seconds = 1.0
+max_duration_seconds = 300.0
+quality_scoring_enabled = true
+speaker_identification_enabled = false
+
+# Audio settings
+[audio]
+sample_rate = 16000
+channels = 1
+format = "wav"
+volume_reduction_factor = 0.5
+
+# Transcription settings
+[transcription]
+model = "base"
+language = "de"
+confidence_threshold = 0.5
+
+# Database settings
+[database]
+enabled = true
+auto_save_recordings = true
+auto_save_transcriptions = true
+mark_as_training_data = false
+
+# UI settings
+[ui]
+theme = "cyberpunk"
+notifications_enabled = true
+control_center_enabled = true
+
+[ui.notifications]
+recording_start = { toast = true, sound = true }
+recording_stop = { toast = true, sound = true }
+transcription_complete = { toast = true, sound = false }
+transcription_error = { toast = true, sound = true }
+transcription_empty = { toast = true, sound = false }
+
+# System tray settings
+[system_tray]
+enabled = true
+show_notifications = true
+minimize_to_tray = true
+
+# Enhanced features
+[enhanced_features]
+session_management = true
+training_data_collection = true
+audio_compression = true
+backup_system = true
+statistics_tracking = true

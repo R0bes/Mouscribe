@@ -1,7 +1,7 @@
 # Mauscribe - Voice-to-Text Tool
 # Elegant and functional Makefile for development workflow
 
-.PHONY: help setup install-dev check tests validate fix run clean install-windows install-linux
+.PHONY: help setup install-dev check tests validate fix run clean install-windows install-linux build-exe
 .DEFAULT_GOAL := help
 
 # Project configuration
@@ -42,6 +42,9 @@ help: ## Show this help message
 	@echo "  run-dev         Run application in development mode"
 	@echo "  dev             Quick development cycle (fix + check + test)"
 	@echo ""
+	@echo "Build & Distribution:"
+	@echo "  build-exe       Build standalone executable (.exe)"
+	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean           Clean up generated files and caches"
 	@echo "  status          Show project status and environment info"
@@ -80,7 +83,7 @@ install-windows: setup ## Install Windows-specific dependencies
 	@$(PIP) install -e ".[windows]"
 	@echo "Windows dependencies installed"
 
-# Install Linux-specific dependencies  
+# Install Linux-specific dependencies
 install-linux: setup ## Install Linux-specific dependencies
 	@echo "Installing Linux-specific packages..."
 	@$(PIP) install -e ".[linux]"
@@ -156,6 +159,25 @@ clean: ## Clean up generated files and caches
 dev: fix check tests ## Quick development cycle (fix + check + test)
 	@echo "Development cycle completed!"
 
+# Build standalone executable
+build-exe: ## Build standalone executable (.exe)
+	@echo "Building Mauscribe executable..."
+	@echo "Stopping any running instances..."
+	@taskkill /F /IM Mauscribe.exe 2>nul || echo "No running instances found"
+	@echo "Cleaning previous build..."
+	@if exist "build" rmdir /s /q build
+	@if exist "dist" rmdir /s /q dist
+	@echo "Building with PyInstaller..."
+	@$(PYTHON_VENV) -m PyInstaller mauscribe.spec --clean
+	@echo "Build completed!"
+	@if exist "dist\Mauscribe.exe" ( \
+		echo "✅ Executable created: dist\Mauscribe.exe" & \
+		for %%A in ("dist\Mauscribe.exe") do echo "   Size: %%~zA bytes" \
+	) else ( \
+		echo "❌ Build failed - executable not found" & \
+		exit /b 1 \
+	)
+
 # Show project status
 status: ## Show project status and environment info
 	@echo "Mauscribe Project Status"
@@ -165,3 +187,29 @@ status: ## Show project status and environment info
 	@echo "Virtual Env: $(if exist '$(VENV_DIR)',Present,Missing)"
 	@echo "Dependencies: $(if exist '$(VENV_DIR)/pyvenv.cfg',Installed,Not installed)"
 	@echo "Project Files: Available"
+
+# Release management targets
+release-patch: ## Bump patch version and create release
+	@echo "Creating patch release..."
+	@$(PYTHON_VENV) python tools/version_bump.py patch
+
+release-minor: ## Bump minor version and create release
+	@echo "Creating minor release..."
+	@$(PYTHON_VENV) python tools/version_bump.py minor
+
+release-major: ## Bump major version and create release
+	@echo "Creating major release..."
+	@$(PYTHON_VENV) python tools/version_bump.py major
+
+changelog: ## Generate changelog preview
+	@echo "Generating changelog preview..."
+	@$(PYTHON_VENV) python -c "from tools.release_manager import ReleaseManager; rm = ReleaseManager(); latest = rm.get_latest_tag(); print('Latest tag:', latest); print('Changelog:'); print(rm.generate_changelog(latest) if latest else 'No previous tag found')"
+
+upload-release: ## Upload release artifacts to GitHub
+	@echo "Uploading release artifacts..."
+	@$(PYTHON_VENV) python tools/release_manager.py --tag $(shell git describe --tags --abbrev=0) --upload
+
+# Development release (for testing)
+dev-release: ## Create development release with current changes
+	@echo "Creating development release..."
+	@$(PYTHON_VENV) python tools/version_bump.py patch

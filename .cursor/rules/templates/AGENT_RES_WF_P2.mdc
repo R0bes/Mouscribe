@@ -1,0 +1,90 @@
+---
+templateType: workflow-phase-response
+phase: EXECUTE
+description: Template for EXECUTE phase agent responses
+---
+
+# EXECUTE Phase Response Template
+
+## 🔄 Execution Status
+
+**Current Task**: [Brief description of current work]
+**Progress**: [X% complete or specific milestones reached]
+
+## 📋 Implementation Details
+
+### **Files Modified**
+
+- [ ] [File 1](path/to/file1) - [Brief description of changes]
+- [ ] [File 2](path/to/file2) - [Brief description of changes]
+
+### **Key Changes Made**
+
+**Code Changes**:
+
+- [ ] [Specific code changes made]
+- [ ] [New functions/classes added]
+
+**Configuration Changes**:
+
+- [ ] [Config files modified]
+- [ ] [Environment variables added]
+
+### **Progress Tracking**
+
+**Completed**:
+
+- [ ] [Task 1] - [Date/Time completed]
+- [ ] [Task 2] - [Date/Time completed]
+
+**In Progress**:
+
+- [ ] [Current task] - [Expected completion time]
+
+**Pending**:
+
+- [ ] [Task 1] - [Expected start time]
+
+## 🛠️ Technical Implementation
+
+### **Code Quality**
+
+- [ ] **PEP 8 Compliance**: Code follows Python style guide
+- [ ] **Type Hints**: All functions have type annotations
+- [ ] **Error Handling**: Proper exception handling implemented
+
+### **Testing**
+
+- [ ] **Unit Tests**: [Number] tests added/updated
+- [ ] **Test Coverage**: [Percentage] coverage maintained
+
+## ⚠️ Issues and Blockers
+
+### **Current Issues**
+
+- [ ] [Issue 1]
+  - **Impact**: [How this affects progress]
+  - **Resolution**: [How it will be resolved]
+
+### **Blockers**
+
+- [ ] [Blocker 1]
+  - **Impact**: [How this affects timeline]
+  - **Escalation**: [Yes/No - if yes, to whom]
+
+## 📊 Metrics
+
+**Time Spent**: [Hours/days]
+**Files Modified**: [Count]
+**Tests Added**: [Count]
+
+## 🎯 Next Steps
+
+**Immediate Actions**:
+
+- [ ] [Next immediate action]
+- [ ] [Next immediate action]
+
+**Ready for VERIFY Phase**: [Yes/No]
+
+---

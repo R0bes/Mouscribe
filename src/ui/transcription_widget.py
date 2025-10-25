@@ -88,7 +88,11 @@ class TranscriptionWidget:
 
         # Confidence-Indikator
         self.confidence_label = tk.Label(
-            header_frame, text="", font=("Arial", 12, "bold"), fg="#28A745", bg="#F8F9FA"  # Grün für hohe Confidence
+            header_frame,
+            text="",
+            font=("Arial", 12, "bold"),
+            fg="#28A745",
+            bg="#F8F9FA",  # Grün für hohe Confidence
         )
         self.confidence_label.pack(side="left", padx=(10, 0))
 

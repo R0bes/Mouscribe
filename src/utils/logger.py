@@ -1,21 +1,140 @@
-# src/utils/logger.py - Simple Logger for Mauscribe
+# src/utils/logger.py - Enhanced Logger for Mauscribe Control Center
 """
-Simple logger implementation for Mauscribe.
-Provides console and file logging with clean, minimal configuration.
+Enhanced logger implementation for Mauscribe.
+Provides console, file logging, and structured log buffer for GUI.
+Supports LogEntry dataclass and Thread-Safe log buffer for Control Center.
 """
 import logging
+import threading
+import time
 import warnings
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from queue import Empty, Queue
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
-# ModuleSettings removed - using BaseSettings directly
-
 # Suppress warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+
+@dataclass
+class LogEntry:
+    """Structured log entry for GUI display."""
+
+    timestamp: float
+    level: str
+    module: str
+    message: str
+    thread_id: int
+
+    def __post_init__(self):
+        """Format timestamp for display."""
+        self.formatted_time = time.strftime("%H:%M:%S", time.localtime(self.timestamp))
+
+
+class StructuredLogHandler(logging.Handler):
+    """Custom log handler that stores logs in a thread-safe queue."""
+
+    def __init__(self, max_size: int = 1000):
+        """Initialize the structured log handler.
+
+        Args:
+            max_size: Maximum number of log entries to keep in buffer
+        """
+        super().__init__()
+        self.log_queue = Queue(maxsize=max_size)
+        self.max_size = max_size
+        self._lock = threading.Lock()
+        self._emit_events = True  # Enable event emission
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Emit a log record to the queue."""
+        try:
+            # Create structured log entry
+            log_entry = LogEntry(
+                timestamp=record.created,
+                level=record.levelname,
+                module=record.name,
+                message=record.getMessage(),
+                thread_id=record.thread,
+            )
+
+            # Add to queue (non-blocking)
+            try:
+                self.log_queue.put_nowait(log_entry)
+            except:
+                # Queue is full, remove oldest entry and add new one
+                try:
+                    self.log_queue.get_nowait()
+                    self.log_queue.put_nowait(log_entry)
+                except Empty:
+                    pass  # Queue was emptied by another thread
+
+            # Emit event for real-time log updates
+            if self._emit_events:
+                try:
+                    from .eventbus import EventType, emit_event
+
+                    emit_event(
+                        EventType.LOG_MESSAGE_ADDED,
+                        {
+                            "timestamp": log_entry.timestamp,
+                            "level": log_entry.level,
+                            "module": log_entry.module,
+                            "message": log_entry.message,
+                            "formatted_time": log_entry.formatted_time,
+                        },
+                        source="Logger",
+                    )
+                except Exception:
+                    # Don't break logging if event system fails
+                    pass
+
+        except Exception:
+            # Don't let logging errors break the application
+            pass
+
+    def get_logs(self, max_count: Optional[int] = None) -> list[LogEntry]:
+        """Get logs from the queue.
+
+        Args:
+            max_count: Maximum number of logs to retrieve
+
+        Returns:
+            List of LogEntry objects
+        """
+        logs = []
+        count = 0
+
+        try:
+            while True:
+                if max_count and count >= max_count:
+                    break
+
+                log_entry = self.log_queue.get_nowait()
+                logs.append(log_entry)
+                count += 1
+
+        except Empty:
+            pass
+
+        return logs
+
+    def get_all_logs(self) -> list[LogEntry]:
+        """Get all logs currently in the queue."""
+        return self.get_logs()
+
+    def clear_logs(self) -> None:
+        """Clear all logs from the queue."""
+        try:
+            while True:
+                self.log_queue.get_nowait()
+        except Empty:
+            pass
 
 
 class LoggingSettings(BaseSettings):
@@ -25,11 +144,14 @@ class LoggingSettings(BaseSettings):
     file_enabled: bool = Field(default=True, description="Enable file logging")
     filename: str = Field(default="mauscribe.log", description="Log filename")
     suppress_external_logs: bool = Field(default=True, description="Suppress external library logs")
+    buffer_enabled: bool = Field(default=True, description="Enable structured log buffer")
+    buffer_size: int = Field(default=1000, description="Maximum log buffer size")
     model_config = {"env_prefix": "MAUSCRIBE_LOGGING_"}
 
 
-# Global flag to prevent multiple initializations
+# Global instances
 _logging_initialized = False
+_structured_handler: Optional[StructuredLogHandler] = None
 
 
 def setup_logging() -> None:
@@ -38,7 +160,7 @@ def setup_logging() -> None:
     Args:
         config: Optional Config object for logging settings
     """
-    global _logging_initialized
+    global _logging_initialized, _structured_handler
 
     if _logging_initialized:
         return
@@ -67,6 +189,10 @@ def setup_logging() -> None:
         file_enabled = settings.logging.file_enabled
         log_filename = settings.logging.filename
         suppress_external = settings.logging.suppress_external_logs
+
+        # Check if structured buffer is enabled
+        buffer_enabled = settings.logging.buffer_enabled
+        buffer_size = settings.logging.buffer_size
     else:
         # Default values if no config or logging disabled
         console_level = logging.INFO
@@ -74,6 +200,8 @@ def setup_logging() -> None:
         file_enabled = True
         log_filename = "mauscribe.log"
         suppress_external = True
+        buffer_enabled = True
+        buffer_size = 1000
 
     # Create formatter
     formatter = logging.Formatter(
@@ -97,6 +225,12 @@ def setup_logging() -> None:
         file_handler.setLevel(file_level)
         file_handler.setFormatter(formatter)
 
+    # Setup structured log handler if enabled
+    if buffer_enabled:
+        _structured_handler = StructuredLogHandler(max_size=buffer_size)
+        _structured_handler.setLevel(logging.DEBUG)
+        _structured_handler.setFormatter(formatter)
+
     # Setup root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
@@ -106,10 +240,22 @@ def setup_logging() -> None:
         root_logger.addHandler(console_handler)
         if file_handler:
             root_logger.addHandler(file_handler)
+        if _structured_handler:
+            root_logger.addHandler(_structured_handler)
 
     # Suppress verbose logging from external libraries if enabled
     if suppress_external:
-        external_loggers = ["comtypes", "pycaw", "pynput", "faster_whisper", "urllib3", "PIL", "pystray", "PIL.Image"]
+        external_loggers = [
+            "comtypes",
+            "pycaw",
+            "pynput",
+            "faster_whisper",
+            "urllib3",
+            "PIL",
+            "pystray",
+            "PIL.Image",
+            "customtkinter",
+        ]
         for logger_name in external_loggers:
             logging.getLogger(logger_name).setLevel(logging.WARNING)
 
@@ -144,3 +290,56 @@ def log_message(level: str, message: str, logger_name: Optional[str] = None) -> 
     logger = get_logger(logger_name)
     level_method = getattr(logger, level.lower(), logger.info)
     level_method(message)
+
+
+def get_log_buffer() -> Optional[StructuredLogHandler]:
+    """Get the structured log handler for GUI access.
+
+    Returns:
+        StructuredLogHandler instance or None if not available
+    """
+    global _structured_handler
+    return _structured_handler
+
+
+def get_recent_logs(count: int = 100) -> list[LogEntry]:
+    """Get recent log entries from the buffer.
+
+    Args:
+        count: Number of recent logs to retrieve
+
+    Returns:
+        List of LogEntry objects
+    """
+    handler = get_log_buffer()
+    if handler:
+        return handler.get_logs(max_count=count)
+    return []
+
+
+def clear_log_buffer() -> None:
+    """Clear all logs from the structured buffer."""
+    handler = get_log_buffer()
+    if handler:
+        handler.clear_logs()
+
+
+def get_log_statistics() -> dict:
+    """Get log statistics for the GUI.
+
+    Returns:
+        Dictionary with log level counts
+    """
+    handler = get_log_buffer()
+    if not handler:
+        return {"ERROR": 0, "WARNING": 0, "INFO": 0, "DEBUG": 0, "TOTAL": 0}
+
+    logs = handler.get_all_logs()
+    stats = {"ERROR": 0, "WARNING": 0, "INFO": 0, "DEBUG": 0, "TOTAL": len(logs)}
+
+    for log in logs:
+        level = log.level
+        if level in stats:
+            stats[level] += 1
+
+    return stats

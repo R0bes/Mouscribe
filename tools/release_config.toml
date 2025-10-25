@@ -1,0 +1,43 @@
+# Release Configuration for Mauscribe
+
+[release]
+# Release notes template
+template = """## What's New in {tag}
+
+{changelog}
+
+## Installation
+
+Download `Mauscribe.exe` from the assets below and run it directly.
+
+## Changes Since Last Release
+
+{changelog}
+
+---
+*Released on {date}*
+"""
+
+# Changelog format for individual entries
+changelog_format = "### {type}: {message}"
+
+# Asset patterns to upload with releases
+asset_patterns = [
+    "dist/Mauscribe.exe",
+    "dist/data/"
+]
+
+# GitHub repository configuration
+[github]
+owner = "R0bes"
+repo = "Mauscribe"
+base_url = "https://api.github.com"
+
+# Release settings
+[settings]
+# Create draft releases (set to true for testing)
+draft = false
+# Mark as pre-release
+prerelease = false
+# Auto-generate release notes
+generate_release_notes = true
