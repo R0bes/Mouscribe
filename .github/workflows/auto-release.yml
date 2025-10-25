@@ -1,0 +1,121 @@
+name: Auto Release on Main
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  auto-release:
+    runs-on: windows-latest
+    # Only run if CI/CD pipeline succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for version bumping
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-ci.txt
+        pip install -e .
+
+    - name: Get next version
+      id: version
+      shell: bash
+      run: |
+        # Determine version bump type from commit messages since last release
+        git fetch --tags
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+        
+        # Check commits since last tag
+        COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"%s")
+        
+        # Determine version bump type
+        if echo "$COMMITS" | grep -qiE "BREAKING|major"; then
+          BUMP_TYPE="major"
+        elif echo "$COMMITS" | grep -qiE "feat|feature"; then
+          BUMP_TYPE="minor"
+        else
+          BUMP_TYPE="patch"
+        fi
+        
+        # Extract current version
+        CURRENT_VERSION=$(python -c "import tomli; print(tomli.load(open('pyproject.toml'))['project']['version'])")
+        IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+        MAJOR=${VERSION_PARTS[0]}
+        MINOR=${VERSION_PARTS[1]}
+        PATCH=${VERSION_PARTS[2]}
+        
+        # Bump version
+        case "$BUMP_TYPE" in
+          major)
+            NEW_VERSION="$((MAJOR + 1)).0.0"
+            ;;
+          minor)
+            NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
+            ;;
+          patch)
+            NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            ;;
+        esac
+        
+        echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Update version in files
+      shell: bash
+      run: |
+        python tools/version_bump.py --version ${{ steps.version.outputs.version }} --type ${{ steps.version.outputs.bump_type }}
+
+    - name: Build executable
+      shell: bash
+      run: |
+        pyinstaller mauscribe.spec --clean --noconfirm
+    
+    - name: Run Release Validation
+      shell: bash
+      run: |
+        python tools/validate_release.py --dist-path dist --verbose
+
+    - name: Create Git Tag
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
+        git push origin ${{ steps.version.outputs.tag }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        name: Release ${{ steps.version.outputs.tag }}
+        body: |
+          ## What's New
+
+          This release includes the latest changes from the main branch.
+
+          ### Version: ${{ steps.version.outputs.version }}
+          ### Bump Type: ${{ steps.version.outputs.bump_type }}
+
+          See [CHANGELOG.md](https://github.com/R0bes/Mauscribe/blob/main/CHANGELOG.md) for details.
+        files: dist/Mauscribe.exe
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

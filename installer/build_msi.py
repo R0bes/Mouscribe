@@ -35,7 +35,9 @@ class MSIBuilder:
     def log(self, message: str, level: str = "INFO") -> None:
         """Log a message with timestamp."""
         if self.verbose or level in ["ERROR", "WARNING"]:
-            print(f"[{level}] {message}")
+            # Replace Unicode characters for Windows compatibility
+            safe_message = message.replace("✅", "[OK]").replace("❌", "[FAIL]").replace("⚠️", "[WARN]")
+            print(f"[{level}] {safe_message}")
 
     def download_wix_toolset(self) -> bool:
         """Download and extract WiX Toolset if not present."""
@@ -313,10 +315,10 @@ def main():
 
     if success:
         msi_file = Path(args.output_dir) / f"Mauscribe-{args.version}.msi"
-        print(f"✅ MSI installer created: {msi_file}")
+        print(f"[OK] MSI installer created: {msi_file}")
         sys.exit(0)
     else:
-        print("❌ MSI build failed")
+        print("[FAIL] MSI build failed")
         sys.exit(1)
 
 

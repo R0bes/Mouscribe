@@ -20,7 +20,9 @@ def cli() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Why the mouse became a voice recognition expert?
-It was tired of being clicked around... 🐭
+It was tired of being clicked around... <;3
+
+Note: This is a Windows-friendly version without Unicode characters.
         """,
     )
     parser.add_argument(
@@ -36,6 +38,12 @@ It was tired of being clicked around... 🐭
         action="store_true",
         help="Enable debug mode with detailed error output",
     )
+    parser.add_argument(
+        "--version",
+        "-v",
+        action="version",
+        version="%(prog)s 1.0.10",
+    )
 
     args = parser.parse_args()
 
@@ -50,7 +58,7 @@ It was tired of being clicked around... 🐭
             logger.info(f"Configuration file not found: {config_path}")
             logger.info("Using default configuration...")
 
-        logger.info(f"📁 Configuration loaded from: {config_path}")
+        logger.info(f"Configuration loaded from: {config_path}")
 
         # Start Mauscribe application
         app = MauscribeApp()

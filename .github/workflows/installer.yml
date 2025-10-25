@@ -2,9 +2,9 @@ name: Installer Build
 
 on:
   workflow_run:
-    workflows: ["Build and Release"]
+    workflows: ["Build and Release", "Auto Release on Main"]
     types: [completed]
-    branches: [main, v2-development]
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
@@ -170,26 +170,26 @@ jobs:
     - name: Generate Installation Instructions
       run: |
         echo "📝 Generating installation instructions..."
-        
+
         $instructions = @"
         # Mauscribe ${{ steps.version.outputs.version }} Installation
-        
+
         ## Download Options
-        
+
         ### MSI Installer (Recommended)
         - **File**: Mauscribe-${{ steps.version.outputs.version }}.msi
         - **Type**: Windows Installer Package
         - **Features**: Professional installation with feature selection
         - **Requirements**: Windows 7 or later
-        
+
         ### Inno Setup Installer (Alternative)
         - **File**: Mauscribe-${{ steps.version.outputs.version }}-Setup.exe
         - **Type**: Executable Installer
         - **Features**: Simple installation wizard
         - **Requirements**: Windows 7 or later
-        
+
         ## Installation Steps
-        
+
         1. Download your preferred installer
         2. Run the installer as Administrator
         3. Follow the installation wizard
@@ -200,24 +200,24 @@ jobs:
            - Whisper Models (optional, 1.5GB)
            - Desktop Shortcuts (optional)
            - Start with Windows (optional)
-        
+
         ## System Requirements
-        
+
         - Windows 7 SP1 or later
         - 2GB free disk space
         - Microphone access
         - Internet connection (for model downloads)
-        
+
         ## Troubleshooting
-        
+
         If you encounter issues:
         1. Run installer as Administrator
         2. Disable antivirus temporarily
         3. Check Windows Event Viewer for errors
         4. Contact support at: https://github.com/R0bes/Mauscribe/issues
-        
+
         ## Uninstallation
-        
+
         Use Windows "Add or Remove Programs" or run the uninstaller from Start Menu.
         "@
 
