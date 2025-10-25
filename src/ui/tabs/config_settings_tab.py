@@ -339,7 +339,7 @@ class ConfigSettingsTab(ctk.CTkFrame):
                     self.auto_start_var.set(self.config.ui.auto_start_gui)
                 if hasattr(self.config.ui, "close_app_on_gui_close"):
                     self.close_app_var.set(self.config.ui.close_app_on_gui_close)
-                
+
                 # Feature flags
                 if hasattr(self.config.ui, "enable_audio_files_tab"):
                     self.audio_files_var.set(self.config.ui.enable_audio_files_tab)
@@ -383,12 +383,7 @@ class ConfigSettingsTab(ctk.CTkFrame):
 
                 from ...utils.eventbus import Event, EventType
 
-                event = Event(
-                    event_type=EventType(event_type),
-                    data=data,
-                    timestamp=time.time(),
-                    source="config_settings_tab"
-                )
+                event = Event(event_type=EventType(event_type), data=data, timestamp=time.time(), source="config_settings_tab")
                 self.app_instance.event_bus.emit(event)
         except Exception as e:
             print(f"Error emitting settings event: {e}")
@@ -435,7 +430,7 @@ class ConfigSettingsTab(ctk.CTkFrame):
                 # Theme setting
                 if hasattr(self, "theme_dropdown"):
                     self.config.ui.dark_mode = self.theme_dropdown.get() == "Cyberpunk"
-                
+
                 # Feature flags
                 self.config.ui.enable_audio_files_tab = self.audio_files_var.get()
                 self.config.ui.enable_audio_database = self.audio_db_var.get()

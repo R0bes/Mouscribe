@@ -14,9 +14,9 @@ from typing import Any, List, Optional
 import customtkinter as ctk
 import pygame
 
+from ...utils.feature_manager import FeatureManager
 from ..icon_helper import icon_helper
 from ..theme import CyberpunkTheme
-from ...utils.feature_manager import FeatureManager
 
 
 class AudioTab(ctk.CTkFrame):
@@ -106,7 +106,7 @@ class AudioTab(ctk.CTkFrame):
         desc_label.pack(pady=(0, 20))
 
         # Enable button (if config is available)
-        if self.app_instance and hasattr(self.app_instance, 'config'):
+        if self.app_instance and hasattr(self.app_instance, "config"):
             enable_button = ctk.CTkButton(
                 disabled_frame,
                 text="⚙️ Open Settings",
@@ -122,9 +122,9 @@ class AudioTab(ctk.CTkFrame):
         """Open settings to enable audio files feature."""
         try:
             # Switch to settings tab
-            if hasattr(self.app_instance, 'control_center') and self.app_instance.control_center:
+            if hasattr(self.app_instance, "control_center") and self.app_instance.control_center:
                 control_center = self.app_instance.control_center
-                if hasattr(control_center, 'tab_view') and control_center.tab_view:
+                if hasattr(control_center, "tab_view") and control_center.tab_view:
                     control_center.tab_view.set("⚙️ Settings")
                     print("Switched to Settings tab")
         except Exception as e:
