@@ -14,6 +14,7 @@ from typing import Any, List, Optional
 import customtkinter as ctk
 import pygame
 
+from ..icon_helper import icon_helper
 from ..theme import CyberpunkTheme
 
 
@@ -378,12 +379,12 @@ class AudioTab(ctk.CTkFrame):
             actions_frame.grid_propagate(False)
 
             # Action buttons - compact design
-            play_button = ctk.CTkButton(
+            play_button = icon_helper.create_icon_button(
                 actions_frame,
-                text="▶",
+                "play",
+                size=16,
                 width=30,
                 height=24,
-                font=ctk.CTkFont(size=10),
                 fg_color=CyberpunkTheme.STATUS_SUCCESS,
                 hover_color="#00CC66",
                 command=lambda: self._play_audio_inline(file_info),
@@ -683,8 +684,9 @@ class AudioTab(ctk.CTkFrame):
                             self.after(
                                 0, lambda: self.status_label.configure(text=f"Re-transcription failed: {file_path.name}")
                             )
-                    except Exception as e:
-                        self.after(0, lambda: self.status_label.configure(text=f"Re-transcription error: {str(e)}"))
+                    except Exception as exc:
+                        error_msg = f"Re-transcription error: {str(exc)}"
+                        self.after(0, lambda: self.status_label.configure(text=error_msg))
 
                 threading.Thread(target=transcribe_thread, daemon=True).start()
             else:

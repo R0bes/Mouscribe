@@ -34,6 +34,7 @@ class LogsTab(ctk.CTkFrame):
         self.auto_scroll = True
         self.update_thread: Optional[threading.Thread] = None
         self.running = False
+        self.is_closing = False
 
         # Initialize logging system
         self._initialize_logging()
@@ -196,7 +197,7 @@ class LogsTab(ctk.CTkFrame):
                 fg_color=CyberpunkTheme.BG_SURFACE,
                 hover_color=CyberpunkTheme.BUTTON_HOVER,
                 text_color=CyberpunkTheme.TEXT_SECONDARY,
-                command=lambda l=level: self._set_filter(l),
+                command=lambda level_name=level: self._set_filter(level_name),
             )
             button.pack(side="left", padx=2)
             self.filter_buttons[level] = button
@@ -655,13 +656,22 @@ class LogsTab(ctk.CTkFrame):
         """Cleanup resources and stop event handlers."""
         try:
             self.is_closing = True
+            self.running = False
+
+            # Stop update thread
+            if self.update_thread and self.update_thread.is_alive():
+                self.update_thread.join(timeout=1.0)
 
             # Clear log cards
             self.log_cards.clear()
 
             # Unsubscribe from events if event bus exists
             if hasattr(self.app_instance, "event_bus") and self.app_instance.event_bus:
-                self.app_instance.event_bus.unsubscribe("log_entry", self._add_log_entry)
+                try:
+                    self.app_instance.event_bus.unsubscribe("log_entry", self._add_log_entry)
+                    self.app_instance.event_bus.unsubscribe("LOG_MESSAGE_ADDED", self._on_log_added)
+                except Exception:
+                    pass  # Ignore unsubscribe errors
 
             print("🧹 LogsTab cleaned up")
 

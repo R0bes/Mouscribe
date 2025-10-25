@@ -171,8 +171,8 @@ class ReleaseManager:
         changelog = self.generate_changelog(latest_tag)
         release_notes = self.create_release_notes(tag, changelog)
 
-        print(f"📝 Creating release for tag: {tag}")
-        print(f"📋 Changelog preview:")
+        print(f"[INFO] Creating release for tag: {tag}")
+        print("[INFO] Changelog preview:")
         print(changelog)
         print("-" * 50)
 

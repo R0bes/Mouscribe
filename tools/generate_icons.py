@@ -125,10 +125,10 @@ class IconGenerator:
             self.generate_icon_set(icon_name)
 
         # UI icons
-        print(f"\n[INFO] Generating UI icons...")
+        print("\n[INFO] Generating UI icons...")
         self.generate_ui_icons()
 
-        print(f"\n[SUCCESS] Icon generation complete!")
+        print("\n[SUCCESS] Icon generation complete!")
         self._print_summary()
 
     def _print_summary(self) -> None:
