@@ -361,13 +361,134 @@ class SettingsTab(ctk.CTkFrame):
         content_frame = ctk.CTkFrame(main_frame, fg_color=CyberpunkTheme.BG_DARK, corner_radius=6, border_width=1)
         content_frame.pack(fill="both", expand=True, padx=4, pady=4)
 
-        # Configure grid weights - Action gets more space
+        # Configure grid weights - Settings and Status columns
         content_frame.grid_columnconfigure(0, weight=1)  # Settings column (smaller)
         content_frame.grid_columnconfigure(1, weight=2)  # Status/Action column (larger)
         content_frame.grid_rowconfigure(0, weight=1)  # Use full height
 
-        # Status column (full width)
+        # Recording settings column (left) - Only recording-related settings
+        self._create_recording_settings_column(content_frame)
+
+        # Status column (right)
         self._create_status_column(content_frame)
+
+    def _create_recording_settings_column(self, parent: ctk.CTkFrame) -> None:
+        """Create recording-related settings column."""
+        # Settings frame
+        settings_frame = ctk.CTkFrame(parent, fg_color=CyberpunkTheme.BG_SURFACE, corner_radius=6, border_width=1)
+        settings_frame.grid(row=0, column=0, padx=(4, 2), pady=4, sticky="nsew")
+
+        # Settings header
+        settings_header = ctk.CTkLabel(
+            settings_frame,
+            text="🎛️ Recording Settings",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=CyberpunkTheme.ACCENT_CYAN,
+        )
+        settings_header.pack(fill="x", padx=8, pady=(8, 4))
+
+        # Volume reduction slider
+        volume_frame = ctk.CTkFrame(settings_frame, fg_color="transparent")
+        volume_frame.pack(fill="x", padx=8, pady=4)
+
+        volume_label = ctk.CTkLabel(
+            volume_frame,
+            text="🔊 Volume Reduction:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color=CyberpunkTheme.TEXT_PRIMARY,
+        )
+        volume_label.pack(anchor="w")
+
+        self.volume_slider = ctk.CTkSlider(
+            volume_frame,
+            from_=0.0,
+            to=1.0,
+            number_of_steps=20,
+            command=self._on_volume_change,
+        )
+        self.volume_slider.pack(fill="x", pady=(4, 0))
+        self.volume_slider.set(0.2)  # Default value
+
+        self.volume_value_label = ctk.CTkLabel(
+            volume_frame,
+            text="0.20",
+            font=ctk.CTkFont(size=11),
+            text_color=CyberpunkTheme.TEXT_SECONDARY,
+        )
+        self.volume_value_label.pack(anchor="w", pady=(2, 0))
+
+        # Language selector
+        language_frame = ctk.CTkFrame(settings_frame, fg_color="transparent")
+        language_frame.pack(fill="x", padx=8, pady=4)
+
+        language_label = ctk.CTkLabel(
+            language_frame,
+            text="🌍 Language:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color=CyberpunkTheme.TEXT_PRIMARY,
+        )
+        language_label.pack(anchor="w")
+
+        self.language_dropdown = ctk.CTkOptionMenu(
+            language_frame,
+            values=["de", "en", "fr", "es", "it", "pt", "ru", "ja", "ko", "zh"],
+            command=self._on_language_change,
+        )
+        self.language_dropdown.pack(fill="x", pady=(4, 0))
+        self.language_dropdown.set("de")  # Default to German
+
+        # Model selector
+        model_frame = ctk.CTkFrame(settings_frame, fg_color="transparent")
+        model_frame.pack(fill="x", padx=8, pady=4)
+
+        model_label = ctk.CTkLabel(
+            model_frame,
+            text="🤖 Whisper Model:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color=CyberpunkTheme.TEXT_PRIMARY,
+        )
+        model_label.pack(anchor="w")
+
+        self.model_dropdown = ctk.CTkOptionMenu(
+            model_frame, 
+            values=["tiny", "base", "small", "medium", "large"], 
+            command=self._on_model_change
+        )
+        self.model_dropdown.pack(fill="x", pady=(4, 0))
+        self.model_dropdown.set("base")  # Default to base model
+
+    def _on_volume_change(self, value: float) -> None:
+        """Handle volume slider change and auto-save."""
+        self.volume_value_label.configure(text=f"{value:.2f}")
+        self._save_recording_settings()
+
+    def _on_language_change(self, language: str) -> None:
+        """Handle language change and auto-save."""
+        self._save_recording_settings()
+
+    def _on_model_change(self, model: str) -> None:
+        """Handle model change and auto-save."""
+        self._save_recording_settings()
+
+    def _save_recording_settings(self) -> None:
+        """Auto-save recording settings to config."""
+        try:
+            if hasattr(self.app_instance, 'config') and self.app_instance.config:
+                # Update config values
+                if hasattr(self.app_instance.config, 'audio'):
+                    self.app_instance.config.audio.volume_reduction_factor = self.volume_slider.get()
+                
+                if hasattr(self.app_instance.config, 'audio'):
+                    self.app_instance.config.audio.language = self.language_dropdown.get()
+                
+                if hasattr(self.app_instance.config, 'audio'):
+                    self.app_instance.config.audio.model = self.model_dropdown.get()
+                
+                # Save to file
+                self.app_instance.config.save()
+                print("✅ Recording settings auto-saved")
+        except Exception as e:
+            print(f"❌ Error auto-saving recording settings: {e}")
 
     def _create_recording_card(self, parent: ctk.CTkFrame) -> None:
         """Create recording status card."""

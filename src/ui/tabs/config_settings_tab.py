@@ -61,26 +61,14 @@ class ConfigSettingsTab(ctk.CTkFrame):
         content_frame = ctk.CTkScrollableFrame(main_frame, fg_color=CyberpunkTheme.BG_SURFACE, corner_radius=6, border_width=1)
         content_frame.pack(fill="both", expand=True, padx=4, pady=2)
 
-        # Create settings sections
-        self._create_audio_settings(content_frame)
+        # Create settings sections (excluding audio - moved to transcription tab)
         self._create_transcription_settings(content_frame)
         self._create_recording_settings(content_frame)
         self._create_ui_settings(content_frame)
+        self._create_notification_settings(content_frame)
 
-        # Save button
-        save_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        save_frame.pack(fill="x", padx=4, pady=2)
-
-        save_button = ctk.CTkButton(
-            save_frame,
-            text="💾 Save All Settings",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            fg_color=CyberpunkTheme.ACCENT_CYAN,
-            hover_color="#00CCCC",
-            command=self._save_all_settings,
-            height=40,
-        )
-        save_button.pack(side="right", padx=4, pady=4)
+        # Auto-save button (removed - all settings auto-save)
+        # Settings are automatically saved on change
 
     def _create_audio_settings(self, parent: ctk.CTkScrollableFrame) -> None:
         """Create audio settings section."""
@@ -209,6 +197,7 @@ class ConfigSettingsTab(ctk.CTkFrame):
             variable=self.auto_start_var,
             font=ctk.CTkFont(size=11),
             text_color=CyberpunkTheme.TEXT_SECONDARY,
+            command=self._auto_save_settings,
         )
         self.auto_start_checkbox.pack(anchor="w", pady=4)
 
@@ -228,6 +217,7 @@ class ConfigSettingsTab(ctk.CTkFrame):
             variable=self.close_app_var,
             font=ctk.CTkFont(size=11),
             text_color=CyberpunkTheme.TEXT_SECONDARY,
+            command=self._auto_save_settings,
         )
         self.close_app_checkbox.pack(anchor="w", pady=4)
 
@@ -286,9 +276,29 @@ class ConfigSettingsTab(ctk.CTkFrame):
             self.config.recording_mode = choice.lower()
 
     def _on_theme_change(self, choice: str) -> None:
-        """Handle theme change."""
-        # TODO: Implement theme switching
-        pass
+        """Handle theme change and auto-save."""
+        self._auto_save_settings()
+
+    def _auto_save_settings(self) -> None:
+        """Auto-save all settings to config file."""
+        try:
+            if not self.config:
+                return
+
+            # Update config values
+            if hasattr(self.config, "ui"):
+                self.config.ui.auto_start_gui = self.auto_start_var.get()
+                self.config.ui.close_app_on_gui_close = self.close_app_var.get()
+                # Theme setting
+                if hasattr(self, 'theme_dropdown'):
+                    self.config.ui.dark_mode = self.theme_dropdown.get() == "Cyberpunk"
+
+            # Save to file
+            self.config.save()
+            print("✅ Settings auto-saved")
+
+        except Exception as e:
+            print(f"❌ Error auto-saving settings: {e}")
 
     def _save_all_settings(self) -> None:
         """Save all settings to config file."""
