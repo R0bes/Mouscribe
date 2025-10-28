@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-10-27 03:28:02",
+  "dist_path": "dist",
+  "checks": {
+    "artifacts": "PASS",
+    "executable_hash": "78574cb22a69d994efcc3d6fcaea2942769955484ee37f0b914c1a8bd3045346",
+    "executable": "PASS",
+    "version": "PASS",
+    "smoke_tests": "PASS",
+    "permissions": "PASS"
+  },
+  "overall_status": "FAIL",
+  "errors": [],
+  "warnings": [
+    "smoke_tests: Executable returned code 2"
+  ],
+  "version": "1.0.10"
+}

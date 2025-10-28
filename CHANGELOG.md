@@ -2,6 +2,64 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2024-12-19] - Setup.exe with Whisper Model Selection
+
+### Added
+
+- **Whisper Model Management**: Individual model selection and download system
+  - `src/utils/model_downloader.py` - Central model download manager with progress callback
+  - `src/ui/dialogs/model_download_dialog.py` - GUI dialog for model download confirmation
+  - `src/ui/dialogs/__init__.py` - Dialog package initialization
+  - 5 separate Whisper models: tiny (39 MB), base (74 MB), small (244 MB), medium (769 MB), large (1550 MB)
+  - Model status display in system tray menu (loaded/not loaded)
+  - Confirmation dialog before downloading new models
+  - Progress indication during download
+
+- **Enhanced Installer**: Inno Setup installer with model selection
+  - `tools/build_setup.py` - Automated Setup.exe build script
+  - Enhanced `installer/mauscribe.iss` with separate tasks for each Whisper model
+  - Model selection during installation
+  - Post-install download only selected models
+  - Models stored in AppData/Mauscribe/models directory
+
+- **System Tray Integration**: Visual model management
+  - Model download status indication ([OK] = downloaded, [DL] = not downloaded)
+  - Automatic dialog trigger for not-downloaded models
+  - Download progress bar and status updates
+  - Success/failure notifications
+
+- **CI/CD Updates**: Inno Setup installation in automated builds
+  - `.github/workflows/installer.yml` - Automated Inno Setup 6.2.2 installation
+  - Automated version injection into ISS file
+  - Setup.exe build and validation
+  - Artifact upload with installation instructions
+
+### Modified
+
+- `installer/features.json` - Added all 5 Whisper models with URLs, sizes, and descriptions
+- `installer/mauscribe.iss` - Separated Whisper model tasks (whisper_tiny, whisper_base, whisper_small, whisper_medium, whisper_large)
+- `tools/post_install.py` - Selective model download based on user selection during installation
+- `src/ui/system_tray.py` - Model status checking and download dialog integration
+- `.github/workflows/installer.yml` - Inno Setup installation and build automation
+
+### Features
+
+- **Modular Model Selection**: Users can choose which models to download during installation
+- **On-Demand Downloads**: Download additional models from within the application
+- **Progress Feedback**: Real-time download progress with size information
+- **Storage Management**: Models stored in user-accessible location (AppData)
+- **Visual Status**: Clear indication of which models are available vs. need downloading
+- **User Confirmation**: Dialog prompt before downloading new models
+
+### Technical
+
+- **Model Downloader**: Centralized download logic with retry and error handling
+- **Download Dialog**: CustomTkinter-based GUI with progress bar
+- **Status Tracking**: File existence check for downloaded models
+- **Registry Integration**: Store selected models in Windows registry
+- **CI/CD Automation**: Fully automated Setup.exe build in GitHub Actions
+- **Storage Location**: Default to AppData with fallback to Program Files
+
 ## [2024-12-19] - Release Validation and Windows Installer System
 
 ### Added

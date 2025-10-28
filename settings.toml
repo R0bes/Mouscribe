@@ -1,6 +1,6 @@
 app_name = "Mauscribe"
 version = "0.7.0"
-volume_reduction_factor = 0.2
+volume_reduction_factor = 0.4
 language = "de"
 
 [logging]
@@ -9,14 +9,12 @@ level = "DEBUG"
 [audio]
 language = "de"
 model = "small"
-volume_reduction_factor = 0.2
+volume_reduction_factor = 0.4
 
 [ui]
 dark_mode = true
 auto_start_gui = false
 close_app_on_gui_close = false
-
-# Feature flags for optional components
 enable_audio_files_tab = false
 enable_audio_database = false
 enable_enhanced_mode = false

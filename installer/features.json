@@ -71,9 +71,25 @@
       "shortcuts": [],
       "dependencies": ["core"],
       "download_urls": {
+        "tiny": "https://huggingface.co/guillaumekln/faster-whisper-tiny/resolve/main/model.bin",
+        "base": "https://huggingface.co/guillaumekln/faster-whisper-base/resolve/main/model.bin",
         "small": "https://huggingface.co/guillaumekln/faster-whisper-small.en/resolve/main/model.bin",
         "medium": "https://huggingface.co/guillaumekln/faster-whisper-medium.en/resolve/main/model.bin",
         "large": "https://huggingface.co/guillaumekln/faster-whisper-large-v2/resolve/main/model.bin"
+      },
+      "sizes_mb": {
+        "tiny": 39,
+        "base": 74,
+        "small": 244,
+        "medium": 769,
+        "large": 1550
+      },
+      "descriptions": {
+        "tiny": "Tiny (39 MB) - Schnellste",
+        "base": "Base (74 MB) - Ausgewogen",
+        "small": "Small (244 MB) - Gut",
+        "medium": "Medium (769 MB) - Sehr gut",
+        "large": "Large (1550 MB) - Beste Qualität"
       },
       "post_install_action": "download_models"
     },

@@ -40,9 +40,19 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
 Name: "autostart"; Description: "Start Mauscribe with Windows"; GroupDescription: "Startup Options"; Flags: unchecked
+
+; Audio Database feature
 Name: "audio_database"; Description: "Install Audio Database feature"; GroupDescription: "Features"; Flags: checked
+
+; Whisper Model downloads (optional)
+Name: "whisper_tiny"; Description: "Tiny (39 MB) - Schnellste"; GroupDescription: "Whisper-Modelle (optional)"; Flags: unchecked
+Name: "whisper_base"; Description: "Base (74 MB) - Ausgewogen"; GroupDescription: "Whisper-Modelle (optional)"; Flags: unchecked
+Name: "whisper_small"; Description: "Small (244 MB) - Gut"; GroupDescription: "Whisper-Modelle (optional)"; Flags: unchecked
+Name: "whisper_medium"; Description: "Medium (769 MB) - Sehr gut"; GroupDescription: "Whisper-Modelle (optional)"; Flags: checked
+Name: "whisper_large"; Description: "Large (1550 MB) - Beste Qualität"; GroupDescription: "Whisper-Modelle (optional)"; Flags: unchecked
+
+; Other features
 Name: "enhanced_mode"; Description: "Install Enhanced Mode feature"; GroupDescription: "Features"; Flags: unchecked
-Name: "whisper_models"; Description: "Download Whisper AI models (1.5GB)"; GroupDescription: "Features"; Flags: unchecked
 Name: "ui_icons"; Description: "Install additional UI icons"; GroupDescription: "Features"; Flags: checked
 
 [Files]
@@ -113,10 +123,18 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 ; Application settings
 Root: HKCU; Subkey: "Software\Mauscribe"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"
 Root: HKCU; Subkey: "Software\Mauscribe"; ValueType: string; ValueName: "Version"; ValueData: "{#MyAppVersion}"
+
+; Feature selections
 Root: HKCU; Subkey: "Software\Mauscribe\Settings"; ValueType: dword; ValueName: "audio_database"; ValueData: 1; Tasks: audio_database
 Root: HKCU; Subkey: "Software\Mauscribe\Settings"; ValueType: dword; ValueName: "enhanced_mode"; ValueData: 1; Tasks: enhanced_mode
-Root: HKCU; Subkey: "Software\Mauscribe\Settings"; ValueType: dword; ValueName: "whisper_models"; ValueData: 1; Tasks: whisper_models
 Root: HKCU; Subkey: "Software\Mauscribe\Settings"; ValueType: dword; ValueName: "ui_icons"; ValueData: 1; Tasks: ui_icons
+
+; Whisper model selections
+Root: HKCU; Subkey: "Software\Mauscribe\Settings"; ValueType: dword; ValueName: "whisper_tiny"; ValueData: 1; Tasks: whisper_tiny
+Root: HKCU; Subkey: "Software\Mauscribe\Settings"; ValueType: dword; ValueName: "whisper_base"; ValueData: 1; Tasks: whisper_base
+Root: HKCU; Subkey: "Software\Mauscribe\Settings"; ValueType: dword; ValueName: "whisper_small"; ValueData: 1; Tasks: whisper_small
+Root: HKCU; Subkey: "Software\Mauscribe\Settings"; ValueType: dword; ValueName: "whisper_medium"; ValueData: 1; Tasks: whisper_medium
+Root: HKCU; Subkey: "Software\Mauscribe\Settings"; ValueType: dword; ValueName: "whisper_large"; ValueData: 1; Tasks: whisper_large
 
 [Run]
 ; Post-install actions

@@ -83,38 +83,44 @@ jobs:
           exit /b 1
         )
 
+    - name: Download and Install Inno Setup
+      run: |
+        echo "📥 Installing Inno Setup..."
+
+        # Download Inno Setup Compiler
+        $setupPath = "$env:RUNNER_TEMP\innosetup.exe"
+        Invoke-WebRequest -Uri "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe" -OutFile $setupPath
+
+        # Silent install
+        Start-Process -FilePath $setupPath -ArgumentList "/S" -Wait
+
+        # Add to PATH for this job
+        $innoPath = "C:\Program Files (x86)\Inno Setup 6"
+        echo "$innoPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+        echo "✅ Inno Setup installed"
+
     - name: Build Inno Setup Installer
       run: |
         echo "🔨 Building Inno Setup installer..."
 
-        # Download Inno Setup if not present
-        if not exist "tools\innosetup" (
-          echo "Downloading Inno Setup..."
-          mkdir tools\innosetup
-          powershell -Command "Invoke-WebRequest -Uri 'https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe' -OutFile 'tools\innosetup\innosetup.exe'"
-        )
-
         # Update version in .iss file
         $issContent = Get-Content "installer\mauscribe.iss" -Raw
         $issContent = $issContent -replace 'MyAppVersion "1\.0\.0"', "MyAppVersion `"${{ steps.version.outputs.version }}`""
-        $issContent = $issContent -replace 'OutputBaseFilename=Mauscribe-1\.0\.0-Setup', "OutputBaseFilename=Mauscribe-${{ steps.version.outputs.version }}-Setup"
-        Set-Content "installer\mauscribe.iss" -Value $issContent
+        Set-Content "installer\mauscribe.iss" -Value $issContent -NoNewline
 
-        # Build installer
-        if exist "tools\innosetup\innosetup.exe" (
-          tools\innosetup\innosetup.exe /S "installer\mauscribe.iss"
-        ) else (
-          # Try system-installed Inno Setup
-          iscc "installer\mauscribe.iss"
-        )
+        # Build with ISCC
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\mauscribe.iss"
 
-        if exist "dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe" (
+        if (Test-Path "dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe") {
           echo "✅ Inno Setup build successful"
-          for %%A in ("dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe") do echo "Setup Size: %%~zA bytes"
-        ) else (
+          $file = Get-Item "dist\Mauscribe-${{ steps.version.outputs.version }}-Setup.exe"
+          $sizeMB = [math]::Round($file.Length / 1MB, 2)
+          echo "Setup Size: $sizeMB MB"
+        } else {
           echo "❌ Inno Setup build failed"
-          exit /b 1
-        )
+          exit 1
+        }
 
     - name: Validate installers
       run: |

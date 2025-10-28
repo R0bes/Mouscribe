@@ -337,8 +337,19 @@ class SysTray:
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Umschalten der Benachrichtigungen: {e}")
 
+    def _is_model_downloaded(self, model_id: str) -> bool:
+        """Check if a Whisper model is downloaded."""
+        try:
+            from src.utils.model_downloader import ModelDownloader
+
+            downloader = ModelDownloader()
+            return downloader.is_model_downloaded(model_id)
+        except Exception as e:
+            self.logger.error(f"Error checking if model is downloaded: {e}")
+            return False
+
     def _create_whisper_model_submenu(self) -> list:
-        """Create submenu for whisper model selection."""
+        """Create submenu for whisper model selection with download status."""
         try:
             # Available whisper models
             models = [
@@ -354,14 +365,27 @@ class SysTray:
 
             submenu_items = []
             for model_id, model_desc in models:
-                # Create callback for this model
-                def create_model_callback(model):
-                    return lambda icon, item: self._set_whisper_model(model, icon, item)
+                # Check if model is downloaded
+                is_downloaded = self._is_model_downloaded(model_id)
 
-                # Create menu item with checkmark for current model
+                # Status prefix
+                if model_id == current_model:
+                    prefix = "[OK]"  # Current model
+                elif is_downloaded:
+                    prefix = "[OK]"  # Downloaded
+                else:
+                    prefix = "[DL]"  # Not downloaded
+
+                status = " (geladen)" if is_downloaded else " (nicht geladen)"
+
+                # Create callback for this model
+                def create_model_callback(model, downloaded):
+                    return lambda icon, item: self._select_model(model, downloaded)
+
+                # Create menu item with status
                 menu_item = pystray.MenuItem(
-                    f"{'✅' if model_id == current_model else '  '} {model_desc}",
-                    create_model_callback(model_id),
+                    f"{prefix} {model_desc}{status}",
+                    create_model_callback(model_id, is_downloaded),
                     checked=lambda item, m=model_id: m == current_model,
                 )
                 submenu_items.append(menu_item)
@@ -371,6 +395,48 @@ class SysTray:
         except Exception as e:
             self.logger.error(f"❌ Fehler beim Erstellen des Whisper-Modell Submenus: {e}")
             return []
+
+    def _select_model(self, model: str, is_downloaded: bool) -> None:
+        """Select a Whisper model, show download dialog if not downloaded."""
+        try:
+            if not is_downloaded:
+                # Show download confirmation dialog
+                self._show_model_download_dialog(model)
+            else:
+                # Model is already downloaded, switch to it
+                self._set_whisper_model(model)
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Auswählen des Whisper-Modells: {e}")
+
+    def _show_model_download_dialog(self, model_id: str) -> None:
+        """Show download dialog for a model."""
+        try:
+            from customtkinter import CTk
+
+            from src.ui.dialogs.model_download_dialog import show_model_download_dialog
+
+            # Get or create root window
+            root = None
+            if hasattr(self.app_instance, "root") and self.app_instance.root:
+                root = self.app_instance.root
+            else:
+                # Create temporary root for dialog
+                root = CTk()
+                root.withdraw()
+
+            # Show download dialog
+            success = show_model_download_dialog(model_id, root)
+
+            if success:
+                # Model downloaded successfully, switch to it
+                self._set_whisper_model(model_id)
+                self.logger.info(f"✅ Modell {model_id} erfolgreich heruntergeladen und aktiviert")
+            else:
+                self.logger.warning(f"⚠️ Download von Modell {model_id} abgebrochen oder fehlgeschlagen")
+
+        except Exception as e:
+            self.logger.error(f"❌ Fehler beim Anzeigen des Download-Dialogs: {e}")
 
     def _set_whisper_model(self, model: str, icon=None, item=None) -> None:
         """Set whisper model."""
