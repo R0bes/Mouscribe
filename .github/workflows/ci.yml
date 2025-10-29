@@ -43,17 +43,17 @@ jobs:
 
     - name: Run linting
       run: |
-        black --check --diff src/ main.py
-        isort --check-only --diff src/ main.py
-        flake8 src/ main.py
+        python -m black --check --diff src/ main.py
+        python -m isort --check-only --diff src/ main.py
+        python -m flake8 src/ main.py
 
     - name: Run type checking
       run: |
-        mypy src/ main.py --ignore-missing-imports
+        python -m mypy src/ main.py --ignore-missing-imports
 
     - name: Run tests
       run: |
-        pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-report=html
+        python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml --cov-report=html
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v4
@@ -93,8 +93,8 @@ jobs:
 
     - name: Run security scan
       run: |
-        bandit -r src/ -f json -o bandit-report.json || true
-        safety check --json --output safety-report.json || true
+        python -m bandit -r src/ -f json -o bandit-report.json || true
+        python -m safety check --json --output safety-report.json || true
 
     - name: Upload security reports
       uses: actions/upload-artifact@v4
