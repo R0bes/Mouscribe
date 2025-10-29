@@ -39,7 +39,7 @@ jobs:
 
     - name: Run pre-commit hooks
       run: |
-        pre-commit run --all-files
+        python -m pre_commit run --all-files
 
     - name: Run linting
       run: |
